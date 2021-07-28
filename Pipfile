@@ -4,18 +4,17 @@ verify_ssl = true
 name = "pypi"
 
 [packages]
-livemark = "*"
 pandas = "*"
-black = "*"
-isort = "*"
 lxml = "*"
 beautifulsoup4 = "*"
 requests = "*"
-ipykernel = "*"
-matplotlib = "*"
-jupyterlab = "*"
+
 
 [dev-packages]
+ipykernel = "*"
+jupyterlab = "*"
+black = "*"
+isort = "*"
 
 [requires]
 python_version = "3.9"
