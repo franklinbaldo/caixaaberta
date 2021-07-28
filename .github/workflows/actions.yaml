@@ -11,12 +11,12 @@ jobs:
       - name: Setup python
         uses: actions/setup-python@v2
         with:
-          python-version: "3.8"
+          python-version: "3.9"
           architecture: x64
       - name: Install pipenv
         run: pip3 install pipenv
       - name: Install dependencies
-        run: pipenv install
+        run: pipenv install --python /usr/bin/python3
       - name: Extract data
         run: pipenv run python etl.py
       - name: Compile data
