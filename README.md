@@ -1,3 +1,5 @@
+[![Run every day](https://github.com/franklinbaldo/caixaaberta/actions/workflows/actions.yaml/badge.svg)](https://github.com/franklinbaldo/caixaaberta/actions/workflows/actions.yaml)
+
 # What is Caixa Aberta?
 Caixa Aberta is a script to scrap em compile realstate data from the Caixa Econômica Federal (CEF) official site.
 
