@@ -111,6 +111,7 @@ def etl_state(state, output_csv=output_csv)->None:
 
 def etl_many(states):
     for state in states:
+        print(state)
         etl_state(state)
 
 
