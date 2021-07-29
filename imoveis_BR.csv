@@ -1,4 +1,4 @@
-link,endereco,bairro,descricao,preco,valor,desconto,modalidade,foto,cidade,estado,data,fist_time_seen
+link,endereco,bairro,descricao,preco,valor,desconto,modalidade,foto,cidade,estado,data,first_time_seen
 2212,"TRAVESSA RAMÃO VASQUES LOPES, N. 15, quadra 9, lote 13,14",CENTRO,"Casa, 0.00 de área total, 54.40 de área privativa, 158.75 de área do terreno.",43750.0,125000.0,65.0,Venda Direta Online,,ITAQUI,RS,2021-07-19 15:21:51.065262,2021-07-19 15:21:51.065262
 2668,"R VALENTIM LORENZETTI, N. 55, (ANT AV DOIS LT 15 QD 37)",JARDIM SIPRAMAR,"Comercial, 430.00 de área total, 430.00 de área privativa, 416.00 de área do terreno.",317900.0,578000.0,45.0,Venda Direta Especial,,SAO PAULO,SP,2021-07-29 00:16:39.932225,2021-07-19 15:21:56.809430
 2719,"R MIN JOSE HUGO CASTELO BRANCO, N. 230, LT 12 QD 04 (antiga Rua 30)",PARQUE RESIDENCIAL COCAIA,"Casa, 100.00 de área total, 100.00 de área privativa, 250.00 de área do terreno.",148500.0,330000.0,55.0,Venda Direta Especial,,SAO PAULO,SP,2021-07-29 00:16:39.932225,2021-07-19 15:21:56.809430

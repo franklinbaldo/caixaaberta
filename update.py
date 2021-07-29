@@ -8,7 +8,7 @@ from etl import cols as etl_cols
 from pandas.core.frame import DataFrame
 
 cols = etl_cols + [
-    "fist_time_seen",
+    "first_time_seen",
 ]
 
 file_path = "imoveis_BR.csv"
