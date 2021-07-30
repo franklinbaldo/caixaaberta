@@ -40,10 +40,10 @@ def update_imoveis(file_path="imoveis_BR.csv"):
     concated_df['data'] = pd.to_datetime(concated_df['data']).dt.date
     concated_df['first_time_seen'] = pd.to_datetime(concated_df['first_time_seen']).dt.date
 
-    concated_df[col].to_csv(file_path)
+    
 
     if file_path is not None:
-        concated_df.to_csv(file_path)
+        concated_df[cols].to_csv(file_path)
         print("Arquivo atualizado com sucesso!", file_path)
 
     return concated_df
