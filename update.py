@@ -41,7 +41,7 @@ def update_imoveis(file_path="imoveis_BR.csv"):
     concated_df['first_time_seen'] = pd.to_datetime(concated_df['first_time_seen']).dt.date
 
     if file_path is not None:
-        concated_df.reset_index()[cols].to_csv(file_path,index='ignore')
+        concated_df.reset_index()[cols].to_csv(file_path,index=False)
         print("Arquivo atualizado com sucesso!", file_path)
 
     return concated_df
