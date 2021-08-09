@@ -1,7 +1,9 @@
 #%%
 import pandas as pd
+from pandas._libs.tslibs.timestamps import Timestamp
 import requests
 from bs4 import BeautifulSoup
+import datetime
 
 output_csv = "data/imoveis_{}.csv"
 base_url = "https://venda-imoveis.caixa.gov.br/listaweb/Lista_imoveis_{}.htm"
@@ -16,8 +18,7 @@ cols = [
     "modalidade",
     "foto",
     "cidade",
-    "estado",
-    "data",
+    "estado"
 ]
 base_detalhe_url = "https://venda-imoveis.caixa.gov.br/sistema/detalhe-imovel.asp?hdnOrigem=index&hdnimovel="
 
@@ -50,7 +51,12 @@ brazilian_states = [
     "SE",
     "TO",
 ]
+log = "etl.log"
 
+def log_sucess(state,transformed_df:pd.DataFrame) -> None:
+    assert not transformed_df.empty, "Empty dataframe"
+    df = pd.DataFrame([[state,datetime.datetime.now()]],columns=["state","date"])
+    df.to_csv(log,mode='a',index=False,header=None)
 
 def extract_state(state) -> pd.DataFrame:
     url = base_url.format(state)
@@ -58,7 +64,7 @@ def extract_state(state) -> pd.DataFrame:
     reqs = requests.get(url)
     soup = BeautifulSoup(reqs.text, "html.parser")
     extracted_df = pd.read_html(reqs.text, header=0)[0]
-    extracted_df["data"] = pd.Timestamp.today()
+
     extracted_df.columns = cols
     extracted_df["link"] = [
         str(link.get("href")).replace(base_detalhe_url, "").strip()
@@ -77,6 +83,7 @@ def extract_state(state) -> pd.DataFrame:
         .str.replace(",", ".", regex=False)
         .astype(float)
     )
+    
     return extracted_df
 
 
@@ -106,6 +113,7 @@ def etl_state(state, output_csv=output_csv)->None:
     df = extract_state(state)
     transformed_df = transform(df)
     load(transformed_df, output_csv.format(state))
+    log_sucess(state,transformed_df)
 
 
 
