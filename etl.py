@@ -95,7 +95,7 @@ def transform(extracted_df) -> pd.DataFrame:
     print("Transforming")
     transformed_df = extracted_df
     transformed_df["bairro"] = (
-        transformed_df["bairro"].astype(str).str.upper().str.strip().fillna("")
+        transformed_df["bairro"].fillna("").astype(str).str.upper().str.strip()
     )
     transformed_df = transformed_df.sort_values(by=["estado", "cidade", "link"])
     transformed_df = transformed_df.drop_duplicates(
