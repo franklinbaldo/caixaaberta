@@ -18,7 +18,7 @@ cols = [
     "modalidade",
     "foto",
     "cidade",
-    "estado"
+    "estado",
 ]
 base_detalhe_url = "https://venda-imoveis.caixa.gov.br/sistema/detalhe-imovel.asp?hdnOrigem=index&hdnimovel="
 
@@ -53,10 +53,12 @@ brazilian_states = [
 ]
 log = "etl.log"
 
-def log_sucess(state,transformed_df:pd.DataFrame) -> None:
+
+def log_sucess(state, transformed_df: pd.DataFrame) -> None:
     assert not transformed_df.empty, "Empty dataframe"
-    df = pd.DataFrame([[state,datetime.datetime.now()]],columns=["state","date"])
-    df.to_csv(log,mode='a',index=False,header=None)
+    df = pd.DataFrame([[state, datetime.datetime.now()]], columns=["state", "date"])
+    df.to_csv(log, mode="a", index=False, header=None)
+
 
 def extract_state(state) -> pd.DataFrame:
     url = base_url.format(state)
@@ -72,25 +74,29 @@ def extract_state(state) -> pd.DataFrame:
         if " Detalhes" in link.text
     ]
     extracted_df["preco"] = (
-        extracted_df["preco"].astype(str)
+        extracted_df["preco"]
+        .astype(str)
         .str.replace(".", "", regex=False)
         .str.replace(",", ".", regex=False)
         .astype(float)
     )
     extracted_df["valor"] = (
-        extracted_df["valor"].astype(str)
+        extracted_df["valor"]
+        .astype(str)
         .str.replace(".", "", regex=False)
         .str.replace(",", ".", regex=False)
         .astype(float)
     )
-    
+
     return extracted_df
 
 
 def transform(extracted_df) -> pd.DataFrame:
     print("Transforming")
     transformed_df = extracted_df
-    transformed_df["bairro"] = transformed_df["bairro"].astype(str).str.upper().str.strip()
+    transformed_df["bairro"] = (
+        transformed_df["bairro"].astype(str).str.upper().str.strip().fillna("")
+    )
     transformed_df = transformed_df.sort_values(by=["estado", "cidade", "link"])
     transformed_df = transformed_df.drop_duplicates(
         subset=["estado", "cidade", "link"], keep="first"
@@ -103,7 +109,7 @@ def load(transformed_df, output_csv) -> None:
     transformed_df.to_csv(output_csv, index=False)
 
 
-def etl_state(state, output_csv=output_csv)->None:
+def etl_state(state, output_csv=output_csv) -> None:
     """
     Takes a state and extracts the data from the website
     and saves it to a csv file.
@@ -113,8 +119,7 @@ def etl_state(state, output_csv=output_csv)->None:
     df = extract_state(state)
     transformed_df = transform(df)
     load(transformed_df, output_csv.format(state))
-    log_sucess(state,transformed_df)
-
+    log_sucess(state, transformed_df)
 
 
 def etl_many(states):
