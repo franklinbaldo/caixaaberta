@@ -72,13 +72,13 @@ def extract_state(state) -> pd.DataFrame:
         if " Detalhes" in link.text
     ]
     extracted_df["preco"] = (
-        extracted_df["preco"]
+        extracted_df["preco"].astype(str)
         .str.replace(".", "", regex=False)
         .str.replace(",", ".", regex=False)
         .astype(float)
     )
     extracted_df["valor"] = (
-        extracted_df["valor"]
+        extracted_df["valor"].astype(str)
         .str.replace(".", "", regex=False)
         .str.replace(",", ".", regex=False)
         .astype(float)
@@ -90,7 +90,7 @@ def extract_state(state) -> pd.DataFrame:
 def transform(extracted_df) -> pd.DataFrame:
     print("Transforming")
     transformed_df = extracted_df
-    transformed_df["bairro"] = transformed_df["bairro"].str.upper().str.strip()
+    transformed_df["bairro"] = transformed_df["bairro"].astype(str).str.upper().str.strip()
     transformed_df = transformed_df.sort_values(by=["estado", "cidade", "link"])
     transformed_df = transformed_df.drop_duplicates(
         subset=["estado", "cidade", "link"], keep="first"
