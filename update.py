@@ -1,11 +1,13 @@
 #%%
 
 from os import makedirs
-import pandas as pd
 from pathlib import Path
-from etl import log
-from etl import cols as etl_cols
+
+import pandas as pd
 from pandas.core.frame import DataFrame
+
+from etl import cols as etl_cols
+from etl import log
 
 cols = etl_cols + ["first_time_seen", "not_seen_since"]
 
