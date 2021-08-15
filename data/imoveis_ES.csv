@@ -2,6 +2,7 @@ link,endereco,bairro,descricao,preco,valor,desconto,modalidade,foto,cidade,estad
 18590,"RODOVIA SEBASTIÃO ALVES DE LIMA, LOTES 3 E 4 QUADRA A",JOAO VALIM,"Terreno, 335.00 de área total, 0.01 de área privativa, 335.00 de área do terreno.",348336.01,480000.0,27.43,Venda Online,,AFONSO CLAUDIO,ES
 1444401201611,"ESTRADA SANTA MARIA, N. SN, Lt 34 Qd 5 BAIRRO DO LIMAO",LIMAO,"Terreno, 473.10 de área total, 0.00 de área privativa, 473.10 de área do terreno.",86149.0,120000.0,28.21,Venda Online,,ARACRUZ,ES
 1444405697999,"RUA ANGICO, N. 93, Lote 20 Quadra 4 - loteamento Coqueira",COQUEIRAL,"Casa, 319.71 de área total, 85.00 de área privativa, 300.00 de área do terreno.",313310.01,485000.0,35.4,Venda Online,,ARACRUZ,ES
+1444405971721,"PRAIA DE ITAGUACU, N. 06, QD 06 LT 06",SAUACU,"Casa, 51.92 de área total, 51.92 de área privativa, 186.30 de área do terreno.",183464.01,284000.0,35.4,Venda Online,,ARACRUZ,ES
 10007787,"RUA JOAQUIM MENDONÇA, N. 143, Esquina com Rua Otaviano Ferreira",,"Prédio, 0.00 de área total, 0.00 de área privativa, 247.22 de área do terreno.",456000.0,760000.0,40.0,Venda Online,,BAIXO GUANDU,ES
 1444407711280,"RUA BELARMINO PINTO, N. S/N, QUADRA Q-8,LOTE 11-12",CENTRO,"Terreno, 200.00 de área total, 0.00 de área privativa, 200.00 de área do terreno.",95914.0,130000.0,26.22,Venda Online,,BAIXO GUANDU,ES
 8444406052892,"RUA ENGENHEIRO SILVINO, ÁREA 04, parte lt 05",,"Casa, 0.00 de área total, 48.00 de área privativa, 300.00 de área do terreno, 2 qto(s), a.serv, WC, 1 sala(s), cozinha.",47319.46,83500.0,43.33,Venda Online,,BAIXO GUANDU,ES
@@ -16,6 +17,7 @@ link,endereco,bairro,descricao,preco,valor,desconto,modalidade,foto,cidade,estad
 10003105,"RUA VALERIO JOAO RODRIGUES, N. 475, ÁREA 04 TERRITORIAL",PORTO DE CARIACICA,"Terreno, 10988.54 de área total, 0.00 de área privativa, 10988.54 de área do terreno.",446305.5,615000.0,27.43,Venda Online,,CARIACICA,ES
 1444402594781,"RUA BARAO DE ITAPEMIRIM, N. 40, QD 45 ( ANT CH 45)LOT CHACARAS HORIZON",NOVO HORIZONTE,"Terreno, 0.00 de área total, 0.00 de área privativa, 1049.44 de área do terreno.",48450.01,75000.0,35.4,Venda Online,,CARIACICA,ES
 1444402603314,"R BARAO DE ITAPEMIRIM, N. 40, LT 46",NOVO HORIZONTE,"Terreno, 984.00 de área total, 0.00 de área privativa, 984.00 de área do terreno.",47219.2,64000.0,26.22,Venda Online,,CARIACICA,ES
+1444403389537,"TRV. BRASIL, N. S/N, LT 55",NOVO HORIZONTE,"Terreno, 984.00 de área total, 0.00 de área privativa, 984.00 de área do terreno.",46481.4,70000.0,33.6,Venda Online,,CARIACICA,ES
 1444403390195,"AV. BRASIL, N. SN, LT 56",NOVO HORIZONTE,"Terreno, 864.00 de área total, 0.00 de área privativa, 864.00 de área do terreno.",37627.8,51000.0,26.22,Venda Online,,CARIACICA,ES
 1444406505350,"RUA AURORA BRUMATT, N. 77, QD 19 LT 15",VILA CAPIXABA,"Terreno, 0.00 de área total, 153.50 de área privativa, 153.50 de área do terreno.",106759.67,144700.0,26.22,Venda Online,,CARIACICA,ES
 1444407557817,"RUA RUI BARBOSA, N. 78, LOTE 12 QUADRA A",ALTO LAGE,"Casa, 300.00 de área total, 53.00 de área privativa, 250.00 de área do terreno.",368220.01,570000.0,35.4,Venda Online,,CARIACICA,ES
@@ -61,7 +63,7 @@ link,endereco,bairro,descricao,preco,valor,desconto,modalidade,foto,cidade,estad
 1444405447844,"RUA PAULO SAMORINI, N. 386, QD 8 LOTES 23/25",PARQUE SANTA FE,"Terreno, 600.00 de área total, 0.00 de área privativa, 600.00 de área do terreno.",200260.01,310000.0,35.4,Venda Online,,SERRA,ES
 1444408268487,"RUA QUARENTA E OITO/ ATUAL RUA MALÁSIA, N. S/N, QDR 59, LT 21, UNIDADE 21",LAGOA DE CARAPEBUS,"Terreno, 2400.00 de área total, 2400.00 de área privativa, 2400.00 de área do terreno.",194350.0,299000.0,35.0,Venda Online,,SERRA,ES
 8444416328327,"RUA 11/ RUA JUCÚ 172, N. S/N, Apto 304, ALA A, QDR 36, BL 3604",JARDIM CARAPINA,"Apartamento, 0.00 de área total, 37.22 de área privativa, 0.01 de área do terreno.",43069.21,76000.0,43.33,Venda Online,,SERRA,ES
-8555537420641,"RUA AMAZONAS, N. 668, Apto 201, BL 06",PLANICIE DA SERRA,"Apartamento, 44.30 de área total, 44.30 de área privativa, 12148.43 de área do terreno.",75925.41,104155.0,27.11,Venda Online,,SERRA,ES
+8555537420641,"RUA AMAZONAS, N. 668, Apto 201, BL 06",PLANICIE DA SERRA,"Apartamento, 44.30 de área total, 44.30 de área privativa, 12148.43 de área do terreno.",75925.41,104155.0,27.11,Venda Direta Online,,SERRA,ES
 1555525742403,"RUA BELO HORIZONTE, N. 00, AREA C",MARCILIO DE NORONHA,"Terreno, 11931.79 de área total, 0.00 de área privativa, 11931.79 de área do terreno.",121632.61,219000.0,44.46,Venda Online,,VIANA,ES
 8156400004122,"RUA DOIS (ATUAL RUA AUGUSTO ALVES DE ARAUJO), N. S/N, LOTE 04, QUADRA I",CENTRO,"Casa, 45.03 de área total, 45.03 de área privativa, 200.00 de área do terreno.",22668.01,39000.0,41.88,Venda Online,,VIANA,ES
 8444401466400,"RUA OITO, QD 9 LT 03",JUCU,"Casa, 50.00 de área total, 50.00 de área privativa, 300.00 de área do terreno.",53269.81,94000.0,43.33,Venda Online,,VIANA,ES
