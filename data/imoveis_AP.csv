@@ -1,12 +1,11 @@
 link,endereco,bairro,descricao,preco,valor,desconto,modalidade,foto,cidade,estado
 10002099,"RODOVIA DUQUE DE CAXIAS, N. s/n, ATUAL ROD. DUCA SERRA",CABRALZINHO,"Gleba, 6790.00 de área total, 0.00 de área privativa, 6790.00 de área do terreno.",920550.45,1286000.0,28.42,Venda Online,,MACAPA,AP
-10002324,"AVENIDA DOS CUPUAÇUS, N. S/N, LOTE 01, QUADRA 44",INFRAERO,"Terreno, 250.00 de área total, 0.00 de área privativa, 250.00 de área do terreno.",42816.3,59000.0,27.43,Venda Online,,MACAPA,AP
-10002325,"AVENIDA DOS CUPUAÇUS, N. S/N, LOTE 02, QUADRA 44",INFRAERO,"Terreno, 250.00 de área total, 0.00 de área privativa, 250.00 de área do terreno.",43542.0,60000.0,27.43,Venda Online,,MACAPA,AP
-10002326,"AVENIDA DOS CUPUAÇUS, N. S/N, LOTE 03, QUADRA 44",INFRAERO,"Terreno, 250.00 de área total, 0.00 de área privativa, 250.00 de área do terreno.",43542.0,60000.0,27.43,Venda Online,,MACAPA,AP
+10002324,"AVENIDA DOS CUPUAÇUS, N. S/N, LOTE 01, QUADRA 44",INFRAERO,"Terreno, 250.00 de área total, 0.00 de área privativa, 250.00 de área do terreno.",42816.3,59000.0,27.43,Venda Direta Online,,MACAPA,AP
+10002325,"AVENIDA DOS CUPUAÇUS, N. S/N, LOTE 02, QUADRA 44",INFRAERO,"Terreno, 250.00 de área total, 0.00 de área privativa, 250.00 de área do terreno.",43542.0,60000.0,27.43,Venda Direta Online,,MACAPA,AP
+10002326,"AVENIDA DOS CUPUAÇUS, N. S/N, LOTE 03, QUADRA 44",INFRAERO,"Terreno, 250.00 de área total, 0.00 de área privativa, 250.00 de área do terreno.",43542.0,60000.0,27.43,Venda Direta Online,,MACAPA,AP
 10002327,"AVENIDA DOS CUPUAÇUS, N. S/N, LOTE 04, QUADRA 44",INFRAERO,"Terreno, 250.00 de área total, 0.00 de área privativa, 250.00 de área do terreno.",37736.4,52000.0,27.43,Venda Online,,MACAPA,AP
-10002328,"AVENIDA DOS CUPUAÇUS, N. S/N, LOTE 5 QUADRA 44",INFRAERO,"Terreno, 250.00 de área total, 0.00 de área privativa, 250.00 de área do terreno.",44267.7,61000.0,27.43,Venda Online,,MACAPA,AP
-10004781,"ROD JUSCELINO KUBISTSCHECK, N. S/N, RAMAL BOM JESUS",UNIVERSIDADE,"Terreno, 6689.28 de área total, 0.00 de área privativa, 6689.28 de área do terreno.",632004.09,745252.68,15.2,Venda Online,,MACAPA,AP
-10005667,"NONA ALAMEDA, N. S/N, LOTE 27 QUADRA 7",BONE AZUL,"Casa, 96.55 de área total, 96.55 de área privativa, 250.00 de área do terreno, 2 qto(s), a.serv, 1 suite(s), 1 sala(s), cozinha, 2 vaga(s) de garagem.",130626.0,180000.0,27.43,Venda Online,,MACAPA,AP
-10005787,"RUA 4, N. S/N, QD 05 LT 48",UNIVERSIDADE,"Terreno, 0.00 de área total, 0.00 de área privativa, 200.00 de área do terreno.",40494.06,55800.0,27.43,Venda Online,,MACAPA,AP
-8280700000822,"RUA DOS TUCUMAS, N. S/N, LOTE 12; QUADRA 45",INFRAERO,"Casa, 57.99 de área total, 57.99 de área privativa, 250.00 de área do terreno, 1 qto(s), a.serv, 1 suite(s), WC, 1 sala(s), cozinha.",68854.06,121500.0,43.33,Venda Online,,MACAPA,AP
-8444407332821,"AVENIDA DOS BACURIS, N. S/N, LOTE 03, QD 09",INFRAERO,"Casa, 59.48 de área total, 59.48 de área privativa, 250.00 de área do terreno, a.serv, 1 suite(s), cozinha.",48169.51,85000.0,43.33,Venda Online,,MACAPA,AP
+10002328,"AVENIDA DOS CUPUAÇUS, N. S/N, LOTE 5 QUADRA 44",INFRAERO,"Terreno, 250.00 de área total, 0.00 de área privativa, 250.00 de área do terreno.",44267.7,61000.0,27.43,Venda Direta Online,,MACAPA,AP
+10004781,"ROD JUSCELINO KUBISTSCHECK, N. S/N, RAMAL BOM JESUS",UNIVERSIDADE,"Terreno, 6689.28 de área total, 0.00 de área privativa, 6689.28 de área do terreno.",632004.09,745252.68,15.2,Venda Direta Online,,MACAPA,AP
+10005787,"RUA 4, N. S/N, QD 05 LT 48",UNIVERSIDADE,"Terreno, 0.00 de área total, 0.00 de área privativa, 200.00 de área do terreno.",40494.06,55800.0,27.43,Venda Direta Online,,MACAPA,AP
+8280700000822,"RUA DOS TUCUMAS, N. S/N, LOTE 12; QUADRA 45",INFRAERO,"Casa, 57.99 de área total, 57.99 de área privativa, 250.00 de área do terreno, 1 qto(s), a.serv, 1 suite(s), WC, 1 sala(s), cozinha.",68854.06,121500.0,43.33,Venda Direta Online,,MACAPA,AP
+8444407332821,"AVENIDA DOS BACURIS, N. S/N, LOTE 03, QD 09",INFRAERO,"Casa, 59.48 de área total, 59.48 de área privativa, 250.00 de área do terreno, a.serv, 1 suite(s), cozinha.",48169.51,85000.0,43.33,Venda Direta Online,,MACAPA,AP
