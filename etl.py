@@ -4,7 +4,7 @@ import datetime
 import pandas as pd
 import requests
 from bs4 import BeautifulSoup
-from pandas._libs.tslibs.timestamps import Timestamp
+
 
 output_csv = "data/imoveis_{}.csv"
 base_url = "https://venda-imoveis.caixa.gov.br/listaweb/Lista_imoveis_{}.htm"
