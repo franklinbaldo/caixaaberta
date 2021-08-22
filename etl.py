@@ -7,18 +7,20 @@ from bs4 import BeautifulSoup
 
 output_csv = "data/imoveis_{}.csv"
 base_url = "https://venda-imoveis.caixa.gov.br/listaweb/Lista_imoveis_{}.htm"
+
+
 cols = [
-    "estado",
-    "cidade",
-    "bairro",
+    "link",
     "endereco",
+    "bairro",
+    "descricao",
     "preco",
     "avaliacao",
     "desconto",
     "modalidade",
-    "descricao",
-    "link",
     "foto",
+    "cidade",
+    "estado",
 ]
 base_detalhe_url = "https://venda-imoveis.caixa.gov.br/sistema/detalhe-imovel.asp?hdnOrigem=index&hdnimovel="
 

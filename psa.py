@@ -16,6 +16,21 @@ from etl import log
 
 cols = etl_cols + ["first_time_seen", "not_seen_since"]
 
+sorting_cols = [
+    "estado",
+    "cidade",
+    "bairro",
+    "endereco",
+    "preco",
+    "avaliacao",
+    "desconto",
+    "modalidade",
+    "descricao",
+    "link",
+    "foto",
+]
+sorting_cols.extend([col for col in cols if col not in sorting_cols])
+
 file_path = "imoveis_BR.csv"
 
 
@@ -67,7 +82,7 @@ def update_records(output="imoveis_BR.csv") -> pd.DataFrame:
     dates = ["not_seen_since", "first_time_seen"]
     for date in dates:
         new_history[date] = pd.to_datetime(new_history[date]).dt.date
-    new_history.sort_values(etl_cols).loc[:, cols].to_csv(file_path, index=False)
+    new_history.loc[:, sorting_cols].sort_values(sorting_cols).to_csv(file_path, index=False)
     print("Arquivo atualizado com sucesso!", file_path)
     #%%
     return new_history
