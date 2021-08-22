@@ -5,7 +5,6 @@ import pandas as pd
 import requests
 from bs4 import BeautifulSoup
 
-
 output_csv = "data/imoveis_{}.csv"
 base_url = "https://venda-imoveis.caixa.gov.br/listaweb/Lista_imoveis_{}.htm"
 cols = [
