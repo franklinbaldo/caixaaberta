@@ -64,9 +64,6 @@ def update_records(output="imoveis_BR.csv") -> pd.DataFrame:
         lambda df: df.dataset == "history", "not_seen_since"
     ] = pd.Timestamp.now()
 
-    #%%
-    new_records = lambda df: df["first_time_seen"].isnull()
-    new_history.loc[new_records, "first_time_seen"] = pd.Timestamp.now()
     dates = ["not_seen_since", "first_time_seen"]
     for date in dates:
         new_history[date] = pd.to_datetime(new_history[date]).dt.date
