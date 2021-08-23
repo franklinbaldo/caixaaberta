@@ -22,7 +22,7 @@ jobs:
       - name: Extract data
         run: pipenv run python etl.py
       - name: Compile data
-        run: pipenv run python update.py
+        run: pipenv run python psa.py
       - name: Commit files
         run: |
           git config --local user.email "41898282+github-actions[bot]@users.noreply.github.com"
