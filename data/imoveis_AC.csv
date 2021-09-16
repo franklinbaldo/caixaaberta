@@ -1,5 +1,5 @@
 link,endereco,bairro,descricao,preco,avaliacao,desconto,modalidade,foto,cidade,estado
-10006201,"Rua Prefeito Alexandre Esteves, N. 04, Lt. 04, Qd. 05, St. 03",CENTRO,"Terreno, 900.08 de área total, 0.00 de área privativa, 900.08 de área do terreno.",54500.0,57000.0,4.39,Venda Online,,BRASILEIA,AC
+10006201,"Rua Prefeito Alexandre Esteves, N. 04, Lt. 04, Qd. 05, St. 03",CENTRO,"Terreno, 900.08 de área total, 0.00 de área privativa, 900.08 de área do terreno.",54500.0,57000.0,4.39,Venda Direta Online,,BRASILEIA,AC
 10002718,"Av. Gov. Edmundo Pinto, S-01 QD-04 LT 05-A",CENTRO,"Terreno, 2580.00 de área total, 0.00 de área privativa, 2580.00 de área do terreno.",105226.5,145000.0,27.43,Venda Online,,CAPIXABA,AC
 10002735,"Lote nº 60 rural COLOCAÇÃO SÃO JOSE, N. 60, ROD. 307",CENTRO,"Gleba, 0.00 de área total, 0.00 de área privativa, 15029.00 de área do terreno.",122850.0,273000.0,55.0,Venda Direta Online,,CRUZEIRO DO SUL,AC
 10005015,"Rua Yaco, N. 1, Lote 11, Quadra 82",CENTRO,"Terreno, 550.00 de área total, 0.00 de área privativa, 550.00 de área do terreno.",116112.0,160000.0,27.43,Venda Direta Online,,CRUZEIRO DO SUL,AC
@@ -32,7 +32,7 @@ link,endereco,bairro,descricao,preco,avaliacao,desconto,modalidade,foto,cidade,e
 1555505404006,"Av. Desembargador Távora - Quarteirão n° 33, Lote 24, atrás do hotel SWAMY",CENTRO,"Terreno, 500.00 de área total, 0.00 de área privativa, 500.00 de área do terreno.",101500.0,290000.0,65.0,Venda Direta Online,,CRUZEIRO DO SUL,AC
 1555531302711,"Rua Rio Grande do Sul, N. s/n°, St 03-B, Qd 417, Lt 01",,"Terreno, 0.00 de área total, 0.00 de área privativa, 14400.00 de área do terreno.",639540.01,990000.0,35.4,Venda Direta Online,,CRUZEIRO DO SUL,AC
 8444405327456,"R BAHIA, N. 1635, LT 32, QUARTEIRAO 235-A",CENTRO,"Casa, 126.75 de área total, 126.75 de área privativa, 300.00 de área do terreno, 2 qto(s), a.serv, WC, 1 sala(s), cozinha.",91235.96,167000.0,45.37,Venda Direta Online,Ver foto,CRUZEIRO DO SUL,AC
-10002721,"Av. Internacional, N. 472",CENTRO,"Terreno, 337.00 de área total, 0.00 de área privativa, 337.00 de área do terreno.",250366.5,345000.0,27.43,Venda Online,,EPITACIOLANDIA,AC
+10002721,"Av. Internacional, N. 472",CENTRO,"Terreno, 337.00 de área total, 0.00 de área privativa, 337.00 de área do terreno.",250366.5,345000.0,27.43,Venda Direta Online,,EPITACIOLANDIA,AC
 1444407866747,"R FLOR DE MAIO, N. 100, Lote 14, Quadra 03",CENTRO,"Casa, 0.00 de área total, 300.00 de área privativa, 311.90 de área do terreno, varanda, a.serv, WC, 1 sala(s), cozinha.",317186.0,491000.0,35.4,Venda Direta Online,,EPITACIOLANDIA,AC
 1555527089782,"Rodovia BR 317 Km 06, Lt 82-9",,"Terreno, 33058.00 de área total, 0.00 de área privativa, 33058.00 de área do terreno.",91000.0,260000.0,65.0,Venda Direta Online,Ver foto,EPITACIOLANDIA,AC
 1555528874041,"AV AMAZONAS, N. 117, LT 0001, QD 061",CENTRO,"Comercial, 179.83 de área total, 179.83 de área privativa, 362.63 de área do terreno.",203500.0,370000.0,45.0,Venda Direta Online,,EPITACIOLANDIA,AC
