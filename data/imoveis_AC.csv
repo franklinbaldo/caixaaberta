@@ -1,7 +1,6 @@
 link,endereco,bairro,descricao,preco,avaliacao,desconto,modalidade,foto,cidade,estado
 10006201,"Rua Prefeito Alexandre Esteves, N. 04, Lt. 04, Qd. 05, St. 03",CENTRO,"Terreno, 900.08 de área total, 0.00 de área privativa, 900.08 de área do terreno.",41364.9,57000.0,27.43,Venda Online,,BRASILEIA,AC
 10002718,"Av. Gov. Edmundo Pinto, S-01 QD-04 LT 05-A",CENTRO,"Terreno, 2580.00 de área total, 0.00 de área privativa, 2580.00 de área do terreno.",105226.5,145000.0,27.43,Venda Direta Online,,CAPIXABA,AC
-1555533682007,"Av. Governador Edmundo Pinto, N. 960, Qd 022, Lt 005, St 003",CENTRO,"Outros, 290.00 de área total, 290.00 de área privativa, 299.20 de área do terreno.",235200.0,392000.0,40.0,Venda Online,,CAPIXABA,AC
 10002735,"Lote nº 60 rural COLOCAÇÃO SÃO JOSE, N. 60, ROD. 307",CENTRO,"Gleba, 0.00 de área total, 0.00 de área privativa, 15029.00 de área do terreno.",122850.0,273000.0,55.0,Venda Direta Online,,CRUZEIRO DO SUL,AC
 10005015,"Rua Yaco, N. 1, Lote 11, Quadra 82",CENTRO,"Terreno, 550.00 de área total, 0.00 de área privativa, 550.00 de área do terreno.",116112.0,160000.0,27.43,Venda Direta Online,,CRUZEIRO DO SUL,AC
 10005116,"RUA YACO, N. S/N, QUARTEIRÃO 82, LOTE 12",,"Terreno, 0.00 de área total, 0.00 de área privativa, 550.00 de área do terreno.",123369.0,170000.0,27.43,Venda Direta Online,,CRUZEIRO DO SUL,AC
@@ -37,6 +36,7 @@ link,endereco,bairro,descricao,preco,avaliacao,desconto,modalidade,foto,cidade,e
 1555527089782,"Rodovia BR 317 Km 06, Lt 82-9",,"Terreno, 33058.00 de área total, 0.00 de área privativa, 33058.00 de área do terreno.",91000.0,260000.0,65.0,Venda Direta Online,Ver foto,EPITACIOLANDIA,AC
 1555528874041,"AV AMAZONAS, N. 117, LT 0001, QD 061",CENTRO,"Comercial, 179.83 de área total, 179.83 de área privativa, 362.63 de área do terreno.",203500.0,370000.0,45.0,Venda Direta Online,,EPITACIOLANDIA,AC
 10005524,"Rua Das Palmeiras, N. 1451, Quadra 65, Setor 06",CENTRO,"Terreno, 1000.00 de área total, 0.00 de área privativa, 1000.00 de área do terreno.",62000.0,155000.0,60.0,Venda Direta Online,,FEIJO,AC
+8444408446669,"Rua Joel Ferreira de Souza, N. 033-A, St 04, Qd 04",,"Comercial, 42.93 de área total, 42.93 de área privativa, 320.50 de área do terreno.",31735.21,56000.0,43.33,Venda Online,,FEIJO,AC
 8444411188942,"Rua Aricuri, N. S/N, St 06, Qd 47, Unid. 89",,"Casa, 60.00 de área total, 60.00 de área privativa, 300.00 de área do terreno, 2 qto(s), varanda, a.serv, WC, 1 sala(s), sacada, cozinha.",49302.9,87000.0,43.33,Venda Direta Online,,FEIJO,AC
 10003856,"MINAS GERAIS, N. 442",DOM GIOCONDO,"Comercial, 664.03 de área total, 0.00 de área privativa, 664.03 de área do terreno.",1161120.0,1600000.0,27.43,Venda Direta Online,,RIO BRANCO,AC
 10004245,"Rua Almirante Jaciguais, N. S/N, Lote urbano",ISAURA PARENTE,"Terreno, 450.00 de área total, 0.00 de área privativa, 450.00 de área do terreno.",175033.0,198000.0,11.6,Venda Direta Online,,RIO BRANCO,AC
