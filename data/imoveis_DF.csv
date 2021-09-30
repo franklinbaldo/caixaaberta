@@ -4,6 +4,7 @@ link,endereco,bairro,descricao,preco,avaliacao,desconto,modalidade,foto,cidade,e
 10012013,"SRTVN Conjunto P, N. s/n, Unidade 31 Edificio Radio Center",ASA NORTE,"Loja, 112.62 de área total, 50.00 de área privativa, 10.00 de área do terreno.",210453.0,290000.0,27.43,Venda Direta Online,,BRASILIA,DF
 10012014,"SRTVN LJ-SS-33 1º SUB-SOLO, EDIFICIO BRASILIA RADIO CENTER",ASA NORTE,"Loja, 112.62 de área total, 50.00 de área privativa, 0.00 de área do terreno, 1 sala(s).",166911.0,230000.0,27.43,Venda Direta Online,,BRASILIA,DF
 10012216,"CCSW 4, N. 13",SETOR SUDOESTE,"Loja, 51.73 de área total, 31.74 de área privativa, 0.00 de área do terreno, 1 sala(s), 1 lavabo(s).",207550.2,286000.0,27.43,Venda Direta Online,Ver foto,BRASILIA,DF
+10012307,CLSW 304 BL-A-82 SL-130,SETOR SUDOESTE,"Loja, 40.25 de área total, 31.80 de área privativa, 0.00 de área do terreno.",190859.1,263000.0,27.43,Venda Online,,BRASILIA,DF
 10076039,"SRT/Norte Lt-P, Cj-P Lj-SS37 - 1º Subsolo",SETOR DE RADIO E TELEVISAO NORTE,"Loja, 112.62 de área total, 50.00 de área privativa, 0.00 de área do terreno.",154574.1,213000.0,27.43,Venda Direta Online,,BRASILIA,DF
 10076040,"SRT/Norte Lt-P, Cj-P Lj-SS38 - 1º Subsolo",SETOR DE RADIO E TELEVISAO NORTE,"Loja, 112.62 de área total, 50.00 de área privativa, 0.00 de área do terreno.",154574.1,213000.0,27.43,Venda Direta Online,,BRASILIA,DF
 10076041,"SRT/Norte Lt-P, Cj-P Lj-SS39 - 1º Subsolo",SETOR DE RADIO E TELEVISAO NORTE,"Loja, 112.62 de área total, 50.00 de área privativa, 0.00 de área do terreno.",154574.1,213000.0,27.43,Venda Direta Online,,BRASILIA,DF
@@ -15,7 +16,6 @@ link,endereco,bairro,descricao,preco,avaliacao,desconto,modalidade,foto,cidade,e
 8444406062260,"AREA COMPLEMENTAR 200 - CONJUNTO H - LT 1 A 8, N. SN, Apto 002, BL E",SANTA MARIA,"Apartamento, 0.00 de área total, 44.17 de área privativa, 0.01 de área do terreno.",158000.0,104000.0,0.0,2º Leilão SFI,,BRASILIA,DF
 10007624,"QNM-17 cj-g, N. 37",CEILANDIA SUL,"Casa, 60.84 de área total, 0.00 de área privativa, 249.90 de área do terreno.",667644.0,920000.0,27.43,Venda Direta Online,,CEILANDIA,DF
 10137744,"CNM-02 Lt-B, Sl-303",,"Sala, 44.69 de área total, 39.89 de área privativa, 0.00 de área do terreno, WC, 1 sala(s).",571700.0,156000.0,0.0,2º Leilão SFI,,CEILANDIA,DF
-1444405369320,"QNM 25 - CJ D - LT 24, N. 24",CEILANDIA SUL,"Casa, 0.00 de área total, 253.12 de área privativa, 250.00 de área do terreno, 3 qto(s), varanda, a.serv, 1 suite(s), WC, 1 sala(s), cozinha.",414800.0,518500.0,20.0,Venda Online,,CEILANDIA,DF
 8318900003028,QNP-05 CJ-R LT-35,CEILANDIA NORTE,"Casa, 0.00 de área total, 158.05 de área privativa, 135.00 de área do terreno, 4 qto(s), varanda, a.serv, WC, 3 sala(s), cozinha.",119800.0,295000.0,59.39,2º Leilão SFI,,CEILANDIA,DF
 10006537,SCIA QD-8 CJ-9 LT-6,ZONA INDUSTRIAL,"Terreno, 0.00 de área total, 0.00 de área privativa, 1760.00 de área do terreno.",1604000.0,2645000.0,39.36,Venda Direta Online,,GUARA,DF
 10012170,"QE 12 AREA ESPECIAL I LOJA 18, Apto 18",GUARA I,"Comercial, 0.00 de área total, 36.23 de área privativa, 0.00 de área do terreno.",98695.2,147000.0,32.87,Venda Direta Online,,GUARA,DF
