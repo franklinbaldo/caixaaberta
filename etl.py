@@ -3,7 +3,7 @@ import datetime
 
 import pandas as pd
 import requests
-from bs4 import BeautifulSoup
+from lxml import html
 
 output_csv = "data/imoveis_{}.csv"
 base_url = "https://venda-imoveis.caixa.gov.br/listaweb/Lista_imoveis_{}.htm"
@@ -64,15 +64,15 @@ def log_sucess(state, transformed_df: pd.DataFrame) -> None:
 
 def extract_state(state) -> pd.DataFrame:
     url = base_url.format(state)
-    print("Extracting state: {} from {}".format(state, url))
+    print(f"Extracting state: {state} from {url}")
     reqs = requests.get(url)
-    soup = BeautifulSoup(reqs.text, "html.parser")
+    tree = html.parse(reqs.text)
     extracted_df = pd.read_html(reqs.text, header=0)[0]
 
     extracted_df.columns = cols
     extracted_df["link"] = [
         str(link.get("href")).replace(base_detalhe_url, "").strip()
-        for link in soup.find_all("a")
+        for link in tree.xpath("//a")
         if " Detalhes" in link.text
     ]
     extracted_df["preco"] = (
