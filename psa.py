@@ -5,14 +5,11 @@
 # PSA stores all unique records loaded (tracks history)
 # Many more fields are stored in PSA than required by the data warehouse
 
-from os import makedirs
 from pathlib import Path
-
-import pandas as pd
-from pandas.core.frame import DataFrame
 
 from etl import cols as etl_cols
 from etl import log
+import pandas as pd
 
 cols = etl_cols + ["first_time_seen", "not_seen_since"]
 
@@ -82,7 +79,9 @@ def update_records(output="imoveis_BR.csv") -> pd.DataFrame:
     dates = ["not_seen_since", "first_time_seen"]
     for date in dates:
         new_history[date] = pd.to_datetime(new_history[date]).dt.date
-    new_history.loc[:, sorting_cols].sort_values(sorting_cols).to_csv(file_path, index=False)
+    new_history.loc[:, sorting_cols].sort_values(sorting_cols).to_csv(
+        file_path, index=False
+    )
     print("Arquivo atualizado com sucesso!", file_path)
     #%%
     return new_history

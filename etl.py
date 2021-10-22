@@ -1,9 +1,9 @@
 #%%
 import datetime
 
+from lxml import html
 import pandas as pd
 import requests
-from lxml import html
 
 output_csv = "data/imoveis_{}.csv"
 base_url = "https://venda-imoveis.caixa.gov.br/listaweb/Lista_imoveis_{}.htm"
