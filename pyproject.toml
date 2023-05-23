@@ -8,7 +8,7 @@ authors = ["Franklin Silveira Baldo <franklinbaldo@gmail.com>"]
 python = "^3.9"
 pandas = "^1.3.4"
 lxml = "^4.9.1"
-requests = "^2.26.0"
+requests = "^2.31.0"
 
 [tool.poetry.dev-dependencies]
 ipykernel = "^6.4.2"
