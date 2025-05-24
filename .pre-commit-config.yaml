@@ -4,14 +4,9 @@ repos:
 
   - repo: local
     hooks:
-      - id: poetry-export
-        name: Poetry exports requirements
-        entry: poetry export --output=requirements.txt
-        pass_filenames: false
-        language: system
       - id: pytest-check
         name: pytest-check
-        entry: poetry run pytest test.py
+        entry: pytest test.py
         language: system
         pass_filenames: false
         always_run: true
