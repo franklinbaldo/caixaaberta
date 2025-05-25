@@ -22,12 +22,24 @@ The project consists of several key scripts that work together to scrape, proces
 ## 2. Data Processing and Historical Record Keeping (`psa.py`)
 - The `psa.py` script (Persistent Staging Area) takes all the individual state CSV files from the `data/` directory and consolidates them into a single historical dataset: `imoveis_BR.csv`.
 - **Data Cleaning**: During this process, financial data within the state CSVs (such as property prices, evaluation values, and discount percentages) is cleaned and standardized. For example, currency strings (like "R$ 1.234,56") and percentage strings are converted into numerical float types in `imoveis_BR.csv`. This cleaning logic is imported from `processador_caixa.py`.
-- `imoveis_BR.csv` stores all unique property records encountered over time, tracking when a property was first seen and when it was last seen in the listings.
+- **Geocoding**: `psa.py` now also geocodes property addresses (from fields like `endereco`, `bairro`, `cidade`, `estado`) to obtain latitude and longitude coordinates. This process uses the `geopy` library with Nominatim (which relies on OpenStreetMap data). The geocoding logic is encapsulated in `geocoding_utils.py`.
+- **Output File (`imoveis_BR.csv`)**: This file stores all unique property records encountered over time. Key columns include:
+    - Original data fields from the scraped listings.
+    - Cleaned financial data (as float types).
+    - `latitude` (float): The geocoded latitude of the property. May be blank/NaN if geocoding was unsuccessful.
+    - `longitude` (float): The geocoded longitude of the property. May be blank/NaN if geocoding was unsuccessful.
+    - `first_time_seen` (date): The date when the property listing was first recorded by the script.
+    - `not_seen_since` (date): The date when a previously seen property listing was no longer found in the scrape. This is `NaT` (Not a Time) for currently active listings.
 - This script is typically run after `etl.py` has finished scraping the latest data.
 
-## 3. Data Reporting (`reporter.py`)
+## 3. Geocoding Utility (`geocoding_utils.py`)
+- This utility script provides the function `get_coordinates_for_address(address_str)` which takes an address string and returns its latitude and longitude.
+- It uses the `geopy` library with the Nominatim geocoder and includes rate limiting to respect service usage policies.
+- It's used by `psa.py` to enrich property data with geographic coordinates.
+
+## 4. Data Reporting (`reporter.py`)
 - The `reporter.py` script provides a way to generate summary statistics from the consolidated `imoveis_BR.csv` file.
-- **Purpose**: To quickly get an overview of the current dataset.
+- **Purpose**: To quickly get an overview of the current dataset, including data quality metrics.
 - **Usage**:
   ```bash
   python reporter.py
@@ -36,8 +48,9 @@ The project consists of several key scripts that work together to scrape, proces
     - Total number of properties listed.
     - Number of properties per state.
     - Average price of properties per state (formatted as R$).
+    - Geocoding success statistics (overall and per state percentages, and raw counts).
 
-## 4. Caixa CSV Processing Utility (`processador_caixa.py`)
+## 5. Caixa CSV Processing Utility (`processador_caixa.py`)
 - The `processador_caixa.py` script serves a dual role:
     - **Utility Module**: It provides data cleaning functions (specifically `limpar_colunas_financeiras`) that are imported and used by `psa.py` to standardize financial data before it's saved into `imoveis_BR.csv`.
     - **Standalone Script**: It can also be run directly (e.g., `python processador_caixa.py`) to process a single Caixa-originated CSV file (like the example `exemplo_imoveis.csv` it can generate, or one downloaded directly from Caixa's older systems if the format matches). When run directly, it reads a specified CSV, cleans it, and prints the processed DataFrame. This is useful for testing or inspecting individual files.
@@ -71,4 +84,3 @@ uv pip install -r requirements-dev.txt
 # TODO
 - [ ] Better way to show the data
 - [ ] Website
-- [ ] Geodecoding

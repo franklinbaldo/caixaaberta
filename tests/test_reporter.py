@@ -122,6 +122,95 @@ class TestReporter(unittest.TestCase):
         # but our function has fallbacks.
         self.assertTrue("R$" in format_currency(1000000.00))
 
+    def test_geocoding_stats_mixed_success(self):
+        data = [
+            ("SP", 100000.0, "Desc A", 10.0, 20.0), # Geocoded
+            ("SP", 150000.0, "Desc B", None, None), # Not geocoded
+            ("RJ", 200000.0, "Desc C", 30.0, 40.0), # Geocoded
+            ("MG", 120000.0, "Desc D", None, None), # Not geocoded
+            ("MG", 130000.0, "Desc E", 50.0, 60.0), # Geocoded
+            ("SP", 130000.0, "Desc F", 70.0, 80.0), # Geocoded
+        ]
+        columns = ["estado", "preco", "descricao", "latitude", "longitude"]
+        self._create_csv(data, columns)
+
+        captured_output = io.StringIO()
+        with contextlib.redirect_stdout(captured_output):
+            generate_report(self.mock_imoveis_br_path)
+        output = captured_output.getvalue()
+
+        self.assertIn("Geocoding Statistics:", output)
+        # Overall: 4 geocoded out of 6 total = 66.7%
+        self.assertIn("Overall geocoding success rate: 66.7% (4 out of 6 properties)", output)
+        # SP: 2 geocoded out of 3 total = 66.7%
+        self.assertIn("SP: 66.7% (2 out of 3 properties)", output)
+        # RJ: 1 geocoded out of 1 total = 100.0%
+        self.assertIn("RJ: 100.0% (1 out of 1 properties)", output)
+        # MG: 1 geocoded out of 2 total = 50.0%
+        self.assertIn("MG: 50.0% (1 out of 2 properties)", output)
+
+    def test_geocoding_stats_no_success(self):
+        data = [
+            ("SP", 100000.0, "Desc A", None, None),
+            ("RJ", 200000.0, "Desc C", None, None),
+        ]
+        columns = ["estado", "preco", "descricao", "latitude", "longitude"]
+        self._create_csv(data, columns)
+
+        captured_output = io.StringIO()
+        with contextlib.redirect_stdout(captured_output):
+            generate_report(self.mock_imoveis_br_path)
+        output = captured_output.getvalue()
+        
+        self.assertIn("Overall geocoding success rate: 0.0% (0 out of 2 properties)", output)
+        self.assertIn("SP: 0.0% (0 out of 1 properties)", output)
+        self.assertIn("RJ: 0.0% (0 out of 1 properties)", output)
+
+    def test_geocoding_stats_full_success(self):
+        data = [
+            ("SP", 100000.0, "Desc A", 10.0, 20.0),
+            ("RJ", 200000.0, "Desc C", 30.0, 40.0),
+        ]
+        columns = ["estado", "preco", "descricao", "latitude", "longitude"]
+        self._create_csv(data, columns)
+
+        captured_output = io.StringIO()
+        with contextlib.redirect_stdout(captured_output):
+            generate_report(self.mock_imoveis_br_path)
+        output = captured_output.getvalue()
+        
+        self.assertIn("Overall geocoding success rate: 100.0% (2 out of 2 properties)", output)
+        self.assertIn("SP: 100.0% (1 out of 1 properties)", output)
+        self.assertIn("RJ: 100.0% (1 out of 1 properties)", output)
+
+    def test_geocoding_stats_missing_lat_lon_columns(self):
+        data = [("SP", 100000.0, "Desc A"), ("RJ", 200000.0, "Desc C")]
+        columns = ["estado", "preco", "descricao"] # No latitude/longitude columns
+        self._create_csv(data, columns)
+
+        captured_output = io.StringIO()
+        with contextlib.redirect_stdout(captured_output):
+            generate_report(self.mock_imoveis_br_path)
+        output = captured_output.getvalue()
+        
+        self.assertIn("Latitude/Longitude columns not found. Geocoding statistics cannot be generated.", output)
+        # Ensure the rest of the report is still there
+        self.assertIn("Total properties listed: 2", output) 
+
+    def test_geocoding_stats_with_empty_dataframe_after_loading(self):
+        # This test is similar to test_empty_csv_report, but specifically checks geocoding output
+        # Create a CSV with headers but no data rows
+        self._create_csv([], ["estado", "preco", "descricao", "latitude", "longitude"])
+        
+        captured_output = io.StringIO()
+        with contextlib.redirect_stdout(captured_output):
+            generate_report(self.mock_imoveis_br_path) # Corrected variable name
+        
+        output = captured_output.getvalue()
+        self.assertIn(f"{self.mock_imoveis_br_path} is empty. No statistics to generate.", output)
+        # Ensure Geocoding Statistics section is not printed or indicates no data
+        self.assertNotIn("Overall geocoding success rate:", output) # Should not attempt if df is empty
+
 
 if __name__ == '__main__':
     # This allows running the tests directly from this file

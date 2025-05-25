@@ -94,6 +94,37 @@ def generate_report(csv_filepath: str = "imoveis_BR.csv"):
         print("  'preco' column is missing, cannot calculate average prices.")
     print("--------------------------------------------------")
 
+    # Geocoding Statistics
+    print("Geocoding Statistics:")
+    print("--------------------------------------------------")
+    if 'latitude' not in df.columns or 'longitude' not in df.columns:
+        print("  Latitude/Longitude columns not found. Geocoding statistics cannot be generated.")
+    else:
+        total_geocoded = df['latitude'].notna().sum()
+        percentage_geocoded_overall = (total_geocoded / total_properties) * 100 if total_properties > 0 else 0
+        
+        print(f"Overall geocoding success rate: {percentage_geocoded_overall:.1f}% ({total_geocoded} out of {total_properties} properties)")
+        print("\nGeocoding success rate per state:")
+
+        geocoded_per_state_counts = df.groupby('estado')['latitude'].count() # Counts non-NaN latitudes
+        
+        # properties_per_state is already df.groupby('estado').size()
+        
+        # Combine total properties per state with geocoded counts
+        state_stats_df = pd.DataFrame({
+            'total': properties_per_state,
+            'geocoded': geocoded_per_state_counts
+        }).fillna(0) # Fill NaN for states with 0 properties or 0 geocoded properties in the .count() series
+        
+        state_stats_df['percentage'] = (state_stats_df['geocoded'] / state_stats_df['total'] * 100).fillna(0)
+
+        if state_stats_df.empty:
+            print("  No per-state geocoding data available.")
+        else:
+            for state, row in state_stats_df.iterrows():
+                print(f"  {state}: {row['percentage']:.1f}% ({int(row['geocoded'])} out of {int(row['total'])} properties)")
+    print("--------------------------------------------------")
+
 def main():
     # You could use argparse here to take filepath from command line
     # For simplicity, we'll use the default or a fixed one if needed for main execution.
