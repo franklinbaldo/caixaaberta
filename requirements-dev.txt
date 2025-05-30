@@ -22,3 +22,5 @@ six==1.17.0
     # via python-dateutil
 urllib3==2.4.0
     # via requests
+pytest
+pytest-mock

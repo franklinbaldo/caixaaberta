@@ -50,7 +50,8 @@ def processar_imoveis_caixa(caminho_arquivo_csv: str) -> pd.DataFrame:
         'Endereço do imóvel completo': 'Endereço',
         'Preço total': 'Preço',
         'Percentual de desconto': 'Desconto',
-        'Link de acesso ao imóvel no portal da Caixa': 'Link de acesso'
+            # Corrected casing for 'CAIXA' to match typical CSV headers
+            'Link de acesso ao imóvel no portal da CAIXA': 'Link de acesso' 
     }
     df = df.rename(columns=nomes_colunas_map)
 
@@ -83,9 +84,29 @@ def processar_imoveis_caixa(caminho_arquivo_csv: str) -> pd.DataFrame:
             return float(valor_str)
         if pd.isna(valor_str) or valor_str == '':
             return None
+        
+        valor_str_tratado = str(valor_str).replace('R$', '').strip()
+        
         try:
-            # Remove 'R$', pontos de milhar e substitui vírgula decimal por ponto
-            valor_str_limpo = str(valor_str).replace('R$', '').replace('.', '').replace(',', '.').strip()
+            # Se contém vírgula, é provável que seja o separador decimal (ex: "1.234,56" ou "100,00")
+            if ',' in valor_str_tratado:
+                # Remove pontos (milhar) e substitui vírgula (decimal) por ponto
+                valor_str_limpo = valor_str_tratado.replace('.', '').replace(',', '.')
+            # Se não contém vírgula, mas contém ponto, assume-se que o ponto é o decimal (ex: "1234.56")
+            elif '.' in valor_str_tratado:
+                # Nesse caso, não se deve remover os pontos indiscriminadamente.
+                # A lógica original de remover todos os pontos era o problema.
+                # Se o formato for "1234.56", ele deve ser mantido.
+                # Se fosse "1,234.56" (não comum nesses arquivos), precisaria remover a vírgula.
+                # Para o caso específico "1234.56", não fazer nada com os pontos.
+                # E para "100.00", também não fazer nada.
+                # A remoção de todos os '.' era o bug para "1234.56".
+                # Se não há vírgula, o ponto é o decimal.
+                valor_str_limpo = valor_str_tratado 
+            else:
+                # Sem vírgulas ou pontos, pode ser um inteiro "1000"
+                valor_str_limpo = valor_str_tratado
+                
             return float(valor_str_limpo)
         except ValueError:
             # Se a conversão falhar, pode ser um valor não numérico ou formato inesperado
