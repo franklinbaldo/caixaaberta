@@ -119,6 +119,71 @@ def processar_imoveis_caixa(caminho_arquivo_csv: str) -> pd.DataFrame:
 
     return df
 
+# --- Funções de limpeza reutilizáveis ---
+
+def _converter_valor_monetario_para_float(valor_str):
+    """Converte uma string de valor monetário para float."""
+    if isinstance(valor_str, (float, int)):
+        return float(valor_str)
+    if pd.isna(valor_str) or valor_str == '':
+        return None
+    try:
+        valor_str_limpo = str(valor_str).replace('R$', '').replace('.', '').replace(',', '.').strip()
+        return float(valor_str_limpo)
+    except ValueError:
+        return None
+
+def _converter_percentual_para_float(valor_str):
+    """Converte uma string de percentual para float (ex: '0,50' ou '50%' para 0.5)."""
+    if isinstance(valor_str, (float, int)):
+        return float(valor_str)
+    if pd.isna(valor_str) or valor_str == '':
+        return None
+    try:
+        valor_str_limpo = str(valor_str).replace(',', '.').strip()
+        if '%' in valor_str_limpo:
+            valor_str_limpo = valor_str_limpo.replace('%', '')
+            return float(valor_str_limpo) / 100.0
+        return float(valor_str_limpo)
+    except ValueError:
+        return None
+
+def limpar_colunas_financeiras(df: pd.DataFrame, 
+                               coluna_preco: str, 
+                               coluna_avaliacao: str, 
+                               coluna_desconto: str) -> pd.DataFrame:
+    """
+    Aplica a limpeza e conversão para float nas colunas financeiras especificadas.
+
+    Args:
+        df (pd.DataFrame): DataFrame a ser modificado.
+        coluna_preco (str): Nome da coluna que contém os preços.
+        coluna_avaliacao (str): Nome da coluna que contém os valores de avaliação.
+        coluna_desconto (str): Nome da coluna que contém os valores de desconto.
+
+    Returns:
+        pd.DataFrame: DataFrame com as colunas financeiras limpas e convertidas.
+    """
+    if coluna_preco in df.columns:
+        df[coluna_preco] = df[coluna_preco].apply(_converter_valor_monetario_para_float)
+    else:
+        # print(f"Aviso: Coluna de preço '{coluna_preco}' não encontrada no DataFrame.")
+        pass # Não levantar erro, psa.py pode ter DFs de diferentes fontes/estágios
+
+    if coluna_avaliacao in df.columns:
+        df[coluna_avaliacao] = df[coluna_avaliacao].apply(_converter_valor_monetario_para_float)
+    else:
+        # print(f"Aviso: Coluna de avaliação '{coluna_avaliacao}' não encontrada no DataFrame.")
+        pass
+
+    if coluna_desconto in df.columns:
+        df[coluna_desconto] = df[coluna_desconto].apply(_converter_percentual_para_float)
+    else:
+        # print(f"Aviso: Coluna de desconto '{coluna_desconto}' não encontrada no DataFrame.")
+        pass
+        
+    return df
+
 if __name__ == '__main__':
     # Exemplo de uso (requer um arquivo CSV de exemplo)
     # Crie um arquivo 'exemplo_imoveis.csv' no mesmo diretório ou forneça o caminho correto.
