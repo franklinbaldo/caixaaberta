@@ -4,6 +4,7 @@ Script para processar arquivos CSV de imóveis da Caixa Econômica Federal.
 """
 
 import pandas as pd
+from .utils import converter_valor_monetario_para_float, converter_percentual_para_float
 
 def processar_imoveis_caixa(caminho_arquivo_csv: str) -> pd.DataFrame:
     """
@@ -121,32 +122,8 @@ def processar_imoveis_caixa(caminho_arquivo_csv: str) -> pd.DataFrame:
 
 # --- Funções de limpeza reutilizáveis ---
 
-def _converter_valor_monetario_para_float(valor_str):
-    """Converte uma string de valor monetário para float."""
-    if isinstance(valor_str, (float, int)):
-        return float(valor_str)
-    if pd.isna(valor_str) or valor_str == '':
-        return None
-    try:
-        valor_str_limpo = str(valor_str).replace('R$', '').replace('.', '').replace(',', '.').strip()
-        return float(valor_str_limpo)
-    except ValueError:
-        return None
-
-def _converter_percentual_para_float(valor_str):
-    """Converte uma string de percentual para float (ex: '0,50' ou '50%' para 0.5)."""
-    if isinstance(valor_str, (float, int)):
-        return float(valor_str)
-    if pd.isna(valor_str) or valor_str == '':
-        return None
-    try:
-        valor_str_limpo = str(valor_str).replace(',', '.').strip()
-        if '%' in valor_str_limpo:
-            valor_str_limpo = valor_str_limpo.replace('%', '')
-            return float(valor_str_limpo) / 100.0
-        return float(valor_str_limpo)
-    except ValueError:
-        return None
+# Functions _converter_valor_monetario_para_float and _converter_percentual_para_float
+# were moved to utils.py
 
 def limpar_colunas_financeiras(df: pd.DataFrame, 
                                coluna_preco: str, 
@@ -165,19 +142,19 @@ def limpar_colunas_financeiras(df: pd.DataFrame,
         pd.DataFrame: DataFrame com as colunas financeiras limpas e convertidas.
     """
     if coluna_preco in df.columns:
-        df[coluna_preco] = df[coluna_preco].apply(_converter_valor_monetario_para_float)
+        df[coluna_preco] = df[coluna_preco].apply(converter_valor_monetario_para_float)
     else:
         # print(f"Aviso: Coluna de preço '{coluna_preco}' não encontrada no DataFrame.")
         pass # Não levantar erro, psa.py pode ter DFs de diferentes fontes/estágios
 
     if coluna_avaliacao in df.columns:
-        df[coluna_avaliacao] = df[coluna_avaliacao].apply(_converter_valor_monetario_para_float)
+        df[coluna_avaliacao] = df[coluna_avaliacao].apply(converter_valor_monetario_para_float)
     else:
         # print(f"Aviso: Coluna de avaliação '{coluna_avaliacao}' não encontrada no DataFrame.")
         pass
 
     if coluna_desconto in df.columns:
-        df[coluna_desconto] = df[coluna_desconto].apply(_converter_percentual_para_float)
+        df[coluna_desconto] = df[coluna_desconto].apply(converter_percentual_para_float)
     else:
         # print(f"Aviso: Coluna de desconto '{coluna_desconto}' não encontrada no DataFrame.")
         pass
@@ -204,40 +181,46 @@ N° do imóvel;UF;Cidade;Bairro;Endereço do imóvel completo;Preço total;Valor
 67890;RO;Ariquemes;Setor 01;AV. CAPITÃO SILVIO, 1000, SETOR 01, ARIQUEMES - RO - CEP: 76870-000;"R$ 250.550,75";"R$ 300.000,00";"0,15";"Casa térrea, excelente localização.";Leilão - Edital Único;"http://www.caixa.gov.br/imovel/67890";Mais Lixo
 11223;AC;Rio Branco;Bosque;ESTRADA DO CALAFATE, 200, BOSQUE, RIO BRANCO - AC - CEP: 69900-000;"75.000,00";"70.000,00";"0,00";"Terreno amplo.";Venda Direta Online;"http://www.caixa.gov.br/imovel/11223";Descartavel
 """
-    with open("exemplo_imoveis.csv", "w", encoding='latin1') as f:
+    # Setup basic logging for direct script execution test
+    import logging
+    import sys
+    logging.basicConfig(level=logging.INFO, stream=sys.stdout,
+                        format="%(asctime)s | %(levelname)s | %(module)s:%(lineno)d | %(message)s")
+    logger = logging.getLogger(__name__)
+
+    # Create an example CSV file relative to the script's location if run directly
+    # This is mainly for ad-hoc testing of this script.
+    # In the main pipeline, 'exemplo_imoveis.csv' would be in the project root.
+    # For robustness if __file__ is not available (e.g. in some frozen environments):
+    try:
+        script_dir = Path(__file__).parent
+    except NameError:
+        script_dir = Path(".") # Fallback to current working directory
+
+    example_csv_path = script_dir / "exemplo_imoveis_proc_test.csv" # Different name to avoid conflict
+
+    with open(example_csv_path, "w", encoding='latin1') as f:
         f.write(conteudo_exemplo_csv)
+    logger.info(f"Created example CSV for testing: {example_csv_path}")
 
     try:
-        print("Processando arquivo de exemplo...")
-        df_processado = processar_imoveis_caixa("exemplo_imoveis.csv")
-        print("\nDataFrame Processado:")
-        print(df_processado.head())
-        print("\nTipos de dados das colunas:")
-        print(df_processado.dtypes)
-        print("\nInformações do DataFrame:")
-        df_processado.info()
-
-        # Teste com um arquivo que não existe
-        # print("\nTestando arquivo inexistente...")
-        # processar_imoveis_caixa("nao_existe.csv")
+        logger.info(f"Processing example file: {example_csv_path}...")
+        df_processado = processar_imoveis_caixa(str(example_csv_path))
+        logger.info("\nDataFrame Processed:\n" + df_processado.head().to_string())
+        logger.info("\nColumn Data Types:\n" + df_processado.dtypes.to_string())
+        # df_processado.info() prints to stdout directly, capture it if needed for logging
+        # For now, main info is logged.
 
     except FileNotFoundError as e:
-        print(f"Erro: {e}")
+        logger.error(f"Error: {e}", exc_info=True)
     except ValueError as e:
-        print(f"Erro de valor: {e}")
+        logger.error(f"Value error: {e}", exc_info=True)
     except Exception as e:
-        print(f"Um erro inesperado ocorreu: {e}")
-
-    # Exemplo de como chamar a função e usar o DataFrame retornado:
-    # if os.path.exists("RO_imoveis_caixa.csv"): # Supondo que você tenha o arquivo
-    #     try:
-    #         df_rondonia = processar_imoveis_caixa("RO_imoveis_caixa.csv")
-    #         print("\nImóveis de Rondônia processados:")
-    #         print(df_rondonia.head())
-    #     except Exception as e:
-    #         print(f"Erro ao processar RO_imoveis_caixa.csv: {e}")
-    # else:
-    #     print("\nArquivo RO_imoveis_caixa.csv não encontrado para teste.")
+        logger.error(f"An unexpected error occurred: {e}", exc_info=True)
+    finally:
+        if example_csv_path.exists():
+            example_csv_path.unlink() # Clean up test file
+            logger.info(f"Cleaned up example CSV: {example_csv_path}")
 
 """
 Checklist de requisitos:
