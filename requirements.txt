@@ -20,6 +20,6 @@ requests==2.32.4
     # via caixaaberta (pyproject.toml)
 six==1.17.0
     # via python-dateutil
-urllib3==2.4.0
+urllib3==2.5.0
     # via requests
 geopy
