@@ -1,0 +1,105 @@
+name: Real Estate Data Pipeline
+
+on:
+  push:
+    branches:
+      - main # Or your default branch
+  workflow_dispatch: # Allows manual triggering
+
+jobs:
+  build-and-upload-data:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12' # Match your project's Python version
+
+      - name: Install uv
+        run: curl -LsSf https://astral.sh/uv/install.sh | sh
+        # Add uv to PATH for subsequent steps
+      - name: Add uv to PATH
+        run: echo "$HOME/.cargo/bin" >> $GITHUB_PATH
+
+      - name: Create virtual environment and install dependencies
+        run: |
+          uv venv .venv --python $(which python) # Create venv using the Python from setup-python
+          uv pip install --python .venv/bin/python .[dev] # Install project + dev dependencies into .venv
+        # Subsequent commands that need these deps should use .venv/bin/python or .venv/bin/<command>
+        # or the venv should be activated. For simplicity, we'll prefix commands.
+
+      - name: Run dbt tests
+        run: |
+          echo "Running dbt tests..."
+          # Ensure dbt commands are run from the dbt project directory or specify --project-dir
+          # Also ensure --profiles-dir is set correctly.
+          # The run_dbt_pipeline.py script already handles this for `dbt build`.
+          # For `dbt test` here, we need to do the same.
+          .venv/bin/dbt test --project-dir ./dbt_real_estate --profiles-dir ./dbt_real_estate
+        # If dbt tests fail, the workflow should ideally fail. `dbt test` exits non-zero on failure.
+
+      - name: Run Pytest tests
+        run: |
+          echo "Running Pytest tests..."
+          .venv/bin/python -m pytest -v tests/
+        # Pytest exits non-zero on failure.
+
+      - name: Run Data Pipeline (Build DuckDB and Upload to Archive.org)
+        env:
+          IA_ACCESS_KEY: ${{ secrets.IA_ACCESS_KEY }}
+          IA_SECRET_KEY: ${{ secrets.IA_SECRET_KEY }}
+          # Optional: Pass other env vars if your scripts need them
+          # GEOCODER_KEY: ${{ secrets.GEOCODER_KEY }} # If geocoding is re-enabled and needs a key
+        run: |
+          echo "Running the main data pipeline script..."
+          # The run_dbt_pipeline.py script is expected to:
+          # 1. Run `dbt build` (which includes dbt tests if `dbt build` is used and tests are configured for models/seeds)
+          #    The dbt tests run above are specific to seeds for now via `dbt test --select resource_type:seed`.
+          #    If `dbt build` is used in the pipeline script, it will run all tests it's configured for.
+          # 2. Call the upload script.
+          .venv/bin/python src/run_dbt_pipeline.py
+          # Add any specific arguments for run_dbt_pipeline.py if needed, e.g.:
+          # .venv/bin/python src/run_dbt_pipeline.py --archive-item-title "Automated Daily Data Upload"
+          # For now, using defaults from the script.
+
+      # Example of how to upload the generated DuckDB file as a workflow artifact (optional)
+      # This is useful for debugging or direct download from GitHub Actions.
+      - name: Archive DuckDB database as artifact
+        uses: actions/upload-artifact@v4
+        if: always() # Run even if previous steps fail, to capture the state
+        with:
+          name: real-estate-duckdb
+          path: dbt_real_estate/real_estate_data.db
+          retention-days: 7 # Optional: how long to keep the artifact
+          if-no-files-found: warn # Optional: 'error', 'warn', or 'ignore'
+```
+
+**Important Notes for the User (You will need to do this in your GitHub repository settings):**
+
+1.  **Secrets Configuration:**
+    *   You MUST configure `IA_ACCESS_KEY` and `IA_SECRET_KEY` as repository secrets in your GitHub project settings (Settings -> Secrets and variables -> Actions -> New repository secret). The workflow uses `secrets.IA_ACCESS_KEY` and `secrets.IA_SECRET_KEY` to access these.
+    *   If your old pipeline's geocoding feature (or any other part) is reactivated and needs `GEOCODER_KEY`, that would also need to be added as a secret.
+
+2.  **`uv` Installation in Workflow:**
+    *   The workflow installs `uv` using `curl -LsSf https://astral.sh/uv/install.sh | sh`. This is a common way to get the latest `uv`.
+    *   It then adds `uv` to the GitHub Actions runner's `PATH`.
+
+3.  **Virtual Environment with `uv`:**
+    *   `uv venv .venv` creates a virtual environment.
+    *   `uv pip install --python .venv/bin/python .[dev]` installs dependencies into this `.venv`.
+    *   Subsequent Python-dependent commands (`dbt`, `pytest`, `python src/...`) are prefixed with `.venv/bin/` to ensure they use the executables and packages from this virtual environment.
+
+4.  **Running Tests:**
+    *   The workflow includes separate steps to run `dbt test` and `pytest`. If any of these test steps fail, the workflow will fail, preventing the pipeline from proceeding to the upload if tests don't pass.
+    *   The `dbt test` command is specifically configured with `--project-dir` and `--profiles-dir` similar to how it's done in `run_dbt_pipeline.py`.
+
+5.  **Pipeline Execution:**
+    *   The main pipeline script `src/run_dbt_pipeline.py` is executed. It's responsible for running `dbt build` (which would also run dbt tests on all relevant resources, not just seeds) and then triggering the upload.
+
+6.  **Artifact Upload (Optional):**
+    *   An optional step is included to upload the generated `real_estate_data.db` file as a GitHub Actions artifact. This can be very useful for debugging or accessing the database file directly from the workflow run. It's set to run `if: always()` to capture the DB even if other steps fail.
+
+This workflow provides a solid foundation for automating the data pipeline.
