@@ -1,8 +1,0 @@
-pandas==1.5.3
-requests==2.32.4
-lxml==4.9.4
-python-dotenv==1.0.1
-geopy==2.4.1
-# Transitive dependencies like numpy, pytz, certifi, urllib3, etc.,
-# will be resolved by pip during the installation process based on the
-# versions specified above.

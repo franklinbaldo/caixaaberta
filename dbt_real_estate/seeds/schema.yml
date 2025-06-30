@@ -1,0 +1,107 @@
+version: 2
+
+seeds:
+  - name: imoveis_AC # Match the CSV filename 'imoveis_AC.csv'
+    description: "Real estate data for Acre (AC)"
+    columns:
+      - name: link
+        description: "Unique identifier for the property listing"
+        tests:
+          - not_null
+          - unique
+      - name: endereco
+        description: "Property address"
+      - name: bairro
+        description: "Neighborhood"
+      - name: descricao
+        description: "Property description"
+      - name: preco
+        description: "Price of the property in BRL"
+        tests:
+          - not_null
+          # - dbt_utils.accepted_range: # Example if using dbt_utils package
+          #     min_value: 0
+      - name: avaliacao
+        description: "Appraisal value of the property in BRL"
+        tests:
+          - not_null
+      - name: desconto
+        description: "Discount percentage"
+      - name: modalidade
+        description: "Sales modality (e.g., Venda Direta Online)"
+      - name: foto
+        description: "Indicates if a photo is available"
+      - name: cidade
+        description: "City of the property"
+        tests:
+          - not_null
+      - name: estado
+        description: "State of the property (e.g., AC)"
+        tests:
+          - not_null
+          - accepted_values:
+              values: ['AC'] # Specific to this seed file
+
+  - name: imoveis_AL # Match the CSV filename 'imoveis_AL.csv'
+    description: "Real estate data for Alagoas (AL)"
+    columns:
+      - name: link
+        tests:
+          - not_null
+          - unique
+      - name: preco
+        tests:
+          - not_null
+      - name: avaliacao
+        tests:
+          - not_null
+      - name: cidade
+        tests:
+          - not_null
+      - name: estado
+        tests:
+          - not_null
+          - accepted_values:
+              values: ['AL']
+
+  - name: imoveis_SP # Match the CSV filename 'imoveis_SP.csv'
+    description: "Real estate data for São Paulo (SP)"
+    columns:
+      - name: link
+        tests:
+          - not_null
+          - unique
+      - name: preco
+        tests:
+          - not_null
+      - name: avaliacao
+        tests:
+          - not_null
+      - name: cidade
+        tests:
+          - not_null
+      - name: estado
+        tests:
+          - not_null
+          - accepted_values:
+              values: ['SP']
+
+  # Add more seed configurations here following the pattern above for other states.
+  # For brevity in this example, only AC, AL, and SP are explicitly detailed.
+  # In a full implementation, you would list all 27 seeds or use a macro
+  # if their schemas and test requirements are identical beyond the state code.
+
+  # Generic tests that could apply to all seeds if column names are consistent
+  # This requires a different structure or dbt features like model contracts or macros
+  # For now, explicit declaration per seed (or a representative subset) is clearest.
+
+  # To apply tests to ALL seeds without listing them, you could potentially use
+  # dbt_project.yml configurations for seeds, but schema.yml provides more granularity.
+  # Example of a more generic test (would require dbt-utils or custom macro):
+  # tests:
+  #   - dbt_utils.not_empty_string:
+  #       column_name: cidade # This syntax is not standard for schema.yml,
+                              # tests are applied per column within a model/seed.
+
+# To run these tests: dbt test --select "resource_type:seed"
+# Or `dbt build` will also run them.
