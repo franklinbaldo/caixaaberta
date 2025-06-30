@@ -1,7 +1,7 @@
 version: 2
 
 seeds:
-  - name: imoveis_AC # Match the CSV filename 'imoveis_AC.csv'
+  - name: imoveis_AC # Revert to UPPERCASE to match dbt node name
     description: "Real estate data for Acre (AC)"
     columns:
       - name: link
@@ -42,7 +42,7 @@ seeds:
           - accepted_values:
               values: ['AC'] # Specific to this seed file
 
-  - name: imoveis_AL # Match the CSV filename 'imoveis_AL.csv'
+  - name: imoveis_AL # Revert to UPPERCASE to match dbt node name
     description: "Real estate data for Alagoas (AL)"
     columns:
       - name: link
@@ -64,7 +64,7 @@ seeds:
           - accepted_values:
               values: ['AL']
 
-  - name: imoveis_SP # Match the CSV filename 'imoveis_SP.csv'
+  - name: imoveis_SP # Revert to UPPERCASE to match dbt node name
     description: "Real estate data for São Paulo (SP)"
     columns:
       - name: link

@@ -61,6 +61,15 @@ seeds:
     # To ensure CSVs are loaded into a specific database (if using multiple)
     # +database: '{{ env_var("DUCKDB_DATABASE", "real_estate_data.db") }}'
 
+# Control identifier quoting behavior.
+# For DuckDB, unquoted identifiers are case-insensitive (typically folded to lowercase).
+# Setting identifier quoting to false can help avoid case sensitivity issues
+# if table names are consistently lowercase but schema.yml names might have case.
+quoting:
+  database: false
+  schema: false
+  identifier: false
+
 # Specify that profiles.yml is inside this project directory
 # This is not a standard dbt_project.yml setting.
 # Instead, we will instruct users to set the DBT_PROFILES_DIR environment variable
