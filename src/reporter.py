@@ -1,6 +1,8 @@
 # reporter.py
 import pandas as pd
+import duckdb
 import locale
+import os # For joining path components
 
 def format_currency(value):
     """Formats a float value as Brazilian Real currency string."""
@@ -23,45 +25,59 @@ def format_currency(value):
     except Exception:
         return f"R$ {value:.2f}" # Basic fallback without thousands separator
 
-def generate_report(csv_filepath: str = "imoveis_BR.csv"):
+DEFAULT_DB_PATH = os.path.join("dbt_real_estate", "real_estate_data.db")
+DEFAULT_TABLE_NAME = "imoveis_geocoded" # Assumes this is the final, geocoded table
+
+def generate_report(db_path: str = DEFAULT_DB_PATH, table_name: str = DEFAULT_TABLE_NAME):
     """
-    Loads data from the specified CSV file, calculates summary statistics,
-    and prints them to the console.
+    Connects to the DuckDB database, queries the specified table (expected to be
+    the geocoded properties data), calculates summary statistics, and prints them.
 
     Args:
-        csv_filepath (str): The path to the CSV file to report on.
-                            Defaults to "imoveis_BR.csv".
+        db_path (str): Path to the DuckDB database file.
+        table_name (str): Name of the table to query within the database.
     """
+    print(f"Generating report from DuckDB: {db_path}, Table: {table_name}")
+    print("--------------------------------------------------")
+
     try:
-        df = pd.read_csv(csv_filepath, dtype={'estado': str})
-        # Ensure 'preco' is float, handling potential errors during conversion
-        if 'preco' in df.columns:
-            df['preco'] = pd.to_numeric(df['preco'], errors='coerce')
-        else:
-            print(f"Error: 'preco' column is missing from {csv_filepath}.")
+        con = duckdb.connect(database=db_path, read_only=True)
+
+        # Check if table exists
+        table_check_query = f"SELECT 1 FROM information_schema.tables WHERE table_name = '{table_name}'"
+        if not con.execute(table_check_query).fetchone():
+            print(f"Error: Table '{table_name}' not found in the database '{db_path}'.")
+            con.close()
             return
 
-    except FileNotFoundError:
-        print(f"Error: {csv_filepath} not found.")
-        return
-    except pd.errors.EmptyDataError:
-        print(f"Error: {csv_filepath} is empty or malformed.")
+        # Fetch all data from the specified table
+        df = con.execute(f"SELECT * FROM {table_name}").fetchdf()
+        con.close()
+
+    except duckdb.Error as e:
+        print(f"DuckDB error: {e}")
         return
     except Exception as e:
-        print(f"An unexpected error occurred while loading the CSV {csv_filepath}: {e}")
+        print(f"An unexpected error occurred: {e}")
         return
 
     if df.empty:
-        print(f"{csv_filepath} is empty. No statistics to generate.")
+        print(f"Table '{table_name}' is empty or data could not be loaded. No statistics to generate.")
         return
 
-    # Check for essential columns
+    # Ensure 'preco' is numeric, handling potential non-numeric data if schema wasn't strictly enforced
+    if 'preco' in df.columns:
+        df['preco'] = pd.to_numeric(df['preco'], errors='coerce')
+    else:
+        print(f"Warning: 'preco' column is missing from table '{table_name}'. Price statistics will be skipped.")
+        # Initialize preco with NAs if missing, so downstream code doesn't break, but stats will be NA/0
+        df['preco'] = pd.NA
+
     if 'estado' not in df.columns:
-        print(f"Error: 'estado' column is missing from {csv_filepath}.")
+        print(f"Error: 'estado' column is missing from table '{table_name}'. Report cannot be generated.")
         return
-    # 'preco' presence is already checked and handled during loading
 
-    print(f"Real Estate Data Report for {csv_filepath}:")
+    print(f"Real Estate Data Report for dbt model '{table_name}':")
     print("--------------------------------------------------")
 
     # Total number of properties

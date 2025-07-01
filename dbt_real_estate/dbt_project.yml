@@ -45,17 +45,17 @@ seeds:
     +quote_columns: false # Set to true if your CSV values might contain the delimiter
     # Define column types to override dbt's auto-detection where needed
     +column_types:
-      link: bigint
+      link: varchar # Property IDs, treated as strings
       endereco: varchar
       bairro: varchar
       descricao: varchar
-      preco: double
-      avaliacao: double
-      desconto: double
+      preco: double   # Monetary value, will be numeric
+      avaliacao: double # Monetary value, will be numeric
+      desconto: varchar # Raw format is "X%", string. Transformation needed for numeric use.
       modalidade: varchar
-      foto: varchar # Contains text like "Ver foto" or can be null
+      foto: varchar
       cidade: varchar
-      estado: varchar
+      estado: varchar(2) # Max 2 characters for state codes like 'SP'
     # You can specify schemas for seeds if necessary, e.g.
     # +schema: raw_data # This would put all seed tables into the 'raw_data' schema
     # To ensure CSVs are loaded into a specific database (if using multiple)

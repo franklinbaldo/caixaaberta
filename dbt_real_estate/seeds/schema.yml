@@ -1,7 +1,7 @@
 version: 2
 
 seeds:
-  - name: imoveis_AC # Match the CSV filename 'imoveis_AC.csv'
+  - name: imoveis_AC
     description: "Real estate data for Acre (AC)"
     columns:
       - name: link
@@ -9,43 +9,26 @@ seeds:
         tests:
           - not_null
           - unique
-      - name: endereco
-        description: "Property address"
-      - name: bairro
-        description: "Neighborhood"
-      - name: descricao
-        description: "Property description"
       - name: preco
-        description: "Price of the property in BRL"
         tests:
           - not_null
-          # - dbt_utils.accepted_range: # Example if using dbt_utils package
-          #     min_value: 0
       - name: avaliacao
-        description: "Appraisal value of the property in BRL"
         tests:
           - not_null
-      - name: desconto
-        description: "Discount percentage"
-      - name: modalidade
-        description: "Sales modality (e.g., Venda Direta Online)"
-      - name: foto
-        description: "Indicates if a photo is available"
       - name: cidade
-        description: "City of the property"
         tests:
           - not_null
       - name: estado
-        description: "State of the property (e.g., AC)"
         tests:
           - not_null
           - accepted_values:
-              values: ['AC'] # Specific to this seed file
+              values: ['AC']
 
-  - name: imoveis_AL # Match the CSV filename 'imoveis_AL.csv'
+  - name: imoveis_AL
     description: "Real estate data for Alagoas (AL)"
     columns:
       - name: link
+        description: "Unique identifier for the property listing"
         tests:
           - not_null
           - unique
@@ -64,10 +47,540 @@ seeds:
           - accepted_values:
               values: ['AL']
 
-  - name: imoveis_SP # Match the CSV filename 'imoveis_SP.csv'
+  - name: imoveis_AM
+    description: "Real estate data for Amazonas (AM)"
+    columns:
+      - name: link
+        description: "Unique identifier for the property listing"
+        tests:
+          - not_null
+          - unique
+      - name: preco
+        tests:
+          - not_null
+      - name: avaliacao
+        tests:
+          - not_null
+      - name: cidade
+        tests:
+          - not_null
+      - name: estado
+        tests:
+          - not_null
+          - accepted_values:
+              values: ['AM']
+
+  - name: imoveis_AP
+    description: "Real estate data for Amapá (AP)"
+    columns:
+      - name: link
+        description: "Unique identifier for the property listing"
+        tests:
+          - not_null
+          - unique
+      - name: preco
+        tests:
+          - not_null
+      - name: avaliacao
+        tests:
+          - not_null
+      - name: cidade
+        tests:
+          - not_null
+      - name: estado
+        tests:
+          - not_null
+          - accepted_values:
+              values: ['AP']
+
+  - name: imoveis_BA
+    description: "Real estate data for Bahia (BA)"
+    columns:
+      - name: link
+        description: "Unique identifier for the property listing"
+        tests:
+          - not_null
+          - unique
+      - name: preco
+        tests:
+          - not_null
+      - name: avaliacao
+        tests:
+          - not_null
+      - name: cidade
+        tests:
+          - not_null
+      - name: estado
+        tests:
+          - not_null
+          - accepted_values:
+              values: ['BA']
+
+  - name: imoveis_CE
+    description: "Real estate data for Ceará (CE)"
+    columns:
+      - name: link
+        description: "Unique identifier for the property listing"
+        tests:
+          - not_null
+          - unique
+      - name: preco
+        tests:
+          - not_null
+      - name: avaliacao
+        tests:
+          - not_null
+      - name: cidade
+        tests:
+          - not_null
+      - name: estado
+        tests:
+          - not_null
+          - accepted_values:
+              values: ['CE']
+
+  - name: imoveis_DF
+    description: "Real estate data for Distrito Federal (DF)"
+    columns:
+      - name: link
+        description: "Unique identifier for the property listing"
+        tests:
+          - not_null
+          - unique
+      - name: preco
+        tests:
+          - not_null
+      - name: avaliacao
+        tests:
+          - not_null
+      - name: cidade
+        tests:
+          - not_null
+      - name: estado
+        tests:
+          - not_null
+          - accepted_values:
+              values: ['DF']
+
+  - name: imoveis_ES
+    description: "Real estate data for Espírito Santo (ES)"
+    columns:
+      - name: link
+        description: "Unique identifier for the property listing"
+        tests:
+          - not_null
+          - unique
+      - name: preco
+        tests:
+          - not_null
+      - name: avaliacao
+        tests:
+          - not_null
+      - name: cidade
+        tests:
+          - not_null
+      - name: estado
+        tests:
+          - not_null
+          - accepted_values:
+              values: ['ES']
+
+  - name: imoveis_GO
+    description: "Real estate data for Goiás (GO)"
+    columns:
+      - name: link
+        description: "Unique identifier for the property listing"
+        tests:
+          - not_null
+          - unique
+      - name: preco
+        tests:
+          - not_null
+      - name: avaliacao
+        tests:
+          - not_null
+      - name: cidade
+        tests:
+          - not_null
+      - name: estado
+        tests:
+          - not_null
+          - accepted_values:
+              values: ['GO']
+
+  - name: imoveis_MA
+    description: "Real estate data for Maranhão (MA)"
+    columns:
+      - name: link
+        description: "Unique identifier for the property listing"
+        tests:
+          - not_null
+          - unique
+      - name: preco
+        tests:
+          - not_null
+      - name: avaliacao
+        tests:
+          - not_null
+      - name: cidade
+        tests:
+          - not_null
+      - name: estado
+        tests:
+          - not_null
+          - accepted_values:
+              values: ['MA']
+
+  - name: imoveis_MG
+    description: "Real estate data for Minas Gerais (MG)"
+    columns:
+      - name: link
+        description: "Unique identifier for the property listing"
+        tests:
+          - not_null
+          - unique
+      - name: preco
+        tests:
+          - not_null
+      - name: avaliacao
+        tests:
+          - not_null
+      - name: cidade
+        tests:
+          - not_null
+      - name: estado
+        tests:
+          - not_null
+          - accepted_values:
+              values: ['MG']
+
+  - name: imoveis_MS
+    description: "Real estate data for Mato Grosso do Sul (MS)"
+    columns:
+      - name: link
+        description: "Unique identifier for the property listing"
+        tests:
+          - not_null
+          - unique
+      - name: preco
+        tests:
+          - not_null
+      - name: avaliacao
+        tests:
+          - not_null
+      - name: cidade
+        tests:
+          - not_null
+      - name: estado
+        tests:
+          - not_null
+          - accepted_values:
+              values: ['MS']
+
+  - name: imoveis_MT
+    description: "Real estate data for Mato Grosso (MT)"
+    columns:
+      - name: link
+        description: "Unique identifier for the property listing"
+        tests:
+          - not_null
+          - unique
+      - name: preco
+        tests:
+          - not_null
+      - name: avaliacao
+        tests:
+          - not_null
+      - name: cidade
+        tests:
+          - not_null
+      - name: estado
+        tests:
+          - not_null
+          - accepted_values:
+              values: ['MT']
+
+  - name: imoveis_PA
+    description: "Real estate data for Pará (PA)"
+    columns:
+      - name: link
+        description: "Unique identifier for the property listing"
+        tests:
+          - not_null
+          - unique
+      - name: preco
+        tests:
+          - not_null
+      - name: avaliacao
+        tests:
+          - not_null
+      - name: cidade
+        tests:
+          - not_null
+      - name: estado
+        tests:
+          - not_null
+          - accepted_values:
+              values: ['PA']
+
+  - name: imoveis_PB
+    description: "Real estate data for Paraíba (PB)"
+    columns:
+      - name: link
+        description: "Unique identifier for the property listing"
+        tests:
+          - not_null
+          - unique
+      - name: preco
+        tests:
+          - not_null
+      - name: avaliacao
+        tests:
+          - not_null
+      - name: cidade
+        tests:
+          - not_null
+      - name: estado
+        tests:
+          - not_null
+          - accepted_values:
+              values: ['PB']
+
+  - name: imoveis_PE
+    description: "Real estate data for Pernambuco (PE)"
+    columns:
+      - name: link
+        description: "Unique identifier for the property listing"
+        tests:
+          - not_null
+          - unique
+      - name: preco
+        tests:
+          - not_null
+      - name: avaliacao
+        tests:
+          - not_null
+      - name: cidade
+        tests:
+          - not_null
+      - name: estado
+        tests:
+          - not_null
+          - accepted_values:
+              values: ['PE']
+
+  - name: imoveis_PI
+    description: "Real estate data for Piauí (PI)"
+    columns:
+      - name: link
+        description: "Unique identifier for the property listing"
+        tests:
+          - not_null
+          - unique
+      - name: preco
+        tests:
+          - not_null
+      - name: avaliacao
+        tests:
+          - not_null
+      - name: cidade
+        tests:
+          - not_null
+      - name: estado
+        tests:
+          - not_null
+          - accepted_values:
+              values: ['PI']
+
+  - name: imoveis_PR
+    description: "Real estate data for Paraná (PR)"
+    columns:
+      - name: link
+        description: "Unique identifier for the property listing"
+        tests:
+          - not_null
+          - unique
+      - name: preco
+        tests:
+          - not_null
+      - name: avaliacao
+        tests:
+          - not_null
+      - name: cidade
+        tests:
+          - not_null
+      - name: estado
+        tests:
+          - not_null
+          - accepted_values:
+              values: ['PR']
+
+  - name: imoveis_RJ
+    description: "Real estate data for Rio de Janeiro (RJ)"
+    columns:
+      - name: link
+        description: "Unique identifier for the property listing"
+        tests:
+          - not_null
+          - unique
+      - name: preco
+        tests:
+          - not_null
+      - name: avaliacao
+        tests:
+          - not_null
+      - name: cidade
+        tests:
+          - not_null
+      - name: estado
+        tests:
+          - not_null
+          - accepted_values:
+              values: ['RJ']
+
+  - name: imoveis_RN
+    description: "Real estate data for Rio Grande do Norte (RN)"
+    columns:
+      - name: link
+        description: "Unique identifier for the property listing"
+        tests:
+          - not_null
+          - unique
+      - name: preco
+        tests:
+          - not_null
+      - name: avaliacao
+        tests:
+          - not_null
+      - name: cidade
+        tests:
+          - not_null
+      - name: estado
+        tests:
+          - not_null
+          - accepted_values:
+              values: ['RN']
+
+  - name: imoveis_RO
+    description: "Real estate data for Rondônia (RO)"
+    columns:
+      - name: link
+        description: "Unique identifier for the property listing"
+        tests:
+          - not_null
+          - unique
+      - name: preco
+        tests:
+          - not_null
+      - name: avaliacao
+        tests:
+          - not_null
+      - name: cidade
+        tests:
+          - not_null
+      - name: estado
+        tests:
+          - not_null
+          - accepted_values:
+              values: ['RO']
+
+  - name: imoveis_RR
+    description: "Real estate data for Roraima (RR)"
+    columns:
+      - name: link
+        description: "Unique identifier for the property listing"
+        tests:
+          - not_null
+          - unique
+      - name: preco
+        tests:
+          - not_null
+      - name: avaliacao
+        tests:
+          - not_null
+      - name: cidade
+        tests:
+          - not_null
+      - name: estado
+        tests:
+          - not_null
+          - accepted_values:
+              values: ['RR']
+
+  - name: imoveis_RS
+    description: "Real estate data for Rio Grande do Sul (RS)"
+    columns:
+      - name: link
+        description: "Unique identifier for the property listing"
+        tests:
+          - not_null
+          - unique
+      - name: preco
+        tests:
+          - not_null
+      - name: avaliacao
+        tests:
+          - not_null
+      - name: cidade
+        tests:
+          - not_null
+      - name: estado
+        tests:
+          - not_null
+          - accepted_values:
+              values: ['RS']
+
+  - name: imoveis_SC
+    description: "Real estate data for Santa Catarina (SC)"
+    columns:
+      - name: link
+        description: "Unique identifier for the property listing"
+        tests:
+          - not_null
+          - unique
+      - name: preco
+        tests:
+          - not_null
+      - name: avaliacao
+        tests:
+          - not_null
+      - name: cidade
+        tests:
+          - not_null
+      - name: estado
+        tests:
+          - not_null
+          - accepted_values:
+              values: ['SC']
+
+  - name: imoveis_SE
+    description: "Real estate data for Sergipe (SE)"
+    columns:
+      - name: link
+        description: "Unique identifier for the property listing"
+        tests:
+          - not_null
+          - unique
+      - name: preco
+        tests:
+          - not_null
+      - name: avaliacao
+        tests:
+          - not_null
+      - name: cidade
+        tests:
+          - not_null
+      - name: estado
+        tests:
+          - not_null
+          - accepted_values:
+              values: ['SE']
+
+  - name: imoveis_SP
     description: "Real estate data for São Paulo (SP)"
     columns:
       - name: link
+        description: "Unique identifier for the property listing"
         tests:
           - not_null
           - unique
@@ -86,22 +599,25 @@ seeds:
           - accepted_values:
               values: ['SP']
 
-  # Add more seed configurations here following the pattern above for other states.
-  # For brevity in this example, only AC, AL, and SP are explicitly detailed.
-  # In a full implementation, you would list all 27 seeds or use a macro
-  # if their schemas and test requirements are identical beyond the state code.
-
-  # Generic tests that could apply to all seeds if column names are consistent
-  # This requires a different structure or dbt features like model contracts or macros
-  # For now, explicit declaration per seed (or a representative subset) is clearest.
-
-  # To apply tests to ALL seeds without listing them, you could potentially use
-  # dbt_project.yml configurations for seeds, but schema.yml provides more granularity.
-  # Example of a more generic test (would require dbt-utils or custom macro):
-  # tests:
-  #   - dbt_utils.not_empty_string:
-  #       column_name: cidade # This syntax is not standard for schema.yml,
-                              # tests are applied per column within a model/seed.
-
-# To run these tests: dbt test --select "resource_type:seed"
-# Or `dbt build` will also run them.
+  - name: imoveis_TO
+    description: "Real estate data for Tocantins (TO)"
+    columns:
+      - name: link
+        description: "Unique identifier for the property listing"
+        tests:
+          - not_null
+          - unique
+      - name: preco
+        tests:
+          - not_null
+      - name: avaliacao
+        tests:
+          - not_null
+      - name: cidade
+        tests:
+          - not_null
+      - name: estado
+        tests:
+          - not_null
+          - accepted_values:
+              values: ['TO']
