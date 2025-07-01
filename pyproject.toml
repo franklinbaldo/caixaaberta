@@ -10,15 +10,20 @@ dependencies = [
     "duckdb>=0.9.0",      # Using a recent version
     "dbt-core>=1.7.0",    # Using a recent version
     "dbt-duckdb>=1.7.0",  # Corresponding dbt-duckdb version
-    "pandas>=2.0.0",      # For any data manipulation if needed outside dbt
+    "pandas>=2.0.0",      # For data manipulation
     "internetarchive>=3.3.0", # For Archive.org interaction
-    "pyarrow" # DuckDB recommends pyarrow for faster Pandas integration
+    "pyarrow",            # DuckDB recommends pyarrow for faster Pandas integration
+    "requests>=2.25.0",   # For HTTP requests in fetch_data.py
+    "lxml>=4.6.0",        # For parsing HTML in fetch_data.py
+    "geopy>=2.2.0",       # For geocoding in geocoding_utils.py
+    "python-dotenv>=0.15.0" # For loading .env files
 ]
 
 [project.optional-dependencies]
 dev = [
     "pytest>=7.0.0",
     "pytest-mock>=3.0.0",
+    "requests-mock>=1.9.0" # For mocking HTTP requests in tests for fetch_data.py
 ]
 
 [build-system]
