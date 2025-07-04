@@ -1,13 +1,12 @@
-
 # Name your project! Project names should contain only lowercase characters
 # and underscores. A good package name should reflect your organization's
 # name or the intended use of these models
-name: 'dbt_real_estate'
-version: '0.1.0' # Adjusted version
+name: "dbt_real_estate"
+version: "0.1.0" # Adjusted version
 
 # This setting configures which "profile" dbt uses for this project.
 # It will look for this profile in the profiles.yml file.
-profile: 'dbt_real_estate_profile' # Renamed for clarity, will match profiles.yml
+profile: "dbt_real_estate_profile" # Renamed for clarity, will match profiles.yml
 
 # These configurations specify where dbt should look for different types of files.
 model-paths: ["models"]
@@ -49,7 +48,7 @@ seeds:
       endereco: varchar
       bairro: varchar
       descricao: varchar
-      preco: double   # Monetary value, will be numeric
+      preco: double # Monetary value, will be numeric
       avaliacao: double # Monetary value, will be numeric
       desconto: varchar # Raw format is "X%", string. Transformation needed for numeric use.
       modalidade: varchar
@@ -60,7 +59,6 @@ seeds:
     # +schema: raw_data # This would put all seed tables into the 'raw_data' schema
     # To ensure CSVs are loaded into a specific database (if using multiple)
     # +database: '{{ env_var("DUCKDB_DATABASE", "real_estate_data.db") }}'
-
 # Specify that profiles.yml is inside this project directory
 # This is not a standard dbt_project.yml setting.
 # Instead, we will instruct users to set the DBT_PROFILES_DIR environment variable

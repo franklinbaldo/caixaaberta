@@ -17,7 +17,6 @@ dbt_real_estate_profile: # This is the profile name referenced in dbt_project.ym
       # Optional: add more settings like threads, memory_limit, etc.
       # threads: 4 # Number of threads for dbt to use
       # memory_limit_gb: 1 # Example memory limit for DuckDB
-
 # You can define other targets, e.g., for production or CI:
 # prod:
 #   type: duckdb

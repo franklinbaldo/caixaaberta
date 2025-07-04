@@ -43,6 +43,7 @@ _(Nota: O script legado `src/pipeline.py` foi removido. Suas funcionalidades de 
 
 3.  **Variáveis de Ambiente (Opcional para execução local, necessário para upload):**
     Copie `.env.sample` para `.env` e configure as variáveis, se necessário.
+
     ```bash
     cp .env.sample .env
     ```

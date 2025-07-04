@@ -22,7 +22,7 @@ seeds:
         tests:
           - not_null
           - accepted_values:
-              values: ['AC']
+              values: ["AC"]
 
   - name: imoveis_AL
     description: "Real estate data for Alagoas (AL)"
@@ -45,7 +45,7 @@ seeds:
         tests:
           - not_null
           - accepted_values:
-              values: ['AL']
+              values: ["AL"]
 
   - name: imoveis_AM
     description: "Real estate data for Amazonas (AM)"
@@ -68,7 +68,7 @@ seeds:
         tests:
           - not_null
           - accepted_values:
-              values: ['AM']
+              values: ["AM"]
 
   - name: imoveis_AP
     description: "Real estate data for Amapá (AP)"
@@ -91,7 +91,7 @@ seeds:
         tests:
           - not_null
           - accepted_values:
-              values: ['AP']
+              values: ["AP"]
 
   - name: imoveis_BA
     description: "Real estate data for Bahia (BA)"
@@ -114,7 +114,7 @@ seeds:
         tests:
           - not_null
           - accepted_values:
-              values: ['BA']
+              values: ["BA"]
 
   - name: imoveis_CE
     description: "Real estate data for Ceará (CE)"
@@ -137,7 +137,7 @@ seeds:
         tests:
           - not_null
           - accepted_values:
-              values: ['CE']
+              values: ["CE"]
 
   - name: imoveis_DF
     description: "Real estate data for Distrito Federal (DF)"
@@ -160,7 +160,7 @@ seeds:
         tests:
           - not_null
           - accepted_values:
-              values: ['DF']
+              values: ["DF"]
 
   - name: imoveis_ES
     description: "Real estate data for Espírito Santo (ES)"
@@ -183,7 +183,7 @@ seeds:
         tests:
           - not_null
           - accepted_values:
-              values: ['ES']
+              values: ["ES"]
 
   - name: imoveis_GO
     description: "Real estate data for Goiás (GO)"
@@ -206,7 +206,7 @@ seeds:
         tests:
           - not_null
           - accepted_values:
-              values: ['GO']
+              values: ["GO"]
 
   - name: imoveis_MA
     description: "Real estate data for Maranhão (MA)"
@@ -229,7 +229,7 @@ seeds:
         tests:
           - not_null
           - accepted_values:
-              values: ['MA']
+              values: ["MA"]
 
   - name: imoveis_MG
     description: "Real estate data for Minas Gerais (MG)"
@@ -252,7 +252,7 @@ seeds:
         tests:
           - not_null
           - accepted_values:
-              values: ['MG']
+              values: ["MG"]
 
   - name: imoveis_MS
     description: "Real estate data for Mato Grosso do Sul (MS)"
@@ -275,7 +275,7 @@ seeds:
         tests:
           - not_null
           - accepted_values:
-              values: ['MS']
+              values: ["MS"]
 
   - name: imoveis_MT
     description: "Real estate data for Mato Grosso (MT)"
@@ -298,7 +298,7 @@ seeds:
         tests:
           - not_null
           - accepted_values:
-              values: ['MT']
+              values: ["MT"]
 
   - name: imoveis_PA
     description: "Real estate data for Pará (PA)"
@@ -321,7 +321,7 @@ seeds:
         tests:
           - not_null
           - accepted_values:
-              values: ['PA']
+              values: ["PA"]
 
   - name: imoveis_PB
     description: "Real estate data for Paraíba (PB)"
@@ -344,7 +344,7 @@ seeds:
         tests:
           - not_null
           - accepted_values:
-              values: ['PB']
+              values: ["PB"]
 
   - name: imoveis_PE
     description: "Real estate data for Pernambuco (PE)"
@@ -367,7 +367,7 @@ seeds:
         tests:
           - not_null
           - accepted_values:
-              values: ['PE']
+              values: ["PE"]
 
   - name: imoveis_PI
     description: "Real estate data for Piauí (PI)"
@@ -390,7 +390,7 @@ seeds:
         tests:
           - not_null
           - accepted_values:
-              values: ['PI']
+              values: ["PI"]
 
   - name: imoveis_PR
     description: "Real estate data for Paraná (PR)"
@@ -413,7 +413,7 @@ seeds:
         tests:
           - not_null
           - accepted_values:
-              values: ['PR']
+              values: ["PR"]
 
   - name: imoveis_RJ
     description: "Real estate data for Rio de Janeiro (RJ)"
@@ -436,7 +436,7 @@ seeds:
         tests:
           - not_null
           - accepted_values:
-              values: ['RJ']
+              values: ["RJ"]
 
   - name: imoveis_RN
     description: "Real estate data for Rio Grande do Norte (RN)"
@@ -459,7 +459,7 @@ seeds:
         tests:
           - not_null
           - accepted_values:
-              values: ['RN']
+              values: ["RN"]
 
   - name: imoveis_RO
     description: "Real estate data for Rondônia (RO)"
@@ -482,7 +482,7 @@ seeds:
         tests:
           - not_null
           - accepted_values:
-              values: ['RO']
+              values: ["RO"]
 
   - name: imoveis_RR
     description: "Real estate data for Roraima (RR)"
@@ -505,7 +505,7 @@ seeds:
         tests:
           - not_null
           - accepted_values:
-              values: ['RR']
+              values: ["RR"]
 
   - name: imoveis_RS
     description: "Real estate data for Rio Grande do Sul (RS)"
@@ -528,7 +528,7 @@ seeds:
         tests:
           - not_null
           - accepted_values:
-              values: ['RS']
+              values: ["RS"]
 
   - name: imoveis_SC
     description: "Real estate data for Santa Catarina (SC)"
@@ -551,7 +551,7 @@ seeds:
         tests:
           - not_null
           - accepted_values:
-              values: ['SC']
+              values: ["SC"]
 
   - name: imoveis_SE
     description: "Real estate data for Sergipe (SE)"
@@ -574,7 +574,7 @@ seeds:
         tests:
           - not_null
           - accepted_values:
-              values: ['SE']
+              values: ["SE"]
 
   - name: imoveis_SP
     description: "Real estate data for São Paulo (SP)"
@@ -597,7 +597,7 @@ seeds:
         tests:
           - not_null
           - accepted_values:
-              values: ['SP']
+              values: ["SP"]
 
   - name: imoveis_TO
     description: "Real estate data for Tocantins (TO)"
@@ -620,4 +620,4 @@ seeds:
         tests:
           - not_null
           - accepted_values:
-              values: ['TO']
+              values: ["TO"]
