@@ -3,6 +3,7 @@
 Este projeto ingere dados de imóveis da Caixa Econômica Federal (previamente baixados como CSVs), os processa utilizando dbt e DuckDB, e os arquiva no Archive.org.
 
 ## Funcionalidades Principais
+
 - **Ingestão de Dados com dbt:** Carrega dados de imóveis de arquivos CSV (localizados em `data/`) para um banco de dados DuckDB (`dbt_real_estate/real_estate_data.db`) usando dbt seeds.
 - **Estrutura de Dados Organizada:** Cada CSV de estado (e.g., `imoveis_AC.csv`) é carregado em uma tabela correspondente no DuckDB.
 - **Arquivamento no Archive.org:** Faz o upload do banco de dados DuckDB gerado para o Archive.org.
@@ -12,14 +13,17 @@ Este projeto ingere dados de imóveis da Caixa Econômica Federal (previamente b
 - **Busca de Dados Automatizada:** Script para baixar os dados mais recentes de imóveis da Caixa.
 - **Geocodificação Integrada:** Geocodificação de endereços como parte do pipeline dbt.
 
-*(Nota: O script legado `src/pipeline.py` foi removido. Suas funcionalidades de download de dados e geocodificação foram modernizadas e integradas ao novo fluxo de trabalho com `src/fetch_data.py` e modelos dbt Python, respectivamente.)*
+_(Nota: O script legado `src/pipeline.py` foi removido. Suas funcionalidades de download de dados e geocodificação foram modernizadas e integradas ao novo fluxo de trabalho com `src/fetch_data.py` e modelos dbt Python, respectivamente.)_
 
 ## Pré-requisitos
+
 - Python 3.8+
 - `uv` (gerenciador de pacotes e ambientes virtuais Python). Instruções de instalação: [Astral uv](https://github.com/astral-sh/uv).
 
 ## Configuração Local
+
 1.  **Clone o repositório:**
+
     ```bash
     git clone <URL_DO_REPOSITORIO>
     cd <NOME_DO_REPOSITORIO>
@@ -27,6 +31,7 @@ Este projeto ingere dados de imóveis da Caixa Econômica Federal (previamente b
 
 2.  **Crie um ambiente virtual e instale as dependências:**
     Recomenda-se usar `uv` para criar o ambiente e instalar as dependências definidas em `pyproject.toml`.
+
     ```bash
     uv venv .venv # Cria um ambiente virtual chamado .venv
     # Ative o ambiente (Unix/macOS)
@@ -41,6 +46,7 @@ Este projeto ingere dados de imóveis da Caixa Econômica Federal (previamente b
     ```bash
     cp .env.sample .env
     ```
+
     - `IA_ACCESS_KEY` e `IA_SECRET_KEY`: Necessárias para fazer upload para o Archive.org. Deixe em branco se for apenas testar localmente com `--upload-dry-run`.
     - `URL_BASE`: Utilizada pelo script `src/fetch_data.py` para baixar os dados da Caixa. Exemplo: `https://venda-imoveis.caixa.gov.br/listaweb/Lista_imoveis_{}.htm`
     - `GEOCODER_KEY`: Chave de API para o serviço de geocodificação (ex: Nominatim, Google Geocoding API). Necessária para o modelo dbt `imoveis_geocoded.py`.
@@ -50,10 +56,13 @@ Este projeto ingere dados de imóveis da Caixa Econômica Federal (previamente b
 O pipeline principal é executado através do script `src/run_dbt_pipeline.py`. Certifique-se de que o ambiente virtual (`.venv`) está ativo ou prefixe os comandos Python com `.venv/bin/python` (ou `.\.venv\Scripts\python` no Windows).
 
 1.  **Executar o pipeline completo (dbt build + upload):**
+
     ```bash
     python src/run_dbt_pipeline.py
     ```
+
     Para fazer um dry-run do upload (sem enviar dados reais para o Archive.org):
+
     ```bash
     python src/run_dbt_pipeline.py --upload-dry-run
     ```
@@ -71,6 +80,7 @@ O pipeline principal é executado através do script `src/run_dbt_pipeline.py`. 
 
 1.  **Rodar testes dbt:**
     Os testes dbt verificam a qualidade dos dados carregados nos seeds.
+
     ```bash
     # A partir da raiz do projeto (com .venv ativo ou prefixando dbt)
     .venv/bin/dbt test --project-dir ./dbt_real_estate --profiles-dir ./dbt_real_estate
@@ -84,6 +94,7 @@ O pipeline principal é executado através do script `src/run_dbt_pipeline.py`. 
     ```
 
 ## Estrutura do Projeto
+
 - `src/`: Contém os scripts Python principais.
   - `fetch_data.py`: Script para baixar os dados de imóveis da Caixa e salvá-los em `dbt_real_estate/seeds/`.
   - `run_dbt_pipeline.py`: Orquestra o build do dbt e o upload para o Archive.org.
@@ -106,7 +117,9 @@ O pipeline principal é executado através do script `src/run_dbt_pipeline.py`. 
 - `.env.sample`: Exemplo de arquivo de variáveis de ambiente.
 
 ## Automação (CI/CD)
+
 O projeto utiliza GitHub Actions para automação, definido em `.github/workflows/main.yml`. O workflow:
+
 - É disparado em pushes para a branch `main` ou manualmente (`workflow_dispatch`).
 - Configura Python e `uv`.
 - Instala dependências.
@@ -118,6 +131,7 @@ O projeto utiliza GitHub Actions para automação, definido em `.github/workflow
 - **Importante:** As credenciais `IA_ACCESS_KEY`, `IA_SECRET_KEY` e `GEOCODER_KEY` devem ser configuradas como segredos no repositório GitHub para que o workflow funcione corretamente.
 
 ## Dependências Principais (gerenciadas via `pyproject.toml`)
+
 - `duckdb`: Banco de dados analítico em-processo.
 - `dbt-core`, `dbt-duckdb`: Ferramenta de transformação de dados e adaptador para DuckDB.
 - `internetarchive`: Biblioteca para interagir com o Archive.org.
