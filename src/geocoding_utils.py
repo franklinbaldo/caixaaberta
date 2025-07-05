@@ -3,7 +3,7 @@ import sqlite3
 from pathlib import Path
 
 from geopy.geocoders import Nominatim
-from geopy.extra.adapters import RateLimiter
+from geopy.extra.adapters import RateLimiter # Reverted to original import path
 from geopy.exc import GeocoderTimedOut, GeocoderUnavailable, GeocoderServiceError
 
 # --- SQLite Cache Setup ---

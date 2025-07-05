@@ -370,7 +370,7 @@ def test_monetary_conversion_in_extract(requests_mock):
     <thead><tr>{''.join(f"<th>{col}</th>" for col in cols_for_html)}</tr></thead>
     <tbody><tr>
         <td><a href="https://venda-imoveis.caixa.gov.br/sistema/detalhe-imovel.asp?hdnOrigem=index&hdnimovel=1">1</a></td>
-        {''.join(f"<td>Value for {col}</td>" for col in cols_for_html[1:4]))}
+        {''.join(f"<td>Value for {col}</td>" for col in cols_for_html[1:4])}
         <td>R$ 1.234,56</td>
         <td>R$ 987.654,32</td>
         {''.join(f"<td>Value for {col}</td>" for col in cols_for_html[6:])}

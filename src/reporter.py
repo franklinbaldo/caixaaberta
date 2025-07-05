@@ -65,52 +65,47 @@ def generate_report(db_path: str = DEFAULT_DB_PATH, table_name: str = DEFAULT_TA
         print(f"Table '{table_name}' is empty or data could not be loaded. No statistics to generate.")
         return
 
-    # Ensure 'preco' is numeric, handling potential non-numeric data if schema wasn't strictly enforced
-    if 'preco' in df.columns:
-        df['preco'] = pd.to_numeric(df['preco'], errors='coerce')
+    # Ensure 'price' (dbt model uses 'price') is numeric
+    # The dbt model should already cast it, but good to be safe.
+    if 'price' in df.columns:
+        df['price'] = pd.to_numeric(df['price'], errors='coerce')
     else:
-        print(f"Warning: 'preco' column is missing from table '{table_name}'. Price statistics will be skipped.")
-        # Initialize preco with NAs if missing, so downstream code doesn't break, but stats will be NA/0
-        df['preco'] = pd.NA
+        print(f"Warning: 'price' column (expected from dbt model 'imoveis_geocoded') is missing. Price statistics will be skipped.")
+        df['price'] = pd.NA # Initialize to avoid errors
 
-    if 'estado' not in df.columns:
-        print(f"Error: 'estado' column is missing from table '{table_name}'. Report cannot be generated.")
+    # Ensure 'state' (dbt model uses 'state') column exists
+    if 'state' not in df.columns:
+        print(f"Error: 'state' column (expected from dbt model 'imoveis_geocoded') is missing. Report cannot be generated.")
         return
 
     print(f"Real Estate Data Report for dbt model '{table_name}':")
     print("--------------------------------------------------")
 
-    # Total number of properties
     total_properties = len(df)
     print(f"Total properties listed: {total_properties}")
     print("--------------------------------------------------")
 
-    # Number of properties per state
     print("Properties per state:")
-    properties_per_state = df.groupby('estado').size()
+    properties_per_state = df.groupby('state').size()
     if properties_per_state.empty:
         print("  No data available for properties per state.")
     else:
-        for state, count in properties_per_state.items():
-            print(f"  {state}: {count} properties")
+        for state_code, count in properties_per_state.sort_index().items():
+            print(f"  {state_code}: {count} properties")
     print("--------------------------------------------------")
 
-    # Average price of properties per state
     print("Average price per state:")
-    # Ensure 'preco' column exists before attempting to calculate mean
-    if 'preco' in df.columns:
-        average_price_per_state = df.groupby('estado')['preco'].mean()
+    if 'price' in df.columns and df['price'].notna().any():
+        average_price_per_state = df.groupby('state')['price'].mean()
         if average_price_per_state.empty:
             print("  No price data available for calculating averages per state.")
         else:
-            for state, avg_price in average_price_per_state.items():
-                print(f"  {state}: {format_currency(avg_price)}")
+            for state_code, avg_price in average_price_per_state.sort_index().items():
+                print(f"  {state_code}: {format_currency(avg_price)}")
     else:
-        # This case should ideally be caught earlier, but as a safeguard:
-        print("  'preco' column is missing, cannot calculate average prices.")
+        print("  'price' column is missing or contains no valid data, cannot calculate average prices.")
     print("--------------------------------------------------")
 
-    # Geocoding Statistics
     print("Geocoding Statistics:")
     print("--------------------------------------------------")
     if 'latitude' not in df.columns or 'longitude' not in df.columns:
@@ -120,40 +115,37 @@ def generate_report(db_path: str = DEFAULT_DB_PATH, table_name: str = DEFAULT_TA
         percentage_geocoded_overall = (total_geocoded / total_properties) * 100 if total_properties > 0 else 0
         
         print(f"Overall geocoding success rate: {percentage_geocoded_overall:.1f}% ({total_geocoded} out of {total_properties} properties)")
-        print("\nGeocoding success rate per state:")
+        
+        if total_properties > 0: # Only show per-state if there's data
+            print("\nGeocoding success rate per state:")
+            # df.groupby('state')['latitude'].count() counts non-NaN latitudes
+            geocoded_per_state_counts = df.groupby('state')['latitude'].apply(lambda x: x.notna().sum())
 
-        geocoded_per_state_counts = df.groupby('estado')['latitude'].count() # Counts non-NaN latitudes
-        
-        # properties_per_state is already df.groupby('estado').size()
-        
-        # Combine total properties per state with geocoded counts
-        state_stats_df = pd.DataFrame({
-            'total': properties_per_state,
-            'geocoded': geocoded_per_state_counts
-        }).fillna(0) # Fill NaN for states with 0 properties or 0 geocoded properties in the .count() series
-        
-        state_stats_df['percentage'] = (state_stats_df['geocoded'] / state_stats_df['total'] * 100).fillna(0)
+            state_stats_df = pd.DataFrame({
+                'total': properties_per_state, # Already calculated: df.groupby('state').size()
+                'geocoded': geocoded_per_state_counts
+            }).fillna(0) # Ensure states with no geocoded entries but present in total get 0
 
-        if state_stats_df.empty:
-            print("  No per-state geocoding data available.")
+            # Ensure all states from properties_per_state are in geocoded_per_state_counts, even if with 0
+            state_stats_df['geocoded'] = state_stats_df['geocoded'].astype(int)
+            state_stats_df['total'] = state_stats_df['total'].astype(int)
+
+            state_stats_df['percentage'] = (state_stats_df['geocoded'] / state_stats_df['total'] * 100).fillna(0)
+
+            if state_stats_df.empty:
+                print("  No per-state geocoding data available.")
+            else:
+                for state_code, row in state_stats_df.sort_index().iterrows():
+                    print(f"  {state_code}: {row['percentage']:.1f}% ({row['geocoded']} out of {row['total']} properties)")
         else:
-            for state, row in state_stats_df.iterrows():
-                print(f"  {state}: {row['percentage']:.1f}% ({int(row['geocoded'])} out of {int(row['total'])} properties)")
+            print(" No properties to analyze for per-state geocoding success.")
+
     print("--------------------------------------------------")
 
 def main():
-    # You could use argparse here to take filepath from command line
-    # For simplicity, we'll use the default or a fixed one if needed for main execution.
-    generate_report() # This will use "imoveis_BR.csv" by default
+    # The script now directly uses the DuckDB database and the specific table.
+    # Command-line arguments for db_path or table_name could be added here with argparse if needed.
+    generate_report()
 
 if __name__ == "__main__":
-    # Example: To run from command line for a different file:
-    # python reporter.py path/to/your/file.csv
-    # For now, main() calls generate_report() without arguments, using the default.
-    # If you want to parse command line arguments:
-    # import sys
-    # if len(sys.argv) > 1:
-    #     generate_report(sys.argv[1])
-    # else:
-    #     main()
     main()

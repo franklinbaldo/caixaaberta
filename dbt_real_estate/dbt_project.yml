@@ -50,9 +50,9 @@ seeds:
       descricao: varchar
       preco: double # Monetary value, will be numeric
       avaliacao: double # Monetary value, will be numeric
-      desconto: varchar # Raw format is "X%", string. Transformation needed for numeric use.
+      desconto: double # Should be numeric after parsing in fetch_data.py. If it's "X%", this type will fail.
       modalidade: varchar
-      foto: varchar
+      foto: varchar # URL or path to photo
       cidade: varchar
       estado: varchar(2) # Max 2 characters for state codes like 'SP'
     # You can specify schemas for seeds if necessary, e.g.
