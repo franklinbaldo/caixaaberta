@@ -1,6 +1,9 @@
 import os
 import argparse
 import datetime
+import tempfile
+import duckdb
+from pathlib import Path
 from internetarchive import upload, get_item, search_items
 from unittest.mock import patch
 
@@ -39,6 +42,36 @@ def get_archive_identifier(base_title):
         s = "untitled_item" # Fallback for empty titles after sanitization
     return s
 
+def export_duckdb_to_parquet(duckdb_path: str, output_path: str) -> None:
+    """
+    Export DuckDB data to Parquet format.
+    
+    Args:
+        duckdb_path: Path to the DuckDB file
+        output_path: Path where the Parquet file will be saved
+    """
+    conn = duckdb.connect(duckdb_path)
+    
+    # Get table names from the database
+    tables = conn.execute("SHOW TABLES").fetchall()
+    
+    if not tables:
+        print("Warning: No tables found in the database")
+        return
+    
+    # For simplicity, export all tables to a single parquet file
+    # If there are multiple tables, you might want to union them or handle differently
+    table_name = tables[0][0]  # Get the first table name
+    
+    # Use DuckDB's native COPY command to export to Parquet
+    conn.execute(f"""
+    COPY (SELECT * FROM {table_name}) 
+    TO '{output_path}' (FORMAT PARQUET, COMPRESSION SNAPPY)
+    """)
+    
+    conn.close()
+    print(f"Successfully exported DuckDB data to Parquet: {output_path}")
+
 def upload_duckdb_to_archive(db_filepath, ia_access_key, ia_secret_key, item_identifier=None, item_title=None, collection=None, subjects=None, description=None, dry_run=False):
     """
     Uploads the specified DuckDB file to Archive.org.
@@ -65,9 +98,20 @@ def upload_duckdb_to_archive(db_filepath, ia_access_key, ia_secret_key, item_ide
 
     filename = os.path.basename(db_filepath)
     current_date = datetime.datetime.now().strftime("%Y-%m-%d")
+    
+    # Create a temporary parquet file
+    with tempfile.NamedTemporaryFile(suffix='.parquet', delete=False) as temp_parquet:
+        parquet_path = temp_parquet.name
+
+    print(f"Exporting DuckDB data to Parquet format...")
+    export_duckdb_to_parquet(db_filepath, parquet_path)
+    
+    # Change filename to reflect parquet format
+    base_name = os.path.splitext(filename)[0]  # Remove .duckdb extension
+    parquet_filename = f"{base_name}.parquet"
 
     if not item_title:
-        item_title = f"{ARCHIVE_ORG_ITEM_TITLE_PREFIX} - {filename} - {current_date}"
+        item_title = f"RealEstateDataParquet - {parquet_filename} - {current_date}"
 
     if not item_identifier:
         # Generate a reasonably unique identifier.
@@ -84,13 +128,13 @@ def upload_duckdb_to_archive(db_filepath, ia_access_key, ia_secret_key, item_ide
         "title": item_title,
         "collection": collection or ARCHIVE_ORG_COLLECTION,
         "subject": subjects or ARCHIVE_ORG_SUBJECTS,
-        "description": description or f"DuckDB database containing real estate data, generated on {current_date}. File: {filename}",
+        "description": description or f"Parquet dataset containing real estate data, generated on {current_date}. Exported from DuckDB database. File: {parquet_filename}",
         "mediatype": "data", # Important for data uploads
         "creator": "Real Estate Data Pipeline (Automated Script)", # Or your organization
         "date": current_date,
     }
 
-    print(f"Preparing to upload '{filename}' to Archive.org.")
+    print(f"Preparing to upload '{parquet_filename}' to Archive.org.")
     print(f"Item Identifier: {item_identifier}")
     print(f"Item Title: {metadata['title']}")
     print(f"Collection: {metadata['collection']}")
@@ -98,9 +142,11 @@ def upload_duckdb_to_archive(db_filepath, ia_access_key, ia_secret_key, item_ide
 
     if dry_run:
         print("\n--- DRY RUN ---")
-        print(f"Would upload '{db_filepath}' to Archive.org item '{item_identifier}'.")
+        print(f"Would upload '{parquet_path}' to Archive.org item '{item_identifier}'.")
         print(f"Metadata: {metadata}")
         print("--- END DRY RUN ---")
+        # Clean up temporary file
+        os.unlink(parquet_path)
         return f"DRY RUN: Would upload to https://archive.org/details/{item_identifier}"
 
     if not ia_access_key or not ia_secret_key:
@@ -127,7 +173,7 @@ def upload_duckdb_to_archive(db_filepath, ia_access_key, ia_secret_key, item_ide
         # 'verbose=True' gives more output.
         response = upload(
             identifier=item_identifier,
-            files={filename: db_filepath}, # Uploads db_filepath as 'filename' in the item
+            files={parquet_filename: parquet_path}, # Uploads parquet_path as 'parquet_filename' in the item
             metadata=metadata,
             access_key=ia_access_key,
             secret_key=ia_secret_key,
@@ -138,14 +184,21 @@ def upload_duckdb_to_archive(db_filepath, ia_access_key, ia_secret_key, item_ide
         if response and response[0].status_code == 200:
             item_url = f"https://archive.org/details/{item_identifier}"
             print(f"Upload successful! Item URL: {item_url}")
+            # Clean up temporary file
+            os.unlink(parquet_path)
             return item_url
         else:
             print("Upload failed. Response:")
             print(response)
+            # Clean up temporary file
+            os.unlink(parquet_path)
             return None
 
     except Exception as e:
         print(f"An error occurred during upload: {e}")
+        # Clean up temporary file
+        if 'parquet_path' in locals():
+            os.unlink(parquet_path)
         # For debugging, you might want to print the full traceback
         # import traceback
         # traceback.print_exc()
