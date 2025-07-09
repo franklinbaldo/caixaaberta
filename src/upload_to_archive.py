@@ -3,9 +3,7 @@ import argparse
 import datetime
 import tempfile
 import duckdb
-from pathlib import Path
-from internetarchive import upload, get_item, search_items
-from unittest.mock import patch
+from internetarchive import upload
 
 # Configuration for Archive.org
 # These would ideally be more dynamic or configurable if needed
@@ -103,7 +101,7 @@ def upload_duckdb_to_archive(db_filepath, ia_access_key, ia_secret_key, item_ide
     with tempfile.NamedTemporaryFile(suffix='.parquet', delete=False) as temp_parquet:
         parquet_path = temp_parquet.name
 
-    print(f"Exporting DuckDB data to Parquet format...")
+    print("Exporting DuckDB data to Parquet format...")
     export_duckdb_to_parquet(db_filepath, parquet_path)
     
     # Change filename to reflect parquet format

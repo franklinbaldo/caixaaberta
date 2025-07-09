@@ -144,5 +144,5 @@ if __name__ == '__main__':
         if lat is not None and lon is not None:
             print(f"  -> Coordinates: ({lat}, {lon})")
         else:
-            print(f"  -> Could not retrieve coordinates.")
+            print("  -> Could not retrieve coordinates.")
     print("\nGeocoding tests finished.")

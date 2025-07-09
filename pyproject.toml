@@ -23,7 +23,8 @@ dependencies = [
 dev = [
     "pytest>=7.0.0",
     "pytest-mock>=3.0.0",
-    "requests-mock>=1.9.0" # For mocking HTTP requests in tests for fetch_data.py
+    "requests-mock>=1.9.0", # For mocking HTTP requests in tests for fetch_data.py
+    "ruff>=0.1.0" # For linting and formatting
 ]
 
 [build-system]

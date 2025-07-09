@@ -1,2 +1,2 @@
 def test():
-    import etl
+    pass
