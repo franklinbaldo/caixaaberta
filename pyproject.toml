@@ -16,7 +16,11 @@ dependencies = [
     "requests>=2.25.0",   # For HTTP requests in fetch_data.py
     "lxml>=4.6.0",        # For parsing HTML in fetch_data.py
     "geopy>=2.2.0",       # For geocoding in geocoding_utils.py
-    "python-dotenv>=0.15.0" # For loading .env files
+    "python-dotenv>=0.15.0", # For loading .env files
+    "dlt[duckdb]>=0.4.4",
+    "ibis-framework[duckdb]",
+    "html5lib",
+    "beautifulsoup4"
 ]
 
 [project.optional-dependencies]
