@@ -1,12 +1,14 @@
 name: Real Estate Data Pipeline
 
 on:
+  pull_request:
+    branches: [main]
   push:
     branches: [main]
   workflow_dispatch:
 
 jobs:
-  build-and-upload-data:
+  validate:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
@@ -22,34 +24,46 @@ jobs:
 
       - name: Install dependencies
         run: |
-          echo "$HOME/.local/bin" >> "$GITHUB_PATH"
           "$HOME/.local/bin/uv" venv .venv --python "$(which python)"
           "$HOME/.local/bin/uv" pip install --python .venv/bin/python '.[dev]'
-
-      - name: Fetch latest real estate data
-        env:
-          URL_BASE: "https://venda-imoveis.caixa.gov.br/listaweb/Lista_imoveis_{}.htm"
-        run: .venv/bin/python src/fetch_data.py
-
-      - name: Run dbt tests
-        run: .venv/bin/dbt test --project-dir ./dbt_real_estate --profiles-dir ./dbt_real_estate
 
       - name: Run Pytest tests
         run: .venv/bin/python -m pytest -v tests/
 
-      - name: Build data and publish to Internet Archive
+  publish:
+    if: github.event_name != 'pull_request'
+    needs: validate
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install uv
+        run: curl -LsSf https://astral.sh/uv/install.sh | sh
+
+      - name: Install dependencies
+        run: |
+          "$HOME/.local/bin/uv" venv .venv --python "$(which python)"
+          "$HOME/.local/bin/uv" pip install --python .venv/bin/python '.[dev]'
+
+      - name: Process Parquet and publish to Internet Archive
         env:
           IA_ACCESS_KEY: ${{ secrets.IA_ACCESS_KEY }}
           IA_SECRET_KEY: ${{ secrets.IA_SECRET_KEY }}
           GEOCODER_KEY: ${{ secrets.GEOCODER_KEY }}
-        run: .venv/bin/python src/run_dbt_pipeline.py
+        run: .venv/bin/python src/run_pipeline.py
 
-      - name: Archive DuckDB database as workflow artifact
+      - name: Upload generated Parquet as workflow artifact
         uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: real-estate-duckdb
-          path: dbt_real_estate/real_estate_data.db
+          name: imoveis-caixa-parquet
+          path: output_data/*.parquet
           retention-days: 7
           if-no-files-found: warn
 
