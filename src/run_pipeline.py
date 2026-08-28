@@ -1,6 +1,7 @@
 import argparse
 
 from fetch_data import process_local_data
+from reporter import DEFAULT_PARQUET_PATH, validate_publication_parquet
 from upload_to_archive import upload_files_to_archive
 
 
@@ -53,6 +54,10 @@ def main():
     if args.skip_upload:
         print("Pulando o upload para o Internet Archive.")
         return
+
+    print("Validando o Parquet antes da publicação...")
+    validate_publication_parquet(DEFAULT_PARQUET_PATH)
+    print("Parquet validado para publicação.")
 
     print("Iniciando o upload para o Internet Archive...")
     upload_files_to_archive(
