@@ -65,10 +65,8 @@ def test_process_local_data(mock_get_coords, mock_glob, mock_read_csv, mock_ibis
     assert result_df.iloc[1]["longitude"] == -46.7
 
 @patch("fetch_data.Path.glob")
-def test_process_local_data_no_csvs(mock_glob, capsys):
+def test_process_local_data_no_csvs(mock_glob):
     mock_glob.return_value = []
 
-    process_local_data()
-
-    captured = capsys.readouterr()
-    assert "Nenhum arquivo CSV encontrado" in captured.out
+    with pytest.raises(FileNotFoundError, match="Nenhum arquivo CSV encontrado"):
+        process_local_data()
