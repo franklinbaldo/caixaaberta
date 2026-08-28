@@ -19,8 +19,10 @@ def process_local_data():
     csv_files = list(input_path.glob("imoveis_*.csv"))
 
     if not csv_files:
-        print(f"Nenhum arquivo CSV encontrado em {INPUT_DIR}")
-        return
+        raise FileNotFoundError(
+            f"Nenhum arquivo CSV encontrado em {INPUT_DIR}; "
+            "processamento solicitado não pode reutilizar artefato anterior."
+        )
 
     conn = ibis.duckdb.connect()
 
