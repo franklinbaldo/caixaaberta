@@ -1,0 +1,47 @@
+name: Auction source probe
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - scripts/probe_auction_sources.py
+      - .github/workflows/auction-source-probe.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v6
+      - name: Query real Baliza and CausaGanha Parquets on Internet Archive
+        run: uv run scripts/probe_auction_sources.py --days 62 --causa-max-files 20 --output probe-results.json
+      - name: Summarize
+        if: always()
+        run: |
+          if [ -f probe-results.json ]; then
+            python - <<'PY'
+          import json
+          d=json.load(open('probe-results.json'))
+          print('BALIZA_MATCHES', d['baliza']['matches'])
+          print('CAUSAGANHA_CANDIDATE_PARQUETS', d['causaganha']['candidate_parquets'])
+          print('CAUSAGANHA_SCANNED_PARQUETS', d['causaganha']['scanned_parquets'])
+          print('CAUSAGANHA_MATCHES', d['causaganha']['matches'])
+          print('\nSAMPLES')
+          for source in ('baliza','causaganha'):
+              print('\n##', source)
+              for x in d[source]['samples'][:8]:
+                  print(json.dumps(x, ensure_ascii=False)[:1800])
+          PY
+          fi
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: auction-source-probe-results
+          path: probe-results.json
+          retention-days: 14
+          if-no-files-found: warn
