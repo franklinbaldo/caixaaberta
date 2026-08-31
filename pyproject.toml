@@ -1,23 +1,20 @@
 [project]
 name = "real-estate-data-pipeline"
 version = "0.1.0"
-description = "A pipeline to process real estate data, store it in DuckDB, and upload to Archive.org using dbt."
+description = "Consolida os imóveis à venda da Caixa em um Parquet e publica no Internet Archive."
 readme = "README.md"
-requires-python = ">=3.8"
-license = {text = "MIT"} # Or your preferred license
+requires-python = ">=3.10"
+license = {text = "MIT"}
 
 dependencies = [
-    "duckdb>=0.9.0",      # Using a recent version
-    "dbt-core>=1.7.0",    # Using a recent version
-    "dbt-duckdb>=1.7.0",  # Corresponding dbt-duckdb version
-    "pandas>=2.0.0",      # For data manipulation
-    "internetarchive>=3.3.0", # For Archive.org interaction
-    "pyarrow",            # DuckDB recommends pyarrow for faster Pandas integration
-    "requests>=2.25.0",   # For HTTP requests in fetch_data.py
-    "lxml>=4.6.0",        # For parsing HTML in fetch_data.py
-    "geopy>=2.2.0",       # For geocoding in geocoding_utils.py
-    "python-dotenv>=0.15.0", # For loading .env files
-    "dlt[duckdb]>=0.4.4",
+    "duckdb>=0.9.0",
+    "pandas>=2.0.0",
+    "internetarchive>=3.3.0",
+    "pyarrow",
+    "requests>=2.25.0",
+    "lxml>=4.6.0",
+    "geopy>=2.2.0",
+    "python-dotenv>=0.15.0",
     "ibis-framework[duckdb]",
     "html5lib",
     "beautifulsoup4"
@@ -27,42 +24,24 @@ dependencies = [
 dev = [
     "pytest>=7.0.0",
     "pytest-mock>=3.0.0",
-    "requests-mock>=1.9.0", # For mocking HTTP requests in tests for fetch_data.py
-    "ruff>=0.1.0" # For linting and formatting
+    "requests-mock>=1.9.0",
+    "ruff>=0.1.0",
 ]
 
 [build-system]
 requires = ["hatchling"]
 build-backend = "hatchling.build"
 
-[tool.rye] # If you were using Rye, otherwise this section might not be needed for uv alone
-# managed = true
-# dev-dependencies = []
-
 [tool.hatch.metadata]
 allow-direct-references = true
 
 [tool.hatch.build.targets.sdist]
-# Include everything by default for sdist
-include = ["/src", "/tests", "/dbt_real_estate", "*.md", "pyproject.toml", ".env.sample"]
+include = ["/src", "/tests", "*.md", "pyproject.toml", ".env.sample"]
 
 [tool.hatch.build.targets.wheel]
-# Specify that our 'src' directory contains the package data.
-# Hatch will then package the contents of 'src' into the wheel.
-# If 'src' itself is the package, it's often structured as 'src/<package_name>/...'
-# If 'src' contains multiple top-level modules, this tells hatch to include them.
-# For our case, 'src' contains our modules.
 packages = ["src"]
 
 [tool.pytest.ini_options]
-pythonpath = [
-    ".", # Add project root to pythonpath
-    "src" # Add src to pythonpath
-]
+pythonpath = [".", "src"]
 minversion = "6.0"
-addopts = "-ra -q" # Additional options for pytest
-
-[tool.uv] # Placeholder for any uv specific configurations if they arise
-# Example:
-# tool = "uv"
-# version = "0.1.15"
+addopts = "-ra -q"
