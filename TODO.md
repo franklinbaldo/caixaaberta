@@ -20,16 +20,7 @@ O que fazer:
 As dependências `requests`, `lxml`, `beautifulsoup4` e `html5lib` já estão
 declaradas para isso e hoje não são usadas.
 
-### 2. Alinhar o DDL ao Parquet produzido
-
-`generate_ddl.py` gera um `read_parquet` de 27 arquivos por estado
-(`imoveis_AC.parquet` e seguintes). O pipeline grava um arquivo único,
-`imoveis_geocoded.parquet`. A view distribuída aponta para arquivos que não
-existem no item.
-
-Escolher um dos dois formatos e ajustar o outro lado.
-
-### 3. Tirar a geocodificação do caminho crítico
+### 2. Tirar a geocodificação do caminho crítico
 
 `fetch_data.py` geocodifica linha a linha, de forma síncrona, dentro do job de
 publicação. São dezenas de milhares de endereços e o Nominatim limita a uma
@@ -46,11 +37,11 @@ O que fazer:
 
 ## Média prioridade
 
-### 4. Remover arquivos mortos
+### 3. Remover arquivos mortos
 
 `hello.py`, `src/test.py`, `exemplo_imoveis.csv`, `data/__init__.py` e o binário
 versionado `caixa_imoveis_pipeline.duckdb`.
 
-### 5. Cobrir o fetch com teste
+### 4. Cobrir o fetch com teste
 
 Depois da tarefa 1, testar o parsing do HTML com `requests-mock`, sem rede.
