@@ -9,9 +9,9 @@ geocodifica os endereços sem coordenadas e grava
 
 ## Consumir os dados
 
-Para consultar o dataset publicado sem baixar nada, abra o DuckDB e execute o
-DDL de `imoveis_caixa.sql`, que cria uma view lendo os Parquet direto do
-Internet Archive:
+Para consultar o dataset publicado sem baixar o arquivo inteiro, abra o DuckDB
+e execute o DDL de `imoveis_caixa.sql`, que cria uma view lendo diretamente o
+Parquet publicado no Internet Archive:
 
 ```sql
 .read imoveis_caixa.sql
@@ -42,8 +42,9 @@ Copie `.env.sample` para `.env` e preencha o que for usar:
 
 - `IA_ACCESS_KEY` e `IA_SECRET_KEY`: credenciais do Internet Archive. Exigidas
   para publicar; dispensáveis com `--upload-dry-run`.
-- `GEOCODER_KEY`: chave do serviço de geocodificação usado por
-  `src/geocoding_utils.py`.
+- `GEOCODER_KEY`: nome legado da variável usada como User-Agent do Nominatim
+  por `src/geocoding_utils.py`; o valor deve identificar o cliente, de
+  preferência com uma forma de contato. Não é uma API key do Nominatim.
 - `URL_BASE`: origem dos dados da Caixa. Ainda não consumida pelo código —
   veja `TODO.md`.
 
