@@ -21,6 +21,8 @@ As modalidades são atributo de cada linha do [Dataset](dataset.md) e aparecem
 na coluna `modalidade` do [Schema](schema.md).
 
 O `title` é chave de junção com o dado: precisa bater literalmente com o valor
-da coluna, acentos incluídos. O corpo deve dizer o que o comprador aceita ao
+da coluna, acentos incluídos. `KNOWN_MODALIDADES`, em `src/reporter.py`, repete
+esses títulos para que o relatório aponte modalidade não documentada;
+`scripts/check_bundle_contract.py` recusa a divergência entre os dois. O corpo deve dizer o que o comprador aceita ao
 entrar nesta modalidade — não o passo a passo operacional, que é da Caixa e
 muda sem aviso.

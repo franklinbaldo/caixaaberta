@@ -3,6 +3,13 @@ type: Schema
 title: Esquema do Parquet
 description: Colunas do arquivo publicado e o que cada uma significa
 artifact: output_data/imoveis_geocoded.parquet
+colunas_obrigatorias:
+  - link
+  - endereco
+  - bairro
+  - cidade
+  - estado
+  - preco
 ---
 
 # Esquema do Parquet

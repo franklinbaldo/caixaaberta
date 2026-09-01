@@ -108,3 +108,27 @@ def test_pipeline_skip_fetch_does_not_download(monkeypatch, tmp_path):
     monkeypatch.setattr(sys, "argv", ["run_pipeline.py", "--skip-fetch", "--skip-upload"])
 
     run_pipeline.main()
+
+
+def test_undocumented_modalidades_flags_only_the_unknown():
+    from reporter import undocumented_modalidades
+
+    frame = pd.DataFrame(
+        {
+            "modalidade": [
+                "Venda Direta Online",
+                "Leilão SFI - Edital Único",
+                "Leilão Presencial",
+                None,
+                "  ",
+            ]
+        }
+    )
+
+    assert undocumented_modalidades(frame) == ["Leilão Presencial"]
+
+
+def test_undocumented_modalidades_without_the_column():
+    from reporter import undocumented_modalidades
+
+    assert undocumented_modalidades(pd.DataFrame({"link": ["1"]})) == []

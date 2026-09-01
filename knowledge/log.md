@@ -2,6 +2,15 @@
 
 ## 2026-09-01
 
+- O bundle passou a ser verificado contra o código, e não só contra si mesmo:
+  `scripts/check_bundle_contract.py` recusa divergência no identificador do
+  Archive (que tinha quatro cópias), nas colunas obrigatórias e nas
+  modalidades. A direção é sempre bundle verifica código — o bundle não gera
+  código de produção, porque um erro de markdown viraria corrupção de dado.
+
+- O script roda isolado via PEP 723, o que mantém `okf-parser` fora do
+  `pyproject.toml`: o pipeline continua instalável em 3.10.
+
 - Tipos de domínio: `Modalidade`, `Armadilha` e `Consulta`. Os seis primeiros
   tipos descreviam a mecânica do pipeline; nenhum dizia nada sobre imóveis.
 

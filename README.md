@@ -40,6 +40,17 @@ uvx --from okf-parser okf-parser check knowledge \
 uvx --from okf-parser okf-parser graph knowledge
 ```
 
+Três valores do bundle estão repetidos no código — o identificador do item no
+Archive, as colunas obrigatórias para publicar e as modalidades de venda. A
+repetição existe porque o `okf-parser` exige Python 3.12 e o pipeline suporta
+3.10; importá-lo em produção custaria esse suporte. A divergência entre as
+cópias é recusada no CI por um script isolado, com dependências declaradas em
+PEP 723:
+
+```bash
+uv run scripts/check_bundle_contract.py
+```
+
 ## Pré-requisitos
 
 - Python 3.10 ou superior

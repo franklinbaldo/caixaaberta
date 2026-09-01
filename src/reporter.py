@@ -13,6 +13,25 @@ REQUIRED_PUBLICATION_COLUMNS = {
     "preco",
 }
 
+# Espelha os conceitos Modalidade de knowledge/. A divergência entre as duas
+# listas é recusada por scripts/check_bundle_contract.py.
+KNOWN_MODALIDADES = frozenset(
+    {
+        "Leilão SFI - Edital Único",
+        "Licitação Aberta",
+        "Venda Direta Online",
+        "Venda Online",
+    }
+)
+
+
+def undocumented_modalidades(df: pd.DataFrame) -> list[str]:
+    """Modalidades presentes no Parquet que o bundle não descreve."""
+    if "modalidade" not in df.columns:
+        return []
+    observed = set(df["modalidade"].dropna().astype(str).str.strip())
+    return sorted(observed - KNOWN_MODALIDADES - {""})
+
 
 def validate_publication_parquet(
     parquet_path: Path | str = DEFAULT_PARQUET_PATH,
@@ -68,6 +87,20 @@ def generate_report(parquet_path: Path | str = DEFAULT_PARQUET_PATH):
     print("Average price per state:")
     for state, avg_price in price_frame.groupby("estado")["preco"].mean().items():
         print(f"  {state}: {format_currency(avg_price)}")
+
+    if "modalidade" in df.columns:
+        print("Properties per modalidade:")
+        for modalidade, count in df.groupby("modalidade").size().items():
+            print(f"  {modalidade}: {count} properties")
+
+        novas = undocumented_modalidades(df)
+        if novas:
+            print(
+                "ATENÇÃO: modalidade sem conceito em knowledge/: "
+                + ", ".join(novas)
+                + ". Estatísticas de preço que a incluam misturam regimes de "
+                "venda diferentes."
+            )
 
     if "latitude" in df.columns and "longitude" in df.columns:
         total_geocoded = df["latitude"].notna().sum()
