@@ -3,9 +3,9 @@
 Consolida os dados de imóveis à venda da Caixa Econômica Federal em um único
 arquivo Parquet e publica esse arquivo no Internet Archive.
 
-O pipeline lê os CSVs por estado em `data/`, une tudo com Ibis sobre DuckDB,
-geocodifica os endereços sem coordenadas e grava
-`output_data/imoveis_geocoded.parquet`.
+O pipeline baixa a lista de imóveis de cada estado no site da Caixa, grava os
+CSVs por estado em `data/`, une tudo com Ibis sobre DuckDB, geocodifica os
+endereços sem coordenadas e grava `output_data/imoveis_geocoded.parquet`.
 
 ## Consumir os dados
 
@@ -45,8 +45,8 @@ Copie `.env.sample` para `.env` e preencha o que for usar:
 - `GEOCODER_KEY`: nome legado da variável usada como User-Agent do Nominatim
   por `src/geocoding_utils.py`; o valor deve identificar o cliente, de
   preferência com uma forma de contato. Não é uma API key do Nominatim.
-- `URL_BASE`: origem dos dados da Caixa. Ainda não consumida pelo código —
-  veja `TODO.md`.
+- `URL_BASE`: molde da URL da lista por estado, com `{}` no lugar da UF. O
+  padrão é `https://venda-imoveis.caixa.gov.br/listaweb/Lista_imoveis_{}.csv`.
 
 ## Rodar o pipeline
 
@@ -56,6 +56,7 @@ Copie `.env.sample` para `.env` e preencha o que for usar:
 
 Sem `--upload-dry-run`, o script publica no Internet Archive. Outras opções:
 
+- `--skip-fetch`: pula o download e usa os CSVs já presentes em `data/`.
 - `--skip-processing`: pula o processamento e publica o Parquet já existente.
 - `--skip-upload`: só processa, não publica.
 - `--archive-item-identifier`, `--archive-item-title`,

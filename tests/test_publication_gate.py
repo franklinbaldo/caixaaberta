@@ -75,9 +75,36 @@ def test_pipeline_does_not_upload_when_publication_gate_fails(
 
     monkeypatch.setattr(run_pipeline, "DEFAULT_PARQUET_PATH", tmp_path / "missing.parquet")
     monkeypatch.setattr(run_pipeline, "upload_files_to_archive", fake_upload)
-    monkeypatch.setattr(sys, "argv", ["run_pipeline.py", "--skip-processing"])
+    monkeypatch.setattr(
+        sys, "argv", ["run_pipeline.py", "--skip-fetch", "--skip-processing"]
+    )
 
     with pytest.raises(FileNotFoundError, match="Parquet não encontrado"):
         run_pipeline.main()
 
     assert not called
+
+
+def test_pipeline_fetches_before_processing(monkeypatch, tmp_path):
+    calls = []
+
+    monkeypatch.setattr(run_pipeline, "fetch_all_states", lambda: calls.append("fetch"))
+    monkeypatch.setattr(
+        run_pipeline, "process_local_data", lambda: calls.append("process")
+    )
+    monkeypatch.setattr(sys, "argv", ["run_pipeline.py", "--skip-upload"])
+
+    run_pipeline.main()
+
+    assert calls == ["fetch", "process"]
+
+
+def test_pipeline_skip_fetch_does_not_download(monkeypatch, tmp_path):
+    def fail_fetch():
+        raise AssertionError("fetch não deveria ser chamado com --skip-fetch")
+
+    monkeypatch.setattr(run_pipeline, "fetch_all_states", fail_fetch)
+    monkeypatch.setattr(run_pipeline, "process_local_data", lambda: None)
+    monkeypatch.setattr(sys, "argv", ["run_pipeline.py", "--skip-fetch", "--skip-upload"])
+
+    run_pipeline.main()

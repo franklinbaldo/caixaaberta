@@ -70,3 +70,89 @@ def test_process_local_data_no_csvs(mock_glob):
 
     with pytest.raises(FileNotFoundError, match="Nenhum arquivo CSV encontrado"):
         process_local_data()
+
+
+CAIXA_CSV = (
+    "\n Lista de Imóveis da Caixa;;Data de geração:;31/08/2026;;;;;;;\n"
+    " N° do imóvel;UF;Cidade;Bairro;Endereço;Preço;Valor de avaliação;Desconto;"
+    "Financiamento;Descrição;Modalidade de venda;Link de acesso\n"
+    " 10218509 ;RO ;PORTO VELHO ;LIBERDADE ;AVENIDA PARÁ, N. 00 ;99.743,11;"
+    "170.000,00;41.33;Não;Terreno.;Venda Direta Online;https://exemplo/1\n"
+    " 10307865 ;RO ;CACOAL ;CENTRO ;RUA IJAD DID, N. SN ;1.160.000,00;"
+    "1.160.000,00;0.00;Sim;Casa.;Leilão SFI;https://exemplo/2\n"
+    ";;;;;;;;;;;\n"
+)
+
+
+def test_parse_caixa_csv_maps_columns_and_values():
+    from fetch_data import CSV_COLUMNS, parse_caixa_csv
+
+    df = parse_caixa_csv(CAIXA_CSV.encode("latin-1"))
+
+    assert list(df.columns) == CSV_COLUMNS
+    assert len(df) == 2
+    assert df.iloc[0]["link"] == "10218509"
+    assert df.iloc[0]["cidade"] == "PORTO VELHO"
+    assert df.iloc[0]["estado"] == "RO"
+    assert df.iloc[0]["preco"] == pytest.approx(99743.11)
+    assert df.iloc[0]["avaliacao"] == pytest.approx(170000.0)
+    assert df.iloc[0]["desconto"] == pytest.approx(41.33)
+    assert df.iloc[1]["modalidade"] == "Leilão SFI"
+
+
+def test_parse_caixa_csv_without_header_fails():
+    from fetch_data import FetchError, parse_caixa_csv
+
+    with pytest.raises(FetchError, match="Cabeçalho"):
+        parse_caixa_csv("qualquer coisa;sem cabeçalho\n")
+
+
+def test_fetch_all_states_writes_csvs(tmp_path, requests_mock):
+    from fetch_data import fetch_all_states
+
+    url_base = "https://exemplo.test/Lista_imoveis_{}.csv"
+    for uf in ("RO", "SP"):
+        requests_mock.get(
+            url_base.format(uf), content=CAIXA_CSV.encode("latin-1")
+        )
+
+    frames = fetch_all_states(
+        url_base=url_base, input_dir=str(tmp_path), ufs=["RO", "SP"], delay=0
+    )
+
+    assert set(frames) == {"RO", "SP"}
+    written = pd.read_csv(tmp_path / "imoveis_RO.csv")
+    assert len(written) == 2
+    assert written.iloc[0]["link"] == 10218509
+
+
+def test_fetch_all_states_fails_on_empty_state(tmp_path, requests_mock):
+    from fetch_data import FetchError, fetch_all_states
+
+    url_base = "https://exemplo.test/Lista_imoveis_{}.csv"
+    requests_mock.get(
+        url_base.format("RO"), content=CAIXA_CSV.encode("latin-1")
+    )
+    empty = CAIXA_CSV.split("\n")[:3]
+    requests_mock.get(
+        url_base.format("SP"), content="\n".join(empty).encode("latin-1")
+    )
+
+    with pytest.raises(FetchError, match="SP"):
+        fetch_all_states(
+            url_base=url_base, input_dir=str(tmp_path), ufs=["RO", "SP"], delay=0
+        )
+
+    assert not list(tmp_path.glob("*.csv"))
+
+
+def test_fetch_all_states_fails_on_http_error(tmp_path, requests_mock):
+    from fetch_data import FetchError, fetch_all_states
+
+    url_base = "https://exemplo.test/Lista_imoveis_{}.csv"
+    requests_mock.get(url_base.format("RO"), status_code=404)
+
+    with pytest.raises(FetchError, match="HTTP 404"):
+        fetch_all_states(
+            url_base=url_base, input_dir=str(tmp_path), ufs=["RO"], delay=0
+        )
