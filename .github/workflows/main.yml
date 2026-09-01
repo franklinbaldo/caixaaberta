@@ -6,6 +6,15 @@ on:
   push:
     branches: [main]
   workflow_dispatch:
+    inputs:
+      run_fetch:
+        description: >-
+          Baixar a lista da Caixa antes de publicar. Desligado por padrão: o
+          anti-bot da Caixa bloqueia a maior parte das requisições e o
+          pipeline exige as 27 UFs. Ligue para medir a taxa de sucesso a
+          partir do runner.
+        type: boolean
+        default: false
 
 jobs:
   validate:
@@ -64,7 +73,9 @@ jobs:
           IA_ACCESS_KEY: ${{ secrets.IA_ACCESS_KEY }}
           IA_SECRET_KEY: ${{ secrets.IA_SECRET_KEY }}
           GEOCODER_KEY: ${{ secrets.GEOCODER_KEY }}
-        run: .venv/bin/python src/run_pipeline.py
+          FETCH_FLAG: ${{ inputs.run_fetch && ' ' || '--skip-fetch' }}
+        run: |
+          .venv/bin/python src/run_pipeline.py $FETCH_FLAG
 
       - name: Upload generated Parquet as workflow artifact
         uses: actions/upload-artifact@v4

@@ -24,6 +24,20 @@ Para regerar esse DDL apontando para outro item do Archive:
 python src/generate_ddl.py --identifier <ID_DO_ITEM>
 ```
 
+### O download não está ligado na publicação automática
+
+O job de publicação roda com `--skip-fetch`. A Caixa serve os CSVs atrás do
+Radware Bot Manager, que responde HTTP 200 com uma página de bloqueio: em
+medição de 01/09/2026, cerca de 6 em 8 requisições de um IP de datacenter
+foram bloqueadas, e o pipeline exige as 27 UFs. Ligar o download no caminho
+normal trocaria "publicar dado velho" por "não publicar nada".
+
+Enquanto não houver rota de aquisição confiável, o download é acionado à mão:
+em **Actions → Real Estate Data Pipeline → Run workflow**, marque `run_fetch`.
+Uma execução que conclui as 27 UFs é a prova que falta para ligá-lo por
+padrão; uma que falha mede a taxa de bloqueio a partir do runner, que é a
+primeira tarefa aberta no `TODO.md`.
+
 ## Documentação do dataset
 
 `knowledge/` é um bundle [OKF v0.2](https://github.com/GoogleCloudPlatform/knowledge-catalog/blob/main/okf/SPEC.md)
@@ -84,6 +98,7 @@ Copie `.env.sample` para `.env` e preencha o que for usar:
 Sem `--upload-dry-run`, o script publica no Internet Archive. Outras opções:
 
 - `--skip-fetch`: pula o download e usa os CSVs já presentes em `data/`.
+  Implícito em `--skip-processing`, que não tem o que fazer com dado novo.
 - `--skip-processing`: pula o processamento e publica o Parquet já existente.
 - `--skip-upload`: só processa, não publica.
 - `--archive-item-identifier`, `--archive-item-title`,
