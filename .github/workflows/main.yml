@@ -7,12 +7,11 @@ on:
     branches: [main]
   workflow_dispatch:
     inputs:
-      run_fetch:
+      skip_fetch:
         description: >-
-          Baixar a lista da Caixa antes de publicar. Desligado por padrão: o
-          anti-bot da Caixa bloqueia a maior parte das requisições e o
-          pipeline exige as 27 UFs. Ligue para medir a taxa de sucesso a
-          partir do runner.
+          Publicar sem baixar da Caixa. Só faz sentido para republicar o
+          último Parquet: sem download não há dado de entrada, porque os CSVs
+          não são versionados.
         type: boolean
         default: false
 
@@ -72,12 +71,12 @@ jobs:
         env:
           IA_ACCESS_KEY: ${{ secrets.IA_ACCESS_KEY }}
           IA_SECRET_KEY: ${{ secrets.IA_SECRET_KEY }}
-          RUN_FETCH: ${{ inputs.run_fetch || false }}
+          SKIP_FETCH: ${{ inputs.skip_fetch || false }}
         run: |
-          if [ "$RUN_FETCH" = "true" ]; then
-            .venv/bin/python src/run_pipeline.py
-          else
+          if [ "$SKIP_FETCH" = "true" ]; then
             .venv/bin/python src/run_pipeline.py --skip-fetch
+          else
+            .venv/bin/python src/run_pipeline.py
           fi
 
       - name: Upload generated Parquet as workflow artifact

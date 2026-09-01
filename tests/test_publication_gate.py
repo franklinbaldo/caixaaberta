@@ -86,7 +86,9 @@ def test_pipeline_does_not_upload_when_publication_gate_fails(
 def test_pipeline_fetches_before_processing(monkeypatch, tmp_path):
     calls = []
 
-    monkeypatch.setattr(run_pipeline, "fetch_all_states", lambda: calls.append("fetch"))
+    monkeypatch.setattr(
+        run_pipeline, "fetch_all_states", lambda **kw: calls.append("fetch")
+    )
     monkeypatch.setattr(
         run_pipeline, "process_local_data", lambda: calls.append("process")
     )
@@ -98,7 +100,7 @@ def test_pipeline_fetches_before_processing(monkeypatch, tmp_path):
 
 
 def test_pipeline_skip_fetch_does_not_download(monkeypatch, tmp_path):
-    def fail_fetch():
+    def fail_fetch(**kwargs):
         raise AssertionError("fetch não deveria ser chamado com --skip-fetch")
 
     monkeypatch.setattr(run_pipeline, "fetch_all_states", fail_fetch)
@@ -135,7 +137,7 @@ def test_undocumented_modalidades_without_the_column():
 def test_skip_processing_alone_does_not_download(monkeypatch, tmp_path):
     """--skip-processing publica o Parquet existente sem depender da Caixa."""
 
-    def fail_fetch():
+    def fail_fetch(**kwargs):
         raise AssertionError("fetch não deveria ser chamado com --skip-processing")
 
     uploaded = []

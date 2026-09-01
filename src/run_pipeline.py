@@ -1,4 +1,7 @@
 import argparse
+import shutil
+import tempfile
+from pathlib import Path
 
 from fetch_data import fetch_all_states, process_local_data
 from reporter import DEFAULT_PARQUET_PATH, validate_publication_parquet
@@ -58,7 +61,15 @@ def main():
         print("Pulando o download dos dados da Caixa.")
     else:
         print("Baixando os dados da Caixa...")
-        fetch_all_states()
+        with tempfile.TemporaryDirectory() as bruto:
+            fetch_all_states(raw_dir=bruto)
+            # O CSV como a Caixa serviu vai para o Archive junto do Parquet: é
+            # a fonte primária, e some assim que a Caixa atualiza a lista.
+            saida = Path("output_data")
+            saida.mkdir(parents=True, exist_ok=True)
+            shutil.make_archive(
+                str(saida / "imoveis_csv_bruto"), "zip", root_dir=bruto
+            )
         print("Download dos dados da Caixa concluído.")
 
     if not args.skip_processing:

@@ -130,7 +130,7 @@ def parse_caixa_csv(content):
     return df[CSV_COLUMNS]
 
 
-def fetch_state(uf, url_base=None, session=None, timeout=60, jitter=(0.8, 2.5)):
+def fetch_state(uf, url_base=None, session=None, timeout=60, jitter=(0.8, 2.5), raw_dir=None):
     """Baixa e interpreta a lista de imóveis de um estado, uma tentativa.
 
     Cada chamada usa uma sessão HTTP nova de propósito. O anti-bot da Caixa
@@ -157,13 +157,26 @@ def fetch_state(uf, url_base=None, session=None, timeout=60, jitter=(0.8, 2.5)):
     if df.empty:
         raise FetchError(f"{uf}: a Caixa não retornou nenhum imóvel.")
 
+    # O CSV original é a fonte primária e desaparece quando a Caixa atualiza a
+    # lista. O Parquet publicado é derivado; só o bruto preserva o cabeçalho
+    # com a data de geração e o texto exatamente como a Caixa escreveu.
+    if raw_dir is not None:
+        destino = Path(raw_dir)
+        destino.mkdir(parents=True, exist_ok=True)
+        (destino / f"Lista_imoveis_{uf}.csv").write_bytes(response.content)
+
     if jitter:
         time.sleep(random.uniform(*jitter))
     return df
 
 
 def fetch_all_states(
-    url_base=None, input_dir=None, ufs=None, rodadas=4, espera_entre_rodadas=20.0
+    url_base=None,
+    input_dir=None,
+    ufs=None,
+    rodadas=4,
+    espera_entre_rodadas=20.0,
+    raw_dir=None,
 ):
     """Baixa todos os estados e reescreve os CSVs em `data/`.
 
@@ -186,7 +199,7 @@ def fetch_all_states(
         falharam = []
         for uf in pendentes:
             try:
-                frames[uf] = fetch_state(uf, url_base=url_base)
+                frames[uf] = fetch_state(uf, url_base=url_base, raw_dir=raw_dir)
             except BlockedError:
                 falharam.append(uf)
         pendentes = falharam

@@ -2,6 +2,12 @@
 
 ## 2026-09-01
 
+- Os CSVs saíram do versionamento. Commitá-los foi um erro de arquitetura: 6,9
+  MB por retrato, num histórico que o git guarda para sempre e ninguém
+  consulta — até 2,5 GB/ano no pior caso. O Archive já versiona e serve, e
+  passou a receber `imoveis_csv_bruto.zip` junto do Parquet. Dado no Archive,
+  código no git.
+
 - O anti-bot da Caixa foi contornado, e a descoberta não foi teimosia: o
   bloqueio pune sessão reusada e User-Agent incoerente, não volume. Sessão
   nova por requisição mais cabeçalhos de navegador coerentes levam 27 UFs em

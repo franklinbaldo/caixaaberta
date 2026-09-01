@@ -245,3 +245,37 @@ def test_bloqueio_em_todas_as_rodadas_nao_grava_nada(tmp_path, requests_mock):
         )
 
     assert not list(tmp_path.glob("*.csv"))
+
+
+def test_o_csv_original_da_caixa_e_preservado(tmp_path, requests_mock):
+    """O Parquet é derivado; só o bruto guarda o que a Caixa serviu."""
+    from fetch_data import fetch_state
+
+    bruto = CAIXA_CSV.encode("latin-1")
+    requests_mock.get("https://exemplo.test/Lista_imoveis_RO.csv", content=bruto)
+
+    fetch_state(
+        "RO",
+        url_base="https://exemplo.test/Lista_imoveis_{}.csv",
+        jitter=None,
+        raw_dir=tmp_path,
+    )
+
+    salvo = (tmp_path / "Lista_imoveis_RO.csv").read_bytes()
+    assert salvo == bruto
+    assert "Data de geração" in salvo.decode("latin-1")
+
+
+def test_sem_raw_dir_nada_e_preservado(tmp_path, requests_mock):
+    from fetch_data import fetch_state
+
+    requests_mock.get(
+        "https://exemplo.test/Lista_imoveis_RO.csv",
+        content=CAIXA_CSV.encode("latin-1"),
+    )
+
+    fetch_state(
+        "RO", url_base="https://exemplo.test/Lista_imoveis_{}.csv", jitter=None
+    )
+
+    assert not list(tmp_path.iterdir())

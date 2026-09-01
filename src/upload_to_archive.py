@@ -15,8 +15,14 @@ def upload_files_to_archive(identifier, title, description, files_dir, dry_run=F
     """
     load_dotenv()
 
-    files_to_upload = [str(p) for p in Path(files_dir).glob("*.parquet")]
-    if not files_to_upload:
+    # O Parquet é o dado publicado; o zip preserva o CSV como a Caixa serviu.
+    publicaveis = ("*.parquet", "*.zip")
+    files_to_upload = sorted(
+        str(caminho)
+        for padrao in publicaveis
+        for caminho in Path(files_dir).glob(padrao)
+    )
+    if not any(f.endswith(".parquet") for f in files_to_upload):
         raise FileNotFoundError(f"Nenhum arquivo .parquet encontrado em {files_dir}")
 
     metadata = {

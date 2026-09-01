@@ -11,7 +11,10 @@ schedule: manual e a cada push em main
 Quatro etapas, nesta ordem:
 
 1. **Download** — `fetch_all_states` busca a lista de cada UF na
-   [fonte da Caixa](fonte-caixa.md) e reescreve `data/imoveis_<UF>.csv`. É
+   [fonte da Caixa](fonte-caixa.md), escreve `data/imoveis_<UF>.csv` para o
+   processamento e guarda o CSV original para
+   [publicação](publicacao-archive.md). `data/` não é versionado: o dado vive
+   no Archive, não no git. É
    all-or-nothing: os arquivos só são gravados depois que todos os estados
    voltam com linhas. Os estados são percorridos em rodadas: um bloqueio devolve o estado à fila em
    vez de insistir nele, que é o que o anti-bot da [fonte](fonte-caixa.md)
