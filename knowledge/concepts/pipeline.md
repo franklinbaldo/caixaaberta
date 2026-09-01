@@ -13,8 +13,9 @@ Quatro etapas, nesta ordem:
 1. **Download** — `fetch_all_states` busca a lista de cada UF na
    [fonte da Caixa](fonte-caixa.md) e reescreve `data/imoveis_<UF>.csv`. É
    all-or-nothing: os arquivos só são gravados depois que todos os estados
-   voltam com linhas. Cada estado é tentado até seis vezes, com espera crescente, por causa do
-   anti-bot descrito na [fonte](fonte-caixa.md). Pode ser pulado com
+   voltam com linhas. Os estados são percorridos em rodadas: um bloqueio devolve o estado à fila em
+   vez de insistir nele, que é o que o anti-bot da [fonte](fonte-caixa.md)
+   pune. Pode ser pulado com
    `--skip-fetch`, e é pulado de todo modo sob `--skip-processing`, que não
    teria o que fazer com dado novo. A publicação automática roda com o
    download desligado — ver [fonte](fonte-caixa.md).

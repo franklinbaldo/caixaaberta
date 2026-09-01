@@ -24,19 +24,17 @@ Para regerar esse DDL apontando para outro item do Archive:
 python src/generate_ddl.py --identifier <ID_DO_ITEM>
 ```
 
-### O download não está ligado na publicação automática
+### O download e o anti-bot da Caixa
 
-O job de publicação roda com `--skip-fetch`. A Caixa serve os CSVs atrás do
-Radware Bot Manager, que responde HTTP 200 com uma página de bloqueio: em
-medição de 01/09/2026, cerca de 6 em 8 requisições de um IP de datacenter
-foram bloqueadas, e o pipeline exige as 27 UFs. Ligar o download no caminho
-normal trocaria "publicar dado velho" por "não publicar nada".
+A Caixa serve os CSVs atrás do Radware Bot Manager, que responde HTTP 200 com
+uma página de bloqueio no lugar do arquivo. O pipeline contorna isso mandando
+um conjunto coerente de cabeçalhos de navegador, abrindo sessão HTTP nova a
+cada requisição e percorrendo os estados em rodadas em vez de insistir num
+deles. As 27 UFs vêm em 86 segundos.
 
-Enquanto não houver rota de aquisição confiável, o download é acionado à mão:
-em **Actions → Real Estate Data Pipeline → Run workflow**, marque `run_fetch`.
-Uma execução que conclui as 27 UFs é a prova que falta para ligá-lo por
-padrão; uma que falha mede a taxa de bloqueio a partir do runner, que é a
-primeira tarefa aberta no `TODO.md`.
+O job de publicação ainda roda com `--skip-fetch` até que uma execução no
+runner do GitHub confirme as 27 UFs de lá: em **Actions → Real Estate Data
+Pipeline → Run workflow**, marque `run_fetch`.
 
 ## Documentação do dataset
 
