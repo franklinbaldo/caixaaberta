@@ -23,3 +23,15 @@ SELECT estado, count(*) FROM imoveis_caixa GROUP BY estado;
 
 Publicar exige `IA_ACCESS_KEY` e `IA_SECRET_KEY`; `--upload-dry-run` dispensa
 as duas.
+
+O item sobe **sem coleção declarada**. O Archive recusa o upload inteiro quando
+o metadata nomeia uma coleção em que a conta não pode escrever — foi o que
+aconteceu com `opensource_data`, em 01/09/2026, com credencial válida:
+
+```
+Access Denied - You lack sufficient privileges to write to those collections
+```
+
+Sem coleção, o item fica na área geral da conta e pode ser movido depois por
+quem tenha o privilégio. `IA_COLLECTION` declara uma coleção quando a conta
+tiver acesso a ela.

@@ -82,7 +82,13 @@ uv pip install --python .venv/bin/python -e '.[dev]'
 Copie `.env.sample` para `.env` e preencha o que for usar:
 
 - `IA_ACCESS_KEY` e `IA_SECRET_KEY`: credenciais do Internet Archive. Exigidas
-  para publicar; dispensáveis com `--upload-dry-run`.
+  para publicar; dispensáveis com `--upload-dry-run`. Para conferir um par sem
+  gastar uma execução, use `archive.org/services/user.php?op=whoami` — os
+  endpoints do S3 do Archive respondem 200 mesmo sem credencial nenhuma e não
+  servem para validar.
+- `IA_COLLECTION`: coleção do item, opcional. Só declare uma em que a conta
+  tenha privilégio de escrita: o Archive recusa o upload inteiro caso
+  contrário.
 - `URL_BASE`: molde da URL da lista por estado, com `{}` no lugar da UF. O
   padrão é `https://venda-imoveis.caixa.gov.br/listaweb/Lista_imoveis_{}.csv`.
 
