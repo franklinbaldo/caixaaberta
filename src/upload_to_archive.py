@@ -6,7 +6,9 @@ from dotenv import load_dotenv
 from internetarchive import upload
 
 
-def upload_files_to_archive(identifier, title, description, files_dir, dry_run=False):
+def upload_files_to_archive(
+    identifier, title, description, files_dir, dry_run=False, exigir_bruto=True
+):
     """Upload all Parquet files in ``files_dir`` to one Internet Archive item.
 
     Publication is part of the pipeline contract: when a real upload is requested,
@@ -24,6 +26,17 @@ def upload_files_to_archive(identifier, title, description, files_dir, dry_run=F
     )
     if not any(f.endswith(".parquet") for f in files_to_upload):
         raise FileNotFoundError(f"Nenhum arquivo .parquet encontrado em {files_dir}")
+
+    # Publicar dado novo sem a fonte que o gerou quebra a proveniência: o
+    # Parquet é derivado e some do rastro quem o originou. A exceção é a
+    # republicação de um Parquet já existente, onde não há bruto novo a
+    # preservar — e nesse caso quem chama declara isso com exigir_bruto=False.
+    if exigir_bruto and not any(f.endswith(".zip") for f in files_to_upload):
+        raise FileNotFoundError(
+            f"Nenhum .zip com o CSV bruto em {files_dir}. Toda publicação de "
+            "dado novo leva a fonte junto; para republicar um Parquet "
+            "existente, chame com exigir_bruto=False."
+        )
 
     metadata = {
         "title": title,

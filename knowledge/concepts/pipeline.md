@@ -26,8 +26,8 @@ Quatro etapas, nesta ordem:
    tabelas, normaliza `bairro`, descarta linhas sem `link` e deduplica.
 3. **[Geocodificação](geocodificacao.md)** — casa os endereços com o CNEFE em
    DuckDB e preenche `latitude`, `longitude`, `precisao` e `desvio_metros`.
-4. **[Publicação](publicacao-archive.md)** — valida o Parquet e envia ao
-   Internet Archive.
+4. **[Publicação](publicacao-archive.md)** — valida o Parquet, exige o CSV
+   bruto junto e envia os dois ao Internet Archive.
 
 O resultado é [um único Parquet](dataset-imoveis.md), não uma tabela por
 estado.

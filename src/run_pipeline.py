@@ -94,6 +94,9 @@ def main():
         description=args.archive_item_description,
         files_dir="output_data",
         dry_run=args.upload_dry_run,
+        # --skip-processing republica o Parquet que já existe; não há bruto
+        # novo a preservar, e é a única publicação sem a fonte junto.
+        exigir_bruto=not args.skip_processing,
     )
     if args.upload_dry_run:
         print("Dry-run de upload concluído.")

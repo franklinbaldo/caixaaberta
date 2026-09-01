@@ -159,3 +159,48 @@ def test_skip_processing_alone_does_not_download(monkeypatch, tmp_path):
     run_pipeline.main()
 
     assert len(uploaded) == 1
+
+
+def test_skip_processing_republica_sem_exigir_o_bruto(monkeypatch, tmp_path):
+    """A única publicação sem a fonte é declarada, não implícita."""
+    chamadas = []
+
+    monkeypatch.setattr(
+        run_pipeline, "fetch_all_states", lambda **kw: pytest.fail("não baixa")
+    )
+    monkeypatch.setattr(
+        run_pipeline, "process_local_data", lambda: pytest.fail("não processa")
+    )
+    monkeypatch.setattr(
+        run_pipeline, "validate_publication_parquet", lambda path: None
+    )
+    monkeypatch.setattr(
+        run_pipeline, "upload_files_to_archive", lambda **kw: chamadas.append(kw)
+    )
+    monkeypatch.setattr(
+        sys, "argv", ["run_pipeline.py", "--skip-processing", "--upload-dry-run"]
+    )
+
+    run_pipeline.main()
+
+    assert chamadas[0]["exigir_bruto"] is False
+
+
+def test_publicacao_normal_exige_o_bruto(monkeypatch, tmp_path):
+    chamadas = []
+
+    monkeypatch.setattr(run_pipeline, "fetch_all_states", lambda **kw: None)
+    monkeypatch.setattr(run_pipeline, "process_local_data", lambda: None)
+    monkeypatch.setattr(
+        run_pipeline, "validate_publication_parquet", lambda path: None
+    )
+    monkeypatch.setattr(
+        run_pipeline, "upload_files_to_archive", lambda **kw: chamadas.append(kw)
+    )
+    monkeypatch.setattr(
+        sys, "argv", ["run_pipeline.py", "--skip-fetch", "--upload-dry-run"]
+    )
+
+    run_pipeline.main()
+
+    assert chamadas[0]["exigir_bruto"] is True

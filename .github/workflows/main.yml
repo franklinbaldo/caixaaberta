@@ -5,15 +5,11 @@ on:
     branches: [main]
   push:
     branches: [main]
+  # Sem input para pular o download: o runner é efêmero e data/ não é
+  # versionado, então não existe entrada alternativa. Falhar quando a Caixa
+  # não responde é o comportamento correto — o Archive mantém a publicação
+  # anterior.
   workflow_dispatch:
-    inputs:
-      skip_fetch:
-        description: >-
-          Publicar sem baixar da Caixa. Só faz sentido para republicar o
-          último Parquet: sem download não há dado de entrada, porque os CSVs
-          não são versionados.
-        type: boolean
-        default: false
 
 jobs:
   validate:
@@ -71,13 +67,7 @@ jobs:
         env:
           IA_ACCESS_KEY: ${{ secrets.IA_ACCESS_KEY }}
           IA_SECRET_KEY: ${{ secrets.IA_SECRET_KEY }}
-          SKIP_FETCH: ${{ inputs.skip_fetch || false }}
-        run: |
-          if [ "$SKIP_FETCH" = "true" ]; then
-            .venv/bin/python src/run_pipeline.py --skip-fetch
-          else
-            .venv/bin/python src/run_pipeline.py
-          fi
+        run: .venv/bin/python src/run_pipeline.py
 
       - name: Upload generated Parquet as workflow artifact
         uses: actions/upload-artifact@v4
