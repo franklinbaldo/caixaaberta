@@ -23,9 +23,17 @@ def upload_files_to_archive(identifier, title, description, files_dir, dry_run=F
         "title": title,
         "description": description,
         "mediatype": "data",
-        "collection": "opensource_data",
         "subject": ["real estate", "brazil", "caixa"],
     }
+
+    # A coleção é opcional de propósito. Declarar uma em que a conta não tem
+    # privilégio de escrita faz o Archive recusar o upload inteiro com
+    # "Access Denied - You lack sufficient privileges to write to those
+    # collections" — foi o que aconteceu com "opensource_data". Sem coleção, o
+    # item entra na área geral da conta e um curador pode movê-lo depois.
+    collection = os.getenv("IA_COLLECTION")
+    if collection:
+        metadata["collection"] = collection
 
     print(f"Iniciando o upload para o item: {identifier}")
     if dry_run:

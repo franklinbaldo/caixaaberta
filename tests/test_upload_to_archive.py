@@ -115,3 +115,40 @@ def test_upload_files_to_archive_exception_propagates(
         )
 
     mock_upload.assert_called_once()
+
+
+@pytest.mark.usefixtures("mock_env")
+@patch("upload_to_archive.upload")
+def test_upload_omits_collection_by_default(mock_upload, dummy_files_dir):
+    """Sem IA_COLLECTION, o item sobe sem coleção declarada.
+
+    Declarar uma coleção sem privilégio de escrita faz o Archive recusar o
+    upload inteiro, e não há como saber de fora se a conta tem esse privilégio.
+    """
+    upload_files_to_archive(
+        identifier="test-identifier",
+        title="Test Title",
+        description="Test Description",
+        files_dir=str(dummy_files_dir),
+    )
+
+    metadata = mock_upload.call_args.kwargs["metadata"]
+    assert "collection" not in metadata
+    assert metadata["mediatype"] == "data"
+
+
+@pytest.mark.usefixtures("mock_env")
+@patch("upload_to_archive.upload")
+def test_upload_uses_collection_from_the_environment(
+    mock_upload, dummy_files_dir, monkeypatch
+):
+    monkeypatch.setenv("IA_COLLECTION", "opensource_data")
+
+    upload_files_to_archive(
+        identifier="test-identifier",
+        title="Test Title",
+        description="Test Description",
+        files_dir=str(dummy_files_dir),
+    )
+
+    assert mock_upload.call_args.kwargs["metadata"]["collection"] == "opensource_data"
