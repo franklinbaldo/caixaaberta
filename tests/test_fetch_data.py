@@ -13,8 +13,8 @@ from fetch_data import process_local_data
 @patch("fetch_data.ibis")
 @patch("fetch_data.pd.read_csv")
 @patch("fetch_data.Path.glob")
-@patch("fetch_data.get_coordinates_for_address")
-def test_process_local_data(mock_get_coords, mock_glob, mock_read_csv, mock_ibis, tmp_path):
+@patch("fetch_data.geocodificar")
+def test_process_local_data(mock_geocodificar, mock_glob, mock_read_csv, mock_ibis, tmp_path):
     # Setup mock data for CSVs
     mock_glob.return_value = [Path("data/imoveis_SP.csv")]
 
@@ -45,8 +45,16 @@ def test_process_local_data(mock_get_coords, mock_glob, mock_read_csv, mock_ibis
     # to_pandas returns a fresh copy of mock_df
     mock_table.to_pandas.return_value = mock_df.copy()
 
-    # Setup mock geocoding (should process 2 rows)
-    mock_get_coords.side_effect = [(-23.5, -46.6), (-23.6, -46.7)]
+    # A geocodificação por CNEFE devolve o quadro inteiro já preenchido.
+    def geocodifica(df, **kwargs):
+        out = df.copy()
+        out["latitude"] = [-23.5, -23.6]
+        out["longitude"] = [-46.6, -46.7]
+        out["precisao"] = "logradouro_localidade"
+        out["desvio_metros"] = 30.0
+        return out
+
+    mock_geocodificar.side_effect = geocodifica
 
     with patch("fetch_data.OUTPUT_DIR", str(tmp_path)):
         with patch.dict(os.environ, {"GEOCODER_KEY": "test_key"}):

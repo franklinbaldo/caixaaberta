@@ -20,6 +20,11 @@ conforme a modalidade.
 As modalidades são atributo de cada linha do [Dataset](dataset.md) e aparecem
 na coluna `modalidade` do [Schema](schema.md).
 
+Os conceitos descrevem as modalidades **da fonte atual**. A Caixa muda essa
+lista com o tempo: os CSVs de 2022 versionados em `data/` trazem `1º Leilão SFI`, `2º Leilão SFI` e `Venda Direta Especial`, que não aparecem mais em 2026.
+Modalidade extinta não ganha conceito — o aviso do relatório existe justamente
+para que a diferença apareça em vez de passar batida.
+
 O `title` é chave de junção com o dado: precisa bater literalmente com o valor
 da coluna, acentos incluídos. `KNOWN_MODALIDADES`, em `src/reporter.py`, repete
 esses títulos para que o relatório aponte modalidade não documentada;

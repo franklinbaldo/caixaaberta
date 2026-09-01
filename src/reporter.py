@@ -110,6 +110,18 @@ def generate_report(parquet_path: Path | str = DEFAULT_PARQUET_PATH):
             f"({total_geocoded} out of {len(df)} properties)"
         )
 
+    # A taxa acima conta como sucesso o centroide de município. Sem a quebra
+    # por precisão ela sugere um dataset localizado que não existe.
+    if "precisao" in df.columns:
+        print("Geocoding precision:")
+        for nivel, count in df["precisao"].value_counts().items():
+            print(f"  {nivel}: {count} ({count / len(df) * 100:.1f}%)")
+        rua = df["precisao"].isin(["logradouro_localidade", "logradouro"]).sum()
+        print(
+            f"  ao nível de logradouro ou melhor: {rua} "
+            f"({rua / len(df) * 100:.1f}%)"
+        )
+
 
 def main():
     generate_report()
