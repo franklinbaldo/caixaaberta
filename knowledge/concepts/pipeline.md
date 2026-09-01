@@ -13,7 +13,9 @@ Quatro etapas, nesta ordem:
 1. **Download** — `fetch_all_states` busca a lista de cada UF na
    [fonte da Caixa](fonte-caixa.md) e reescreve `data/imoveis_<UF>.csv`. É
    all-or-nothing: os arquivos só são gravados depois que todos os estados
-   voltam com linhas. Pode ser pulado com `--skip-fetch`.
+   voltam com linhas. Cada estado é tentado até seis vezes, com espera crescente, por causa do
+   anti-bot descrito na [fonte](fonte-caixa.md). Pode ser pulado com
+   `--skip-fetch`.
 2. **União** — `process_local_data` carrega os CSVs em DuckDB via Ibis, une as
    tabelas, normaliza `bairro`, descarta linhas sem `link` e deduplica.
 3. **[Geocodificação](geocodificacao.md)** — preenche `latitude` e `longitude`

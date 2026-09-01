@@ -156,3 +156,40 @@ def test_fetch_all_states_fails_on_http_error(tmp_path, requests_mock):
         fetch_all_states(
             url_base=url_base, input_dir=str(tmp_path), ufs=["RO"], delay=0
         )
+
+
+BLOCK_PAGE = b"<head><title>Radware Bot Manager Block</title></head>"
+
+
+def test_fetch_state_retries_past_the_anti_bot_page(requests_mock):
+    from fetch_data import fetch_state
+
+    url = "https://exemplo.test/Lista_imoveis_RO.csv"
+    requests_mock.get(
+        url,
+        [
+            {"content": BLOCK_PAGE},
+            {"content": BLOCK_PAGE},
+            {"content": CAIXA_CSV.encode("latin-1")},
+        ],
+    )
+
+    df = fetch_state(
+        "RO", url_base="https://exemplo.test/Lista_imoveis_{}.csv", backoff=0
+    )
+
+    assert len(df) == 2
+
+
+def test_fetch_state_reports_a_persistent_block(requests_mock):
+    from fetch_data import BlockedError, fetch_state
+
+    requests_mock.get("https://exemplo.test/Lista_imoveis_RO.csv", content=BLOCK_PAGE)
+
+    with pytest.raises(BlockedError, match="anti-bot"):
+        fetch_state(
+            "RO",
+            url_base="https://exemplo.test/Lista_imoveis_{}.csv",
+            attempts=2,
+            backoff=0,
+        )

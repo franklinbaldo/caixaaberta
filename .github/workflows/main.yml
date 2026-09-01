@@ -32,7 +32,7 @@ jobs:
 
       - name: Validar o bundle OKF
         run: |
-          "$HOME/.local/bin/uvx" --from okf-parser==0.45.2 okf-parser check knowledge
+          "$HOME/.local/bin/uvx" --from okf-parser==0.45.2 okf-parser check knowledge --require-spec 'types/{slug}.md' --normative-spec
 
   publish:
     if: github.event_name != 'pull_request'

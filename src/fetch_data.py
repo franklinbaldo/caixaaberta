@@ -49,6 +49,16 @@ class FetchError(RuntimeError):
     """Falha ao baixar ou interpretar a lista de imóveis de um estado."""
 
 
+class BlockedError(FetchError):
+    """O anti-bot da Caixa respondeu no lugar do CSV."""
+
+
+def _is_block_page(content):
+    """Reconhece a página do Radware Bot Manager, servida com HTTP 200."""
+    head = content[:2048].lower()
+    return b"bot manager" in head or b"<html" in head or b"<head>" in head
+
+
 def parse_caixa_csv(content):
     """Converte o CSV da Caixa (latin-1, ';', duas linhas de preâmbulo) em DataFrame.
 
@@ -96,18 +106,35 @@ def parse_caixa_csv(content):
     return df[CSV_COLUMNS]
 
 
-def fetch_state(uf, url_base=None, session=None, timeout=60):
-    """Baixa e interpreta a lista de imóveis de um estado."""
+def fetch_state(uf, url_base=None, session=None, timeout=60, attempts=6, backoff=2.0):
+    """Baixa e interpreta a lista de imóveis de um estado.
+
+    A Caixa serve o CSV atrás de um anti-bot que responde HTTP 200 com uma
+    página HTML de bloqueio. O bloqueio é intermitente, então cada estado é
+    tentado várias vezes com espera crescente antes de desistir.
+    """
     url_base = url_base or os.getenv("URL_BASE") or DEFAULT_URL_BASE
     getter = session.get if session is not None else requests.get
-    response = getter(url_base.format(uf), timeout=timeout)
-    if response.status_code != 200:
-        raise FetchError(f"{uf}: a Caixa respondeu HTTP {response.status_code}.")
+    url = url_base.format(uf)
 
-    df = parse_caixa_csv(response.content)
-    if df.empty:
-        raise FetchError(f"{uf}: a Caixa não retornou nenhum imóvel.")
-    return df
+    for attempt in range(1, attempts + 1):
+        response = getter(url, timeout=timeout)
+        if response.status_code != 200:
+            raise FetchError(f"{uf}: a Caixa respondeu HTTP {response.status_code}.")
+
+        if not _is_block_page(response.content):
+            df = parse_caixa_csv(response.content)
+            if df.empty:
+                raise FetchError(f"{uf}: a Caixa não retornou nenhum imóvel.")
+            return df
+
+        if attempt < attempts:
+            time.sleep(backoff * 2 ** (attempt - 1))
+
+    raise BlockedError(
+        f"{uf}: o anti-bot da Caixa bloqueou as {attempts} tentativas. "
+        "O CSV não foi servido; nada foi gravado."
+    )
 
 
 def fetch_all_states(url_base=None, input_dir=None, ufs=None, delay=1.0):

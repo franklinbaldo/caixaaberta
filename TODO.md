@@ -17,9 +17,28 @@ O que fazer:
 3. Publicar o Parquet mesmo com geocodificação incompleta, registrando a
    cobertura no relatório.
 
+### 2. Contornar o anti-bot da Caixa
+
+A Caixa serve o CSV atrás do Radware Bot Manager, que devolve HTTP 200 com uma
+página de bloqueio. Em medição de 01/09/2026, cerca de 6 em 8 requisições de um
+IP de datacenter foram bloqueadas; User-Agent de navegador não ajudou. Com seis
+tentativas e espera crescente, 1 de 3 estados passou.
+
+Enquanto isso não for resolvido, o job de publicação vai falhar na maior parte
+das execuções — o que é preferível a publicar dado velho como se fosse novo,
+mas não é o objetivo.
+
+O que investigar, em ordem de custo:
+
+1. Medir a taxa de sucesso a partir do runner do GitHub Actions, que tem IP e
+   reputação diferentes deste ambiente.
+2. Espaçar os estados ao longo de uma janela maior, em vez de 27 requisições em
+   sequência.
+3. Avaliar o endpoint `busca-imovel.asp` como alternativa ao arquivo estático.
+
 ## Média prioridade
 
-### 2. Versionar os CSVs baixados
+### 3. Versionar os CSVs baixados
 
 Hoje o download reescreve `data/` dentro do runner e o resultado se perde. Vale
 decidir se os CSVs continuam versionados (com um commit automático a cada run)

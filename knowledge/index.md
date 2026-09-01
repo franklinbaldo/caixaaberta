@@ -14,3 +14,30 @@ código. É validado no CI com `okf-parser check knowledge`.
 - [Dataset de imóveis](concepts/dataset-imoveis.md)
 - [Esquema do Parquet](concepts/esquema-parquet.md)
 - [Publicação no Internet Archive](concepts/publicacao-archive.md)
+
+## Modalidades de venda
+
+O campo que mais muda a leitura de um imóvel. Só a primeira tem preço fixo.
+
+- [Venda Direta Online](concepts/modalidades/venda-direta-online.md)
+- [Venda Online](concepts/modalidades/venda-online.md)
+- [Leilão SFI - Edital Único](concepts/modalidades/leilao-sfi.md)
+- [Licitação Aberta](concepts/modalidades/licitacao-aberta.md)
+
+## Armadilhas
+
+Leituras intuitivas do dado que produzem conclusão errada.
+
+- [preco não é o preço de venda](concepts/armadilhas/preco-nao-e-preco-de-venda.md)
+- [desconto zero não é ausência de dado](concepts/armadilhas/desconto-zero-nao-e-ausencia-de-dado.md)
+- [o acervo não tem histórico](concepts/armadilhas/acervo-nao-tem-historico.md)
+
+## Consultas
+
+- [Acervo por modalidade e estado](concepts/consultas/acervo-por-modalidade.md)
+- [Maiores descontos por estado](concepts/consultas/maiores-descontos-por-uf.md)
+
+## Tipos
+
+Cada `type` usado acima é definido em [`types/`](types/spec.md), e o CI recusa
+um tipo novo sem definição.

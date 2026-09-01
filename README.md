@@ -27,11 +27,16 @@ python src/generate_ddl.py --identifier <ID_DO_ITEM>
 ## Documentação do dataset
 
 `knowledge/` é um bundle [OKF v0.2](https://github.com/GoogleCloudPlatform/knowledge-catalog/blob/main/okf/SPEC.md)
-que descreve a fonte, o pipeline, o esquema do Parquet e a publicação — para
-quem consome o dado sem ler o código. O CI valida o bundle a cada push:
+com 25 conceitos: a fonte, o pipeline, o esquema do Parquet, a publicação, as
+quatro modalidades de venda, as armadilhas conhecidas do dado e consultas
+prontas. É a documentação para quem consome o dataset sem ler o código.
+
+O CI valida o bundle a cada push, exigindo definição de tipo para todo `type`
+usado:
 
 ```bash
-uvx --from okf-parser okf-parser check knowledge
+uvx --from okf-parser okf-parser check knowledge \
+  --require-spec 'types/{slug}.md' --normative-spec
 uvx --from okf-parser okf-parser graph knowledge
 ```
 
