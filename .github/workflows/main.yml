@@ -30,6 +30,10 @@ jobs:
       - name: Run Pytest tests
         run: .venv/bin/python -m pytest -v tests/
 
+      - name: Validar o bundle OKF
+        run: |
+          "$HOME/.local/bin/uvx" --from okf-parser==0.45.2 okf-parser check knowledge
+
   publish:
     if: github.event_name != 'pull_request'
     needs: validate
