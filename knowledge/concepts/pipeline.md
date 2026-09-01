@@ -20,8 +20,8 @@ Quatro etapas, nesta ordem:
    download desligado — ver [fonte](fonte-caixa.md).
 2. **União** — `process_local_data` carrega os CSVs em DuckDB via Ibis, une as
    tabelas, normaliza `bairro`, descarta linhas sem `link` e deduplica.
-3. **[Geocodificação](geocodificacao.md)** — preenche `latitude` e `longitude`
-   para os endereços que não as têm.
+3. **[Geocodificação](geocodificacao.md)** — casa os endereços com o CNEFE em
+   DuckDB e preenche `latitude`, `longitude`, `precisao` e `desvio_metros`.
 4. **[Publicação](publicacao-archive.md)** — valida o Parquet e envia ao
    Internet Archive.
 

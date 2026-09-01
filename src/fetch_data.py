@@ -8,7 +8,7 @@ import pandas as pd
 import ibis
 import requests
 
-from geocoding_utils import get_coordinates_for_address
+from geocode_cnefe import cobertura, geocodificar
 from utils import converter_valor_monetario_para_float, converter_percentual_para_float
 
 INPUT_DIR = "data"
@@ -200,39 +200,23 @@ def process_local_data():
     imoveis_table = imoveis_table.drop_null('link')
     imoveis_table = imoveis_table.distinct()
 
-    # Geocoding
+    # Geocodificação por CNEFE: um join em DuckDB, sem rede no caminho
+    # crítico. Ver src/geocode_cnefe.py e knowledge/concepts/geocodificacao.md.
     df = imoveis_table.to_pandas()
 
-    # Ensure latitude and longitude columns exist
     if 'latitude' not in df.columns:
         df['latitude'] = pd.NA
     if 'longitude' not in df.columns:
         df['longitude'] = pd.NA
-
     df['latitude'] = pd.to_numeric(df['latitude'], errors='coerce')
     df['longitude'] = pd.to_numeric(df['longitude'], errors='coerce')
 
-    rows_to_geocode = df['latitude'].isnull()
-
-    if rows_to_geocode.any():
-        address_cols = ['endereco', 'bairro', 'cidade', 'estado']
-        df['full_address'] = df[rows_to_geocode][address_cols].fillna('').astype(str).agg(', '.join, axis=1)
-
-        api_key = os.getenv("GEOCODER_KEY")
-        if not api_key:
-            print("Warning: GEOCODER_KEY environment variable not set. Geocoding may fail or be rate-limited.")
-
-        print(f"Starting geocoding for {rows_to_geocode.sum()} rows...")
-        geocoded_coords = df.loc[rows_to_geocode, 'full_address'].apply(
-            lambda addr: get_coordinates_for_address(addr, api_key=api_key) if pd.notna(addr) and addr.strip() else (None, None)
-        )
-
-        if not geocoded_coords.empty:
-            coords_df = pd.DataFrame(geocoded_coords.tolist(), index=df[rows_to_geocode].index, columns=['latitude_new', 'longitude_new'])
-            df.loc[rows_to_geocode, 'latitude'] = coords_df['latitude_new']
-            df.loc[rows_to_geocode, 'longitude'] = coords_df['longitude_new']
-
-        df = df.drop(columns=['full_address'])
+    pendentes = int(df['latitude'].isnull().sum())
+    if pendentes:
+        print(f"Geocodificando {pendentes} endereços pelo CNEFE...")
+        df = geocodificar(df)
+        for nivel, quantos in cobertura(df).items():
+            print(f"  {nivel}: {quantos}")
 
     # Save as a single Parquet file
     output_file = output_path / "imoveis_geocoded.parquet"

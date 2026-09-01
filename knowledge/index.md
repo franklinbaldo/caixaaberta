@@ -31,6 +31,7 @@ Leituras intuitivas do dado que produzem conclusão errada.
 - [preco não é o preço de venda](concepts/armadilhas/preco-nao-e-preco-de-venda.md)
 - [desconto zero não é ausência de dado](concepts/armadilhas/desconto-zero-nao-e-ausencia-de-dado.md)
 - [o acervo não tem histórico](concepts/armadilhas/acervo-nao-tem-historico.md)
+- [geocodificado não é localizado](concepts/armadilhas/geocodificado-nao-e-localizado.md)
 
 ## Consultas
 

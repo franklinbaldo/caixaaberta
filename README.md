@@ -83,9 +83,6 @@ Copie `.env.sample` para `.env` e preencha o que for usar:
 
 - `IA_ACCESS_KEY` e `IA_SECRET_KEY`: credenciais do Internet Archive. Exigidas
   para publicar; dispensáveis com `--upload-dry-run`.
-- `GEOCODER_KEY`: nome legado da variável usada como User-Agent do Nominatim
-  por `src/geocoding_utils.py`; o valor deve identificar o cliente, de
-  preferência com uma forma de contato. Não é uma API key do Nominatim.
 - `URL_BASE`: molde da URL da lista por estado, com `{}` no lugar da UF. O
   padrão é `https://venda-imoveis.caixa.gov.br/listaweb/Lista_imoveis_{}.csv`.
 

@@ -2,23 +2,7 @@
 
 ## Alta prioridade
 
-### 1. Tirar a geocodificação do caminho crítico
-
-`fetch_data.py` geocodifica linha a linha, de forma síncrona, dentro do job de
-publicação. São dezenas de milhares de endereços e o Nominatim limita a uma
-requisição por segundo. O cache é um arquivo DuckDB local, descartado a cada
-execução do CI, então todo run recomeça do zero. Por ser DuckDB, publicá-lo
-como artefato é exportar uma tabela — não exige gravador próprio.
-
-O que fazer:
-
-1. Publicar o cache `endereco → latitude, longitude` como artefato próprio no
-   Internet Archive e carregá-lo no início da execução.
-2. Geocodificar apenas endereços novos, com um teto por execução.
-3. Publicar o Parquet mesmo com geocodificação incompleta, registrando a
-   cobertura no relatório.
-
-### 2. Contornar o anti-bot da Caixa
+### 1. Contornar o anti-bot da Caixa
 
 A Caixa serve o CSV atrás do Radware Bot Manager, que devolve HTTP 200 com uma
 página de bloqueio. Em medição de 01/09/2026, cerca de 6 em 8 requisições de um
@@ -37,6 +21,17 @@ O que investigar, em ordem de custo:
 2. Espaçar os estados ao longo de uma janela maior, em vez de 27 requisições em
    sequência.
 3. Avaliar o endpoint `busca-imovel.asp` como alternativa ao arquivo estático.
+
+### 2. Melhorar a precisão da geocodificação
+
+Hoje 42,8% dos imóveis casam ao nível de logradouro; o resto cai para bairro ou
+município. Duas frentes, em ordem de custo:
+
+1. Usar a tabela `municipio_logradouro_numero_localidade` (616 MB) para casar
+   também o número, hoje descartado. Muitos registros da Caixa trazem `N. 00`,
+   então o ganho precisa ser medido antes de pagar o download.
+2. Padronizar o logradouro além das sete abreviações atuais. O `geocodebr` tem
+   uma camada de padronização bem mais completa, em R, que pode ser portada.
 
 ## Média prioridade
 

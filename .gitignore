@@ -133,3 +133,4 @@ dmypy.json
 .pyre/
 cache.sqlite
 cache.duckdb
+cnefe_cache/
