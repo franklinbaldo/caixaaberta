@@ -3,9 +3,9 @@
 Consolida os dados de imóveis à venda da Caixa Econômica Federal em um único
 arquivo Parquet e publica esse arquivo no Internet Archive.
 
-O pipeline lê os CSVs por estado em `data/`, une tudo com Ibis sobre DuckDB,
-geocodifica os endereços sem coordenadas e grava
-`output_data/imoveis_geocoded.parquet`.
+O pipeline baixa a lista de imóveis de cada estado no site da Caixa, grava os
+CSVs por estado em `data/`, une tudo com Ibis sobre DuckDB, geocodifica os
+endereços sem coordenadas e grava `output_data/imoveis_geocoded.parquet`.
 
 ## Consumir os dados
 
@@ -22,6 +22,47 @@ Para regerar esse DDL apontando para outro item do Archive:
 
 ```bash
 python src/generate_ddl.py --identifier <ID_DO_ITEM>
+```
+
+### O download não está ligado na publicação automática
+
+O job de publicação roda com `--skip-fetch`. A Caixa serve os CSVs atrás do
+Radware Bot Manager, que responde HTTP 200 com uma página de bloqueio: em
+medição de 01/09/2026, cerca de 6 em 8 requisições de um IP de datacenter
+foram bloqueadas, e o pipeline exige as 27 UFs. Ligar o download no caminho
+normal trocaria "publicar dado velho" por "não publicar nada".
+
+Enquanto não houver rota de aquisição confiável, o download é acionado à mão:
+em **Actions → Real Estate Data Pipeline → Run workflow**, marque `run_fetch`.
+Uma execução que conclui as 27 UFs é a prova que falta para ligá-lo por
+padrão; uma que falha mede a taxa de bloqueio a partir do runner, que é a
+primeira tarefa aberta no `TODO.md`.
+
+## Documentação do dataset
+
+`knowledge/` é um bundle [OKF v0.2](https://github.com/GoogleCloudPlatform/knowledge-catalog/blob/main/okf/SPEC.md)
+com 25 conceitos: a fonte, o pipeline, o esquema do Parquet, a publicação, as
+quatro modalidades de venda, as armadilhas conhecidas do dado e consultas
+prontas. É a documentação para quem consome o dataset sem ler o código.
+
+O CI valida o bundle a cada push, exigindo definição de tipo para todo `type`
+usado:
+
+```bash
+uvx --from okf-parser okf-parser check knowledge \
+  --require-spec 'types/{slug}.md' --normative-spec
+uvx --from okf-parser okf-parser graph knowledge
+```
+
+Três valores do bundle estão repetidos no código — o identificador do item no
+Archive, as colunas obrigatórias para publicar e as modalidades de venda. A
+repetição existe porque o `okf-parser` exige Python 3.12 e o pipeline suporta
+3.10; importá-lo em produção custaria esse suporte. A divergência entre as
+cópias é recusada no CI por um script isolado, com dependências declaradas em
+PEP 723:
+
+```bash
+uv run scripts/check_bundle_contract.py
 ```
 
 ## Pré-requisitos
@@ -45,8 +86,8 @@ Copie `.env.sample` para `.env` e preencha o que for usar:
 - `GEOCODER_KEY`: nome legado da variável usada como User-Agent do Nominatim
   por `src/geocoding_utils.py`; o valor deve identificar o cliente, de
   preferência com uma forma de contato. Não é uma API key do Nominatim.
-- `URL_BASE`: origem dos dados da Caixa. Ainda não consumida pelo código —
-  veja `TODO.md`.
+- `URL_BASE`: molde da URL da lista por estado, com `{}` no lugar da UF. O
+  padrão é `https://venda-imoveis.caixa.gov.br/listaweb/Lista_imoveis_{}.csv`.
 
 ## Rodar o pipeline
 
@@ -56,6 +97,8 @@ Copie `.env.sample` para `.env` e preencha o que for usar:
 
 Sem `--upload-dry-run`, o script publica no Internet Archive. Outras opções:
 
+- `--skip-fetch`: pula o download e usa os CSVs já presentes em `data/`.
+  Implícito em `--skip-processing`, que não tem o que fazer com dado novo.
 - `--skip-processing`: pula o processamento e publica o Parquet já existente.
 - `--skip-upload`: só processa, não publica.
 - `--archive-item-identifier`, `--archive-item-title`,

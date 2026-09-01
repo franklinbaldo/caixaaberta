@@ -1,6 +1,6 @@
 import argparse
 
-from fetch_data import process_local_data
+from fetch_data import fetch_all_states, process_local_data
 from reporter import DEFAULT_PARQUET_PATH, validate_publication_parquet
 from upload_to_archive import upload_files_to_archive
 
@@ -8,6 +8,14 @@ from upload_to_archive import upload_files_to_archive
 def main():
     parser = argparse.ArgumentParser(
         description="Pipeline de dados imobiliários: processa dados locais e faz upload para o Internet Archive."
+    )
+    parser.add_argument(
+        "--skip-fetch",
+        action="store_true",
+        help=(
+            "Pula o download dos dados da Caixa e usa os CSVs já presentes em "
+            "data/. Implícito em --skip-processing."
+        ),
     )
     parser.add_argument(
         "--skip-processing",
@@ -43,6 +51,15 @@ def main():
         help="A descrição do item no Internet Archive.",
     )
     args = parser.parse_args()
+
+    # O download só serve ao processamento: baixar CSVs para em seguida
+    # ignorá-los faria --skip-processing depender da Caixa estar acessível.
+    if args.skip_processing or args.skip_fetch:
+        print("Pulando o download dos dados da Caixa.")
+    else:
+        print("Baixando os dados da Caixa...")
+        fetch_all_states()
+        print("Download dos dados da Caixa concluído.")
 
     if not args.skip_processing:
         print("Iniciando o processamento de dados locais...")
