@@ -1,6 +1,5 @@
 # geocoding_utils.py
 import sqlite3
-from pathlib import Path
 import time
 
 from geopy.geocoders import Nominatim
@@ -12,7 +11,6 @@ TABLE_NAME = "coords"
 
 def _init_cache_db():
     """Initializes the SQLite database and coords table if they don't exist."""
-    db_path = Path(DB_NAME)
     conn = sqlite3.connect(DB_NAME)
     cursor = conn.cursor()
     cursor.execute(f"""

@@ -26,8 +26,9 @@ def dummy_files_dir(tmp_path):
     return directory
 
 
+@pytest.mark.usefixtures("mock_env")
 @patch("upload_to_archive.upload")
-def test_upload_files_to_archive_success(mock_upload, mock_env, dummy_files_dir):
+def test_upload_files_to_archive_success(mock_upload, dummy_files_dir):
     upload_files_to_archive(
         identifier="test-identifier",
         title="Test Title",
@@ -81,8 +82,9 @@ def test_upload_files_to_archive_no_credentials_fails(
     mock_upload.assert_not_called()
 
 
+@pytest.mark.usefixtures("mock_env")
 @patch("upload_to_archive.upload")
-def test_upload_files_to_archive_no_parquet_files_fails(mock_upload, mock_env, tmp_path):
+def test_upload_files_to_archive_no_parquet_files_fails(mock_upload, tmp_path):
     empty_dir = tmp_path / "empty"
     empty_dir.mkdir()
 
@@ -97,9 +99,10 @@ def test_upload_files_to_archive_no_parquet_files_fails(mock_upload, mock_env, t
     mock_upload.assert_not_called()
 
 
+@pytest.mark.usefixtures("mock_env")
 @patch("upload_to_archive.upload")
 def test_upload_files_to_archive_exception_propagates(
-    mock_upload, mock_env, dummy_files_dir
+    mock_upload, dummy_files_dir
 ):
     mock_upload.side_effect = RuntimeError("Simulated upload error")
 
