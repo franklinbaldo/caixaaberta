@@ -6,8 +6,9 @@
 
 `fetch_data.py` geocodifica linha a linha, de forma síncrona, dentro do job de
 publicação. São dezenas de milhares de endereços e o Nominatim limita a uma
-requisição por segundo. O cache é um SQLite local, descartado a cada execução
-do CI, então todo run recomeça do zero.
+requisição por segundo. O cache é um arquivo DuckDB local, descartado a cada
+execução do CI, então todo run recomeça do zero. Por ser DuckDB, publicá-lo
+como artefato é exportar uma tabela — não exige gravador próprio.
 
 O que fazer:
 

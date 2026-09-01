@@ -1,9 +1,8 @@
 import pytest
 from unittest.mock import patch, MagicMock
-import os
+import sqlite3
 import sys
 from pathlib import Path
-import sqlite3
 
 # Add src to sys.path
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "src"))
@@ -12,23 +11,23 @@ from geocoding_utils import (
     get_coordinates_for_address,
     _get_cached_coords,
     _cache_coords,
-    _init_cache_db,
-    DB_NAME,
-    TABLE_NAME
+    _cache_connection,
+    close_cache_db,
+    export_cache_to_sqlite,
+    TABLE_NAME,
 )
 
 @pytest.fixture(autouse=True)
-def clean_cache_db():
-    """Ensure the database is clean before and after tests."""
+def clean_cache_db(tmp_path, monkeypatch):
+    """Isola o cache de cada teste num arquivo próprio."""
     import geocoding_utils
-    geocoding_utils._geolocators_cache.clear()
 
-    if os.path.exists(DB_NAME):
-        os.remove(DB_NAME)
-    _init_cache_db()
+    geocoding_utils._geolocators_cache.clear()
+    close_cache_db()
+    monkeypatch.setattr(geocoding_utils, "DB_NAME", str(tmp_path / "cache.duckdb"))
+    _cache_connection()
     yield
-    if os.path.exists(DB_NAME):
-        os.remove(DB_NAME)
+    close_cache_db()
 
 @patch("geocoding_utils.Nominatim")
 def test_get_coordinates_success(mock_nominatim):
@@ -98,3 +97,28 @@ def test_sqlite_cache_functions():
     _cache_coords(address, 11.1, -11.1)
     cached2 = _get_cached_coords(address)
     assert cached2[0] == 99.9  # Should keep original values based on IGNORE/pass in IntegrityError
+
+
+def test_export_cache_to_sqlite_roundtrip(tmp_path):
+    _cache_coords("Rua A, Porto Velho, RO", -8.76, -63.90)
+    _cache_coords("Rua B, Porto Velho, RO", -8.77, -63.91)
+
+    destino = export_cache_to_sqlite(tmp_path / "cache.sqlite")
+
+    assert destino.exists()
+    with sqlite3.connect(destino) as conn:
+        rows = conn.execute(
+            f"SELECT address, lat, lon FROM {TABLE_NAME} ORDER BY address"
+        ).fetchall()
+
+    assert rows == [
+        ("Rua A, Porto Velho, RO", -8.76, -63.90),
+        ("Rua B, Porto Velho, RO", -8.77, -63.91),
+    ]
+
+
+def test_cache_coords_ignores_a_repeated_address():
+    _cache_coords("Rua C", 1.0, 2.0)
+    _cache_coords("Rua C", 9.0, 9.0)
+
+    assert _get_cached_coords("Rua C") == (1.0, 2.0)

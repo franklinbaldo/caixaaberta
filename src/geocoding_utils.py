@@ -1,51 +1,81 @@
 # geocoding_utils.py
-import sqlite3
 import time
+from pathlib import Path
 
+import duckdb
 from geopy.geocoders import Nominatim
 from geopy.exc import GeocoderTimedOut, GeocoderUnavailable, GeocoderServiceError
 
-# --- SQLite Cache Setup ---
-DB_NAME = "cache.sqlite"
+# --- Cache de coordenadas ---
+# O cache vive em DuckDB, o mesmo motor que o pipeline já usa para unir os
+# CSVs. Um arquivo SQLite continua disponível sob demanda, exportado pela
+# extensão sqlite do próprio DuckDB — não é preciso manter um segundo
+# gravador só para produzir esse formato.
+DB_NAME = "cache.duckdb"
 TABLE_NAME = "coords"
 
-def _init_cache_db():
-    """Initializes the SQLite database and coords table if they don't exist."""
-    conn = sqlite3.connect(DB_NAME)
-    cursor = conn.cursor()
-    cursor.execute(f"""
-    CREATE TABLE IF NOT EXISTS {TABLE_NAME} (
-        address TEXT PRIMARY KEY,
-        lat REAL,
-        lon REAL
-    )
-    """)
-    conn.commit()
-    conn.close()
+_connection = None
 
-_init_cache_db() # Initialize DB when module is loaded
+
+def _cache_connection():
+    """Conexão única com o cache, aberta na primeira consulta."""
+    global _connection
+    if _connection is None:
+        _connection = duckdb.connect(DB_NAME)
+        _connection.execute(
+            f"""
+            CREATE TABLE IF NOT EXISTS {TABLE_NAME} (
+                address VARCHAR PRIMARY KEY,
+                lat DOUBLE,
+                lon DOUBLE
+            )
+            """
+        )
+    return _connection
+
+
+def close_cache_db():
+    """Fecha a conexão com o cache. O arquivo continua no disco."""
+    global _connection
+    if _connection is not None:
+        _connection.close()
+        _connection = None
+
 
 def _get_cached_coords(address: str) -> tuple | None:
-    """Retrieves coordinates from cache. Returns (lat, lon) or None if not found."""
-    conn = sqlite3.connect(DB_NAME)
-    cursor = conn.cursor()
-    cursor.execute(f"SELECT lat, lon FROM {TABLE_NAME} WHERE address = ?", (address,))
-    result = cursor.fetchone()
-    conn.close()
+    """Devolve (lat, lon) do cache, ou None quando o endereço é novo."""
+    result = _cache_connection().execute(
+        f"SELECT lat, lon FROM {TABLE_NAME} WHERE address = ?", (address,)
+    ).fetchone()
     return result if result else None
 
+
 def _cache_coords(address: str, lat: float, lon: float):
-    """Stores coordinates in cache."""
-    conn = sqlite3.connect(DB_NAME)
-    cursor = conn.cursor()
+    """Grava as coordenadas de um endereço, ignorando quem já está lá."""
+    _cache_connection().execute(
+        f"INSERT OR IGNORE INTO {TABLE_NAME} (address, lat, lon) VALUES (?, ?, ?)",
+        (address, lat, lon),
+    )
+
+
+def export_cache_to_sqlite(sqlite_path: Path | str = "cache.sqlite"):
+    """Exporta o cache para um arquivo SQLite, pela extensão do DuckDB."""
+    path = Path(sqlite_path)
+    path.unlink(missing_ok=True)
+
+    conn = _cache_connection()
+    conn.execute("INSTALL sqlite")
+    conn.execute("LOAD sqlite")
+    conn.execute(f"ATTACH '{path}' AS cache_sqlite (TYPE sqlite)")
     try:
-        cursor.execute(f"INSERT INTO {TABLE_NAME} (address, lat, lon) VALUES (?, ?, ?)", (address, lat, lon))
-        conn.commit()
-    except sqlite3.IntegrityError:
-        pass
+        conn.execute(
+            f"CREATE TABLE cache_sqlite.{TABLE_NAME} AS "
+            f"SELECT address, lat, lon FROM {TABLE_NAME}"
+        )
     finally:
-        conn.close()
-# --- End SQLite Cache Setup ---
+        conn.execute("DETACH cache_sqlite")
+    return path
+
 
 _geolocators_cache = {}
 _default_user_agent = "caixaaberta_geocoder/1.1"

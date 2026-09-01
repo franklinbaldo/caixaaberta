@@ -15,8 +15,10 @@ requisição por segundo.
 Esta é a etapa mais frágil do [pipeline](pipeline.md):
 
 - é síncrona e roda dentro do job de publicação;
-- o cache é um SQLite local, descartado a cada execução do CI, então cada run
-  recomeça do zero;
+- o cache vive em DuckDB (`cache.duckdb`), o mesmo motor que o pipeline usa
+  para unir os CSVs, e é descartado a cada execução do CI, então cada run
+  recomeça do zero. `export_cache_to_sqlite` produz um SQLite quando alguém
+  precisar desse formato, pela extensão do próprio DuckDB;
 - endereços que o Nominatim não resolve ficam com `latitude` e `longitude`
   nulos.
 
