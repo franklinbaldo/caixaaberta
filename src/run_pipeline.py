@@ -5,7 +5,7 @@ from pathlib import Path
 
 from fetch_data import fetch_all_states, process_local_data
 from reporter import DEFAULT_PARQUET_PATH, validate_publication_parquet
-from upload_to_archive import upload_files_to_archive
+from upload_to_archive import BRUTO_FILENAME, upload_files_to_archive
 
 
 def main():
@@ -68,7 +68,7 @@ def main():
             saida = Path("output_data")
             saida.mkdir(parents=True, exist_ok=True)
             shutil.make_archive(
-                str(saida / "imoveis_csv_bruto"), "zip", root_dir=bruto
+                str(saida / Path(BRUTO_FILENAME).stem), "zip", root_dir=bruto
             )
         print("Download dos dados da Caixa concluído.")
 
