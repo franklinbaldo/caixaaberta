@@ -23,10 +23,23 @@ type Property = {
   latitude: number | null;
   longitude: number | null;
   precisao: string;
+  cno: string;
+  cno_match_status: string;
+  cno_match_score: number | null;
+  cno_match_method: string;
+  cno_match_candidate_count: number | null;
+  cno_situacao: string;
+  cno_data_inicio: string;
+  cno_area_total: number | null;
+  cno_nome_obra: string;
+  cno_categorias: string;
+  cno_destinacoes: string;
+  cno_tipos_obra: string;
 };
 
 const currency = new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" });
 const integer = new Intl.NumberFormat("pt-BR");
+const decimal = new Intl.NumberFormat("pt-BR", { maximumFractionDigits: 2 });
 const text = (value: unknown) => (value == null ? "" : String(value));
 const number = (value: unknown): number | null => {
   const parsed = Number(value);
@@ -53,6 +66,18 @@ function normalize(row: RawRow): Property {
     latitude: number(row.latitude),
     longitude: number(row.longitude),
     precisao: text(row.precisao),
+    cno: text(row.cno),
+    cno_match_status: text(row.cno_match_status) || "sem_dados",
+    cno_match_score: number(row.cno_match_score),
+    cno_match_method: text(row.cno_match_method),
+    cno_match_candidate_count: number(row.cno_match_candidate_count),
+    cno_situacao: text(row.cno_situacao),
+    cno_data_inicio: text(row.cno_data_inicio),
+    cno_area_total: number(row.cno_area_total),
+    cno_nome_obra: text(row.cno_nome_obra),
+    cno_categorias: text(row.cno_categorias),
+    cno_destinacoes: text(row.cno_destinacoes),
+    cno_tipos_obra: text(row.cno_tipos_obra),
   };
 }
 
@@ -116,6 +141,18 @@ function precisionLabel(value: string) {
       logradouro: "logradouro",
       localidade: "localidade",
       municipio: "município",
+    }[value] ?? value ?? ""
+  );
+}
+
+function matchLabel(value: string) {
+  return (
+    {
+      forte: "CNO associado",
+      provavel: "CNO provável — não associado",
+      ambiguo: "CNO ambíguo — não associado",
+      sem_match: "sem candidato CNO",
+      sem_dados: "snapshot sem CNO",
     }[value] ?? value ?? ""
   );
 }
@@ -236,6 +273,19 @@ function setupMap() {
         const detail = document.createElement("small");
         detail.textContent = `Imóvel ${props.link ?? ""} · precisão: ${precisionLabel(props.precisao ?? "")}`;
         content.append(title, address, detail);
+
+        if (props.cno) {
+          const cnoDetail = document.createElement("p");
+          const area = Number(props.cno_area_total);
+          const areaLabel = Number.isFinite(area) ? ` · ${decimal.format(area)} m²` : "";
+          cnoDetail.textContent = `CNO ${props.cno} · ${props.cno_situacao || "situação não informada"}${areaLabel}`;
+          content.append(cnoDetail);
+        } else if (props.cno_match_status && props.cno_match_status !== "sem_dados") {
+          const match = document.createElement("p");
+          match.textContent = matchLabel(String(props.cno_match_status));
+          content.append(match);
+        }
+
         const href = safeSourceUrl(String(props.link_acesso ?? ""));
         if (href) {
           const sourceLink = document.createElement("a");
@@ -277,6 +327,10 @@ function toGeoJSON(rows: Property[]) {
           cidade: row.cidade,
           estado: row.estado,
           precisao: row.precisao,
+          cno: row.cno,
+          cno_match_status: row.cno_match_status,
+          cno_situacao: row.cno_situacao,
+          cno_area_total: row.cno_area_total,
         },
       })),
   };
@@ -285,6 +339,30 @@ function toGeoJSON(rows: Property[]) {
 function appendTextCell(row: HTMLTableRowElement, value: string) {
   const cell = document.createElement("td");
   cell.textContent = value || "—";
+  row.append(cell);
+}
+
+function appendCnoCell(row: HTMLTableRowElement, property: Property) {
+  const cell = document.createElement("td");
+  if (!property.cno) {
+    cell.textContent = matchLabel(property.cno_match_status) || "—";
+    row.append(cell);
+    return;
+  }
+
+  const id = document.createElement("strong");
+  id.textContent = `CNO ${property.cno}`;
+  const details = document.createElement("small");
+  const pieces = [property.cno_situacao, property.cno_data_inicio];
+  if (property.cno_area_total != null) pieces.push(`${decimal.format(property.cno_area_total)} m²`);
+  details.textContent = pieces.filter(Boolean).join(" · ");
+  cell.append(id);
+  if (details.textContent) cell.append(document.createElement("br"), details);
+  if (property.cno_nome_obra) {
+    const name = document.createElement("small");
+    name.textContent = property.cno_nome_obra;
+    cell.append(document.createElement("br"), name);
+  }
   row.append(cell);
 }
 
@@ -313,6 +391,7 @@ function renderTable(tbody: HTMLTableSectionElement, rows: Property[]) {
     appendTextCell(tr, property.preco == null ? "—" : currency.format(property.preco));
     appendTextCell(tr, property.desconto == null ? "—" : `${property.desconto.toLocaleString("pt-BR")} %`);
     appendTextCell(tr, property.modalidade);
+    appendCnoCell(tr, property);
     appendTextCell(tr, precisionLabel(property.precisao));
     fragment.append(tr);
   }
@@ -327,6 +406,8 @@ export async function initExplorer() {
   const query = required<HTMLInputElement>("#filter-query");
   const state = required<HTMLSelectElement>("#filter-state");
   const modality = required<HTMLSelectElement>("#filter-modality");
+  const cnoMatch = required<HTMLSelectElement>("#filter-cno-match");
+  const cnoSituation = required<HTMLSelectElement>("#filter-cno-situation");
   const precision = required<HTMLSelectElement>("#filter-precision");
   const discount = required<HTMLInputElement>("#filter-discount");
   const count = required<HTMLElement>("#explorer-count");
@@ -340,6 +421,7 @@ export async function initExplorer() {
     const { manifest, rows } = await loadProperties(setStatus);
     options(state, [...new Set(rows.map((row) => row.estado))]);
     options(modality, [...new Set(rows.map((row) => row.modalidade))]);
+    options(cnoSituation, [...new Set(rows.map((row) => row.cno_situacao))]);
     date.textContent = `Snapshot ${manifest.data}`;
 
     const render = async () => {
@@ -348,6 +430,8 @@ export async function initExplorer() {
       const filtered = rows.filter((property) => {
         if (state.value && property.estado !== state.value) return false;
         if (modality.value && property.modalidade !== modality.value) return false;
+        if (cnoMatch.value && property.cno_match_status !== cnoMatch.value) return false;
+        if (cnoSituation.value && property.cno_situacao !== cnoSituation.value) return false;
         if (precision.value && property.precisao !== precision.value) return false;
         if (minimumDiscount != null && (property.desconto ?? -Infinity) < minimumDiscount) return false;
         if (needle) {
@@ -358,6 +442,11 @@ export async function initExplorer() {
             property.cidade,
             property.estado,
             property.descricao,
+            property.cno,
+            property.cno_nome_obra,
+            property.cno_categorias,
+            property.cno_destinacoes,
+            property.cno_tipos_obra,
           ].join(" ").toLocaleLowerCase("pt-BR");
           if (!haystack.includes(needle)) return false;
         }
@@ -365,7 +454,10 @@ export async function initExplorer() {
       });
       count.textContent = `${integer.format(filtered.length)} imóvel${filtered.length === 1 ? "" : "is"}`;
       const geocoded = filtered.filter((property) => property.latitude != null && property.longitude != null).length;
-      setStatus(`${integer.format(geocoded)} com coordenadas para o mapa; lista limitada a 100 linhas visíveis.`);
+      const linked = filtered.filter((property) => Boolean(property.cno)).length;
+      setStatus(
+        `${integer.format(geocoded)} com coordenadas para o mapa · ${integer.format(linked)} com CNO forte; lista limitada a 100 linhas visíveis.`,
+      );
       renderTable(tbody, filtered);
       await ready;
       (map.getSource("imoveis") as GeoJSONSource).setData(toGeoJSON(filtered));
