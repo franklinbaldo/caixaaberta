@@ -3,7 +3,7 @@ from datetime import date
 import pandas as pd
 import pytest
 
-from compare_snapshots import compare_snapshots
+from compare_snapshots import RESULT_COLUMNS, compare_snapshots
 
 
 D1 = date(2026, 9, 1)
@@ -74,6 +74,7 @@ def test_imovel_igual_nao_vira_evento(tmp_path):
     result = compare_snapshots(anterior, atual)
 
     assert result.empty
+    assert list(result.columns) == list(RESULT_COLUMNS)
 
 
 def test_nao_inferimos_venda_quando_o_imovel_some(tmp_path):
@@ -119,3 +120,17 @@ def test_pode_gravar_o_derivado_em_parquet(tmp_path):
 
     gravado = pd.read_parquet(output)
     assert set(gravado["mudanca"]) == {"entrou_no_estoque", "saiu_do_estoque"}
+
+
+def test_pode_gravar_derivado_vazio_com_schema(tmp_path):
+    anterior = tmp_path / "anterior.parquet"
+    atual = tmp_path / "atual.parquet"
+    output = tmp_path / "sem-mudancas.parquet"
+    _write(anterior, [_row("igual", D1)])
+    _write(atual, [_row("igual", D2)])
+
+    compare_snapshots(anterior, atual, output)
+
+    gravado = pd.read_parquet(output)
+    assert gravado.empty
+    assert list(gravado.columns) == list(RESULT_COLUMNS)
