@@ -1,86 +1,121 @@
 # Caixa Aberta
 
-Consolida os dados de imóveis à venda da Caixa Econômica Federal em um único
-arquivo Parquet e publica esse arquivo no Internet Archive.
+O Caixa Aberta observa diariamente os imóveis à venda da Caixa Econômica
+Federal nas 27 UFs, consolida o retrato nacional em Parquet, geocodifica os
+endereços e preserva cada dia no Internet Archive.
 
-O pipeline baixa a lista de imóveis de cada estado no site da Caixa, grava os
-CSVs por estado em `data/`, une tudo com Ibis sobre DuckDB, geocodifica os
-endereços sem coordenadas e grava `output_data/imoveis_geocoded.parquet`.
+A Caixa publica o estado corrente, mas não oferece o próprio histórico. O valor
+do projeto é repetir a observação de forma confiável: cada snapshot tem nome
+datado e carrega `scrape_date` dentro do próprio dado.
 
-## Consumir os dados
+## Consultar o Brasil inteiro
 
-Para consultar o dataset publicado sem baixar o arquivo inteiro, abra o DuckDB
-e execute o DDL de `imoveis_caixa.sql`, que cria uma view lendo diretamente o
-Parquet publicado no Internet Archive:
+A superfície principal é DuckDB + Parquet remoto. Não é preciso baixar ou
+manter banco local.
+
+Para abrir o **último snapshot publicado**:
 
 ```sql
 .read imoveis_caixa.sql
-SELECT estado, count(*) FROM imoveis_caixa GROUP BY estado;
+
+SELECT estado, count(*) AS imoveis
+FROM imoveis_caixa
+GROUP BY estado
+ORDER BY imoveis DESC;
 ```
 
-Os retratos diários se acumulam em um item por ano
-(`imoveis-caixa-economica-federal-2026`), cada publicação sob um nome datado
-— `imoveis_geocoded_2026-09-02.parquet` — porque a lista da Caixa é um retrato
-do dia e o imóvel vendido some dela.
+`imoveis_caixa.sql` resolve o último snapshot que realmente chegou ao Internet
+Archive. Se a coleta de hoje falhou, a view continua apontando para o último dia
+bem-sucedido.
 
-"O mais recente" não é derivável do calendário: a publicação do dia pode falhar,
-e o dia corrente no DuckDB depende do fuso de quem consulta. Então um item sem
-ano, `imoveis-caixa-economica-federal`, guarda `latest.json` apontando para o
-retrato que de fato subiu — e é ele que o DDL lê. O arquivo não envelhece nem
-na virada do ano. O ponteiro é monotônico: republicar um retrato histórico não
-rebaixa o mais recente.
+Algumas consultas nacionais úteis:
 
-Para congelar a view num retrato específico da série:
+```sql
+-- uma cidade
+SELECT *
+FROM imoveis_caixa
+WHERE estado = 'RO' AND upper(cidade) = 'PORTO VELHO';
+
+-- venda direta com desconto alto
+SELECT estado, cidade, endereco, preco, avaliacao, desconto, link
+FROM imoveis_caixa
+WHERE modalidade = 'Venda Direta Online' AND desconto >= 40
+ORDER BY desconto DESC;
+
+-- apenas coordenadas no nível de rua
+SELECT *
+FROM imoveis_caixa
+WHERE precisao IN ('logradouro_localidade', 'logradouro');
+```
+
+### Consultar um dia histórico
+
+Quem escolhe a data não precisa conhecer como os itens anuais estão organizados
+no Archive. O gerador resolve a URL do snapshot:
 
 ```bash
-python src/generate_ddl.py --data 2026-09-02
+uv run python src/generate_ddl.py --data 2026-09-02 --output-file /tmp/imoveis-2026-09-02.sql
+duckdb
 ```
 
-### O download e o anti-bot da Caixa
+E no DuckDB:
 
-A Caixa serve os CSVs atrás do Radware Bot Manager, que responde HTTP 200 com
-uma página de bloqueio no lugar do arquivo. O pipeline contorna isso mandando
-um conjunto coerente de cabeçalhos de navegador, abrindo sessão HTTP nova a
-cada requisição e percorrendo os estados em rodadas em vez de insistir num
-deles. As 27 UFs vêm em 86 segundos.
+```sql
+.read /tmp/imoveis-2026-09-02.sql
+SELECT scrape_date, count(*) FROM imoveis_caixa GROUP BY scrape_date;
+```
 
-O download roda por padrão na publicação — confirmado no runner do GitHub em
-01/09/2026, com as 27 UFs. Os CSVs **não são versionados**: `data/` está no
-`.gitignore`, e cada publicação leva ao Archive tanto o Parquet quanto
-o zip datado com os CSVs como a Caixa os serviu. O dado vive no
-Archive; o repositório guarda código.
+Os retratos se acumulam em itens anuais no Internet Archive apenas como detalhe
+de armazenamento. A superfície de consulta permanece a mesma.
+
+## Como o histórico é produzido
+
+O GitHub Actions executa o pipeline completo **uma vez por dia**, às 06:17 UTC,
+e também permite execução manual por `workflow_dispatch`. Pull requests e
+pushes em `main` validam código, mas não criam uma nova observação: o relógio,
+não a atividade do Git, define a série histórica.
+
+Cada execução bem-sucedida publica:
+
+- `imoveis_geocoded_AAAA-MM-DD.parquet` — o retrato nacional processado;
+- `imoveis_csv_bruto_AAAA-MM-DD.zip` — os 27 CSVs exatamente como a Caixa os
+  serviu naquele scraping.
+
+O Parquet carrega `scrape_date`, a data controlada pelo Caixa Aberta. A `Data de
+geração` declarada pela Caixa continua preservada no ZIP bruto como
+proveniência secundária.
+
+## O download e o anti-bot da Caixa
+
+A Caixa serve os CSVs atrás do Radware Bot Manager, que pode responder HTTP 200
+com uma página de bloqueio no lugar do arquivo. O pipeline reconhece essa
+resposta, usa um conjunto coerente de cabeçalhos de navegador, abre sessão nova
+a cada requisição e percorre os estados em rodadas em vez de insistir no mesmo
+estado.
+
+A coleta é all-or-nothing: se uma UF não puder ser obtida, o pipeline falha em
+vez de publicar um Brasil parcial com aparência de snapshot completo.
 
 ## Documentação do dataset
 
-`knowledge/` é um bundle [OKF v0.2](https://github.com/GoogleCloudPlatform/knowledge-catalog/blob/main/okf/SPEC.md)
-com 26 conceitos: a fonte, o pipeline, o esquema do Parquet, a publicação, as
-quatro modalidades de venda, as armadilhas conhecidas do dado e consultas
-prontas. É a documentação para quem consome o dataset sem ler o código.
-
-O CI valida o bundle a cada push, exigindo definição de tipo para todo `type`
-usado:
+`knowledge/` é um bundle OKF com a fonte, o pipeline, o esquema do Parquet, a
+publicação, modalidades de venda, armadilhas de interpretação e consultas
+prontas. O CI verifica o bundle e o contrato entre documentação e código:
 
 ```bash
-uvx --from okf-parser okf-parser check knowledge \
+uvx --from okf-parser==0.45.2 okf-parser check knowledge \
   --require-spec 'types/{slug}.md' --normative-spec
-uvx --from okf-parser okf-parser graph knowledge
-```
-
-Três valores do bundle estão repetidos no código — o identificador do item no
-Archive, as colunas obrigatórias para publicar e as modalidades de venda. A
-repetição existe porque o `okf-parser` exige Python 3.12 e o pipeline suporta
-3.10; importá-lo em produção custaria esse suporte. A divergência entre as
-cópias é recusada no CI por um script isolado, com dependências declaradas em
-PEP 723:
-
-```bash
 uv run scripts/check_bundle_contract.py
 ```
+
+Trabalho pendente vive em GitHub Issues. O repositório não mantém `TODO.md`
+paralelo ao backlog.
 
 ## Pré-requisitos
 
 - Python 3.10 ou superior
-- [uv](https://github.com/astral-sh/uv)
+- `uv`
+- DuckDB CLI para usar os exemplos com `.read`
 
 ## Instalação
 
@@ -93,36 +128,32 @@ uv pip install --python .venv/bin/python -e '.[dev]'
 
 Copie `.env.sample` para `.env` e preencha o que for usar:
 
-- `IA_ACCESS_KEY` e `IA_SECRET_KEY`: credenciais do Internet Archive. Exigidas
-  para publicar; dispensáveis com `--upload-dry-run`. Para conferir um par sem
-  gastar uma execução, use `archive.org/services/user.php?op=whoami` — os
-  endpoints do S3 do Archive respondem 200 mesmo sem credencial nenhuma e não
-  servem para validar.
-- `IA_COLLECTION`: coleção do item, opcional. Só declare uma em que a conta
-  tenha privilégio de escrita: o Archive recusa o upload inteiro caso
-  contrário.
-- `URL_BASE`: molde da URL da lista por estado, com `{}` no lugar da UF. O
-  padrão é `https://venda-imoveis.caixa.gov.br/listaweb/Lista_imoveis_{}.csv`.
+- `IA_ACCESS_KEY` e `IA_SECRET_KEY`: credenciais do Internet Archive para
+  publicação real;
+- `IA_COLLECTION`: coleção opcional do item, somente se a conta tiver
+  privilégio de escrita nela;
+- `URL_BASE`: molde da URL da lista por estado, com `{}` no lugar da UF.
 
-## Rodar o pipeline
+## Rodar localmente
+
+Pipeline completo em dry-run:
 
 ```bash
 .venv/bin/python src/run_pipeline.py --upload-dry-run
 ```
 
-Sem `--upload-dry-run`, o script publica no Internet Archive. Outras opções:
+Opções operacionais:
 
-- `--skip-fetch`: pula o download e usa os CSVs já presentes em `data/`. Como
-  `data/` não é versionado, só serve depois de um download anterior na mesma
-  máquina. Implícito em `--skip-processing`.
-- `--skip-processing`: pula o processamento e publica o Parquet já existente.
-- `--skip-upload`: só processa, não publica.
-- `--archive-item-identifier`, `--archive-item-title`,
-  `--archive-item-description`: metadados do item no Archive.
+- `--skip-fetch`: usa CSVs já presentes em `data/`;
+- `--skip-processing`: republica o Parquet existente;
+- `--skip-upload`: coleta e processa sem publicar;
+- `--data AAAA-MM-DD`: seleciona a data operacional de uma republicação;
+- `--archive-item-identifier`, `--archive-item-title` e
+  `--archive-item-description`: overrides avançados de publicação.
 
-Antes de publicar, `run_pipeline.py` valida o Parquet: o arquivo precisa
-existir, ser legível, ter linhas, conter as colunas obrigatórias e ter pelo
-menos um `link` preenchido. Se a validação falha, a publicação não acontece.
+Antes de qualquer upload, o gate verifica arquivo legível, não vazio, schema
+obrigatório, pelo menos um `link`, um único `scrape_date` e concordância entre
+a data interna e o nome do snapshot.
 
 ## Relatório
 
@@ -130,8 +161,8 @@ menos um `link` preenchido. Se a validação falha, a publicação não acontece
 .venv/bin/python src/reporter.py
 ```
 
-Imprime total de imóveis, contagem e preço médio por estado, e taxa de
-geocodificação.
+O relatório usa o snapshot local datado mais recente e mostra volume, preços,
+modalidades e precisão da geocodificação.
 
 ## Testes
 
@@ -143,14 +174,15 @@ geocodificação.
 
 | Caminho | Papel |
 | --- | --- |
-| `data/` | CSVs de entrada, um por estado |
-| `src/fetch_data.py` | União, limpeza e geocodificação; gera o Parquet |
-| `src/geocoding_utils.py` | Geocodificação com cache em SQLite |
-| `src/reporter.py` | Validação de publicação e relatório |
-| `src/run_pipeline.py` | Orquestra processamento, validação e publicação |
-| `src/upload_to_archive.py` | Envio ao Internet Archive |
-| `src/generate_ddl.py` | Gera `imoveis_caixa.sql` |
-| `.github/workflows/main.yml` | Testes em PR; processa e publica em `main` |
+| `data/` | CSVs normalizados de entrada, um por estado |
+| `src/fetch_data.py` | Coleta, união, limpeza e geração do snapshot Parquet |
+| `src/geocode_cnefe.py` | Geocodificação pelo CNEFE em DuckDB |
+| `src/reporter.py` | Gate de publicação e relatório |
+| `src/run_pipeline.py` | Orquestra scraping, processamento e publicação |
+| `src/upload_to_archive.py` | Publicação no Internet Archive |
+| `src/generate_ddl.py` | Gera a view DuckDB atual ou histórica |
+| `knowledge/` | Contrato e documentação do produto de dados |
+| `.github/workflows/main.yml` | Validação e execução diária do pipeline |
 
 ## Licença
 
