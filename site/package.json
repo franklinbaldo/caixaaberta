@@ -5,8 +5,9 @@
   "scripts": {
     "dev": "astro dev",
     "build": "astro build",
-    "check": "astro check && npm run check:semantic",
+    "check": "astro check && npm run check:semantic && npm run check:sources",
     "check:semantic": "node scripts/check-semantic.mjs",
+    "check:sources": "node scripts/check-remote-sources.mjs",
     "preview": "astro preview"
   },
   "dependencies": {
