@@ -1,7 +1,7 @@
 ---
 type: Procedure
 title: Snapshot diário
- description: Regra operacional que separa validação de código da observação diária da Caixa
+description: Regra operacional que separa validação de código da observação diária da Caixa
 ---
 
 # Snapshot diário
