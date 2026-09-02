@@ -182,6 +182,9 @@ import "maplibre-gl/dist/maplibre-gl.css";
 </section>
 
 <script>
+  import { initDailyChanges } from "../scripts/daily-changes";
   import { initExplorer } from "../scripts/explorer";
-  initExplorer();
+
+  void initDailyChanges();
+  void initExplorer();
 </script>
