@@ -1,7 +1,7 @@
 import argparse
 from datetime import date
 
-from archive_names import parquet_datado, url_do_manifesto, url_no_archive
+from archive_names import item_do_ano, parquet_datado, url_do_manifesto, url_no_item
 
 # O calendário não serve como ponteiro para o último retrato. Duas razões:
 # a publicação do dia pode falhar, e aí "hoje" aponta para um arquivo que não
@@ -48,7 +48,7 @@ def generate_ddl(output_file="imoveis_caixa.sql", quando: date | None = None):
     else:
         sql_command = DDL_FIXO.format(
             data=quando.isoformat(),
-            url=url_no_archive(quando, parquet_datado(quando)),
+            url=url_no_item(item_do_ano(quando), parquet_datado(quando)),
         )
 
     with open(output_file, "w", encoding="utf-8") as f:

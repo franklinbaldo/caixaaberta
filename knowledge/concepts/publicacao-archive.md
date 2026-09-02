@@ -19,8 +19,8 @@ O acervo da Caixa é um retrato do dia: imóvel vendido some da lista e a fonte
 não guarda histórico. Se toda publicação sobrescrevesse um nome fixo, a série
 temporal que este projeto existe para preservar seria destruída a cada
 execução — o Archive não versiona arquivo homônimo dentro de um item. Por isso
-o nome carrega a data, e **não existe apelido para o mais recente**: quem
-consulta calcula a data.
+o nome carrega a data: **nenhum arquivo de dado tem nome estável**. O endereço
+do retrato mais recente vive num manifesto à parte, descrito adiante.
 
 Os retratos se acumulam em **um item por ano** — `imoveis-caixa-economica-federal-2026`,
 `-2027`, e assim por diante — para nenhum item crescer sem limite.
@@ -73,7 +73,14 @@ guarda dado: guarda `latest.json`, o único nome sobrescrito a cada publicação
 ```
 
 Ele é publicado **depois** do upload dos dados, para o ponteiro só prometer
-arquivo que existe.
+arquivo que existe, e é **monotônico**: republicar um retrato histórico com
+`--data` não rebaixa o mais recente. Maior data publicada vence; empate
+sobrescreve, porque republicar o mesmo dia é corrigir aquele dia. O ponteiro
+também não segue `--archive-item-identifier`: publicar num item arbitrário é um
+experimento, e um experimento não redireciona quem consulta o dataset.
+
+Duas execuções simultâneas disputariam o ponteiro, e a que terminasse primeiro
+perderia — por isso o workflow declara `concurrency` sobre a publicação.
 
 O DDL em `imoveis_caixa.sql` cria uma view DuckDB que lê o manifesto e, dele, o
 Parquet — direto do Archive, sem download do arquivo inteiro. `SET VARIABLE`

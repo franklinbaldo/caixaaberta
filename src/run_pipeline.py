@@ -125,8 +125,16 @@ def main():
         dry_run=args.upload_dry_run,
     )
 
-    # Só depois do upload: o ponteiro promete um arquivo que existe.
-    publicar_manifesto(quando, dry_run=args.upload_dry_run)
+    # Só depois do upload: o ponteiro promete um arquivo que existe. E só para
+    # a série pública: publicar num item arbitrário é um experimento, e um
+    # experimento não redireciona quem consulta o dataset.
+    if identifier == item_do_ano(quando):
+        publicar_manifesto(quando, identifier, dry_run=args.upload_dry_run)
+    else:
+        print(
+            f"Item {identifier} não é o da série ({item_do_ano(quando)}); "
+            "o ponteiro do último retrato fica onde está."
+        )
 
     if args.upload_dry_run:
         print("Dry-run de upload concluído.")

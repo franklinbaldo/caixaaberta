@@ -5,6 +5,7 @@ import tempfile
 from datetime import date
 from pathlib import Path
 
+import requests
 from dotenv import load_dotenv
 from internetarchive import upload
 
@@ -13,9 +14,9 @@ from archive_names import (
     MANIFESTO,
     data_de_publicacao,
     bruto_datado,
-    item_do_ano,
     parquet_datado,
-    url_no_archive,
+    url_do_manifesto,
+    url_no_item,
 )
 
 # O Archive raciona uploads quando a fila GLOBAL dele se aproxima do teto, e
@@ -79,24 +80,60 @@ def artefatos_da_publicacao(
     return artefatos
 
 
-def publicar_manifesto(quando: date, dry_run: bool = False) -> dict:
+def manifesto_publicado() -> dict | None:
+    """Lê o ponteiro atual do Archive. ``None`` se ainda não existe."""
+    try:
+        resposta = requests.get(url_do_manifesto(), timeout=30)
+    except requests.RequestException as exc:
+        raise RuntimeError(
+            f"Não foi possível ler o manifesto em {url_do_manifesto()}: {exc}. "
+            "Publicar sem saber onde o ponteiro está poderia fazê-lo andar "
+            "para trás."
+        ) from exc
+
+    if resposta.status_code == 404:
+        return None
+    resposta.raise_for_status()
+    return resposta.json()
+
+
+def publicar_manifesto(
+    quando: date, identifier: str, dry_run: bool = False
+) -> dict | None:
     """Aponta o item-ponteiro para o retrato recém-publicado.
 
     O calendário não serve como ponteiro: se a publicação do dia falhar, "hoje"
     aponta para um arquivo que não existe. Este manifesto é o único nome
     sobrescrito a cada publicação, e não guarda dado — só o endereço do último
     retrato que de fato subiu.
+
+    O ponteiro é **monotônico**: republicar um retrato histórico com ``--data``
+    não rebaixa o "mais recente". Maior data publicada vence; empate sobrescreve,
+    porque republicar o mesmo dia é corrigir aquele dia.
+
+    ``identifier`` é o item onde os dados de fato foram publicados — não o item
+    do ano derivado da data. Com ``--archive-item-identifier``, os dois divergem,
+    e o manifesto que promete um endereço onde nada subiu é pior que nenhum.
     """
     manifesto = {
         "data": quando.isoformat(),
-        "item": item_do_ano(quando),
-        "parquet_url": url_no_archive(quando, parquet_datado(quando)),
-        "bruto_url": url_no_archive(quando, bruto_datado(quando)),
+        "item": identifier,
+        "parquet_url": url_no_item(identifier, parquet_datado(quando)),
+        "bruto_url": url_no_item(identifier, bruto_datado(quando)),
     }
 
     if dry_run:
         print(f"[Dry Run] Manifesto que seria publicado: {manifesto}")
         return manifesto
+
+    atual = manifesto_publicado()
+    if atual and atual.get("data", "") > manifesto["data"]:
+        print(
+            f"Manifesto preservado: o ponteiro já está em {atual['data']}, "
+            f"depois de {manifesto['data']}. Republicação não rebaixa o "
+            "último retrato."
+        )
+        return None
 
     access_key, secret_key = _credenciais()
     with tempfile.TemporaryDirectory() as tmp:
@@ -210,3 +247,4 @@ if __name__ == "__main__":
         artefatos_da_publicacao(quando, args.files_dir),
         args.dry_run,
     )
+    publicar_manifesto(quando, args.identifier, dry_run=args.dry_run)

@@ -27,7 +27,8 @@ do dia e o imóvel vendido some dela.
 e o dia corrente no DuckDB depende do fuso de quem consulta. Então um item sem
 ano, `imoveis-caixa-economica-federal`, guarda `latest.json` apontando para o
 retrato que de fato subiu — e é ele que o DDL lê. O arquivo não envelhece nem
-na virada do ano.
+na virada do ano. O ponteiro é monotônico: republicar um retrato histórico não
+rebaixa o mais recente.
 
 Para congelar a view num retrato específico da série:
 

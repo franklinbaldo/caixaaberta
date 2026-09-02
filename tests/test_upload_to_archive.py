@@ -20,6 +20,17 @@ from upload_to_archive import (
     upload_files_to_archive,
 )
 
+
+@pytest.fixture
+def sem_manifesto(monkeypatch):
+    """O Archive ainda não tem ponteiro: primeira publicação."""
+    monkeypatch.setattr("upload_to_archive.manifesto_publicado", lambda: None)
+
+
+def _com_manifesto(monkeypatch, data):
+    monkeypatch.setattr("upload_to_archive.manifesto_publicado", lambda: {"data": data})
+
+
 QUANDO = date(2026, 9, 2)
 
 
@@ -219,10 +230,10 @@ def test_upload_pede_espera_ao_archive(mock_upload, publicacao):
 # --- O manifesto ------------------------------------------------------------
 
 
-@pytest.mark.usefixtures("mock_env")
+@pytest.mark.usefixtures("mock_env", "sem_manifesto")
 @patch("upload_to_archive.upload")
 def test_o_manifesto_aponta_para_o_retrato_publicado(mock_upload):
-    manifesto = publicar_manifesto(QUANDO)
+    manifesto = publicar_manifesto(QUANDO, item_do_ano(QUANDO))
 
     assert manifesto["data"] == "2026-09-02"
     assert manifesto["item"] == item_do_ano(QUANDO)
@@ -234,19 +245,74 @@ def test_o_manifesto_aponta_para_o_retrato_publicado(mock_upload):
     assert Path(kwargs["files"][0]).name == MANIFESTO
 
 
-@pytest.mark.usefixtures("mock_env")
+@pytest.mark.usefixtures("mock_env", "sem_manifesto")
+@patch("upload_to_archive.upload")
+def test_o_manifesto_aponta_para_onde_o_dado_foi_publicado(mock_upload):
+    """Com --archive-item-identifier, o item real diverge do item do ano.
+
+    Um ponteiro que promete um endereço onde nada subiu é pior que nenhum.
+    """
+    manifesto = publicar_manifesto(QUANDO, "item-experimental")
+
+    assert manifesto["item"] == "item-experimental"
+    assert "item-experimental" in manifesto["parquet_url"]
+    assert "item-experimental" in manifesto["bruto_url"]
+    assert item_do_ano(QUANDO) not in manifesto["parquet_url"]
+
+
+@pytest.mark.usefixtures("mock_env", "sem_manifesto")
 @patch("upload_to_archive.upload")
 def test_o_manifesto_vive_fora_dos_itens_anuais(mock_upload):
     """Se morasse no item do ano, o consumidor precisaria saber o ano."""
-    publicar_manifesto(QUANDO)
-    publicar_manifesto(date(2027, 1, 1))
+    publicar_manifesto(QUANDO, item_do_ano(QUANDO))
 
     itens = {c.kwargs["identifier"] for c in mock_upload.call_args_list}
     assert itens == {ITEM_PONTEIRO}
 
 
+@pytest.mark.usefixtures("mock_env")
+@patch("upload_to_archive.upload")
+def test_republicar_o_passado_nao_rebaixa_o_ponteiro(mock_upload, monkeypatch, capsys):
+    """--data serve a republicação histórica; ela não pode apagar o presente."""
+    _com_manifesto(monkeypatch, "2026-09-03")
+
+    resultado = publicar_manifesto(date(2026, 8, 31), item_do_ano(QUANDO))
+
+    assert resultado is None
+    mock_upload.assert_not_called()
+    assert "2026-09-03" in capsys.readouterr().out
+
+
+@pytest.mark.usefixtures("mock_env")
+@patch("upload_to_archive.upload")
+def test_republicar_o_mesmo_dia_corrige_o_ponteiro(mock_upload, monkeypatch):
+    """Empate sobrescreve: republicar hoje é corrigir hoje."""
+    _com_manifesto(monkeypatch, QUANDO.isoformat())
+
+    assert publicar_manifesto(QUANDO, item_do_ano(QUANDO)) is not None
+    mock_upload.assert_called_once()
+
+
+@pytest.mark.usefixtures("mock_env")
+@patch("upload_to_archive.upload")
+def test_o_ponteiro_avanca_para_o_retrato_mais_novo(mock_upload, monkeypatch):
+    _com_manifesto(monkeypatch, "2026-09-01")
+
+    manifesto = publicar_manifesto(QUANDO, item_do_ano(QUANDO))
+
+    assert manifesto["data"] == QUANDO.isoformat()
+    mock_upload.assert_called_once()
+
+
+@pytest.mark.usefixtures("mock_env", "sem_manifesto")
+@patch("upload_to_archive.upload")
+def test_a_primeira_publicacao_cria_o_ponteiro(mock_upload):
+    assert publicar_manifesto(QUANDO, item_do_ano(QUANDO)) is not None
+    mock_upload.assert_called_once()
+
+
 @patch("upload_to_archive.upload")
 def test_o_manifesto_respeita_o_dry_run(mock_upload):
-    publicar_manifesto(QUANDO, dry_run=True)
+    publicar_manifesto(QUANDO, item_do_ano(QUANDO), dry_run=True)
 
     mock_upload.assert_not_called()

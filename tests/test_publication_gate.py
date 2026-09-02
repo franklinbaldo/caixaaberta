@@ -253,7 +253,9 @@ def test_a_execucao_que_atravessa_a_meia_noite_usa_uma_data_so(monkeypatch):
         lambda quando, *_, **kw: (vistas.append(quando), ["p.parquet"])[1],
     )
     monkeypatch.setattr(
-        run_pipeline, "publicar_manifesto", lambda quando, **kw: vistas.append(quando)
+        run_pipeline,
+        "publicar_manifesto",
+        lambda quando, _ident, **kw: vistas.append(quando),
     )
     monkeypatch.setattr(run_pipeline, "upload_files_to_archive", lambda **kw: None)
     monkeypatch.setattr(
@@ -296,3 +298,55 @@ def test_o_item_e_o_arquivo_saem_do_mesmo_ano(monkeypatch, capsys):
 
     assert recebido["identifier"] == item_do_ano(quando)
     assert "2026" in recebido["identifier"]
+
+
+def _pipeline_publicando(monkeypatch, argv):
+    monkeypatch.setattr(run_pipeline, "fetch_all_states", lambda **kw: None)
+    monkeypatch.setattr(run_pipeline, "process_local_data", lambda **kw: None)
+    monkeypatch.setattr(run_pipeline, "validate_publication_parquet", lambda path: None)
+    monkeypatch.setattr(
+        run_pipeline, "artefatos_da_publicacao", lambda *_, **kw: ["p.parquet"]
+    )
+    monkeypatch.setattr(run_pipeline, "upload_files_to_archive", lambda **kw: None)
+    apontado = []
+    monkeypatch.setattr(
+        run_pipeline,
+        "publicar_manifesto",
+        lambda quando, ident, **kw: apontado.append((quando, ident)),
+    )
+    monkeypatch.setattr(sys, "argv", argv)
+    run_pipeline.main()
+    return apontado
+
+
+def test_um_item_arbitrario_nao_redireciona_a_serie(monkeypatch):
+    """--archive-item-identifier é experimento; não move o ponteiro público."""
+    apontado = _pipeline_publicando(
+        monkeypatch,
+        [
+            "run_pipeline.py",
+            "--skip-fetch",
+            "--upload-dry-run",
+            "--archive-item-identifier",
+            "item-experimental",
+        ],
+    )
+
+    assert apontado == []
+
+
+def test_a_publicacao_da_serie_move_o_ponteiro(monkeypatch):
+    quando = date(2026, 9, 2)
+
+    apontado = _pipeline_publicando(
+        monkeypatch,
+        [
+            "run_pipeline.py",
+            "--skip-fetch",
+            "--upload-dry-run",
+            "--data",
+            quando.isoformat(),
+        ],
+    )
+
+    assert apontado == [(quando, item_do_ano(quando))]

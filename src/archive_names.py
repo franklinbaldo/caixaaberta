@@ -48,8 +48,8 @@ def bruto_datado(quando: date) -> str:
     return f"{BRUTO_PREFIX}_{quando.isoformat()}.zip"
 
 
-def url_no_archive(quando: date, arquivo: str) -> str:
-    return f"https://archive.org/download/{item_do_ano(quando)}/{arquivo}"
+def url_no_item(identifier: str, arquivo: str) -> str:
+    return f"https://archive.org/download/{identifier}/{arquivo}"
 
 
 def url_do_manifesto() -> str:
