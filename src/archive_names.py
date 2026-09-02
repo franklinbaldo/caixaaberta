@@ -23,6 +23,7 @@ ITEM_PREFIX = "imoveis-caixa-economica-federal"
 PARQUET_PREFIX = "imoveis_geocoded"
 BRUTO_PREFIX = "imoveis_csv_bruto"
 CNO_MATCH_PREFIX = "cno_matches"
+MUDANCAS_PREFIX = "mudancas"
 
 # O item sem ano não guarda dado: guarda o ponteiro para o último retrato
 # efetivamente publicado. O calendário não serve como ponteiro — a publicação
@@ -52,6 +53,11 @@ def bruto_datado(quando: date) -> str:
 def cno_matches_datado(quando: date) -> str:
     """Tabela de candidatos/evidências do matching CNO daquele retrato."""
     return f"{CNO_MATCH_PREFIX}_{quando.isoformat()}.parquet"
+
+
+def mudancas_datado(quando: date) -> str:
+    """Eventos derivados entre este retrato e o imediatamente anterior."""
+    return f"{MUDANCAS_PREFIX}_{quando.isoformat()}.parquet"
 
 
 def url_no_item(identifier: str, arquivo: str) -> str:
