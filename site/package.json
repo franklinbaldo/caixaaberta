@@ -11,9 +11,11 @@
     "preview": "astro preview"
   },
   "dependencies": {
+    "@duckdb/duckdb-wasm": "1.33.1-dev57.0",
     "@picocss/pico": "^2.1.1",
     "astro": "^7.2.10",
-    "cobogo": "github:franklinbaldo/cobogo#9c45d79dcd1c669db6fbc76c24f5518c3dc97069"
+    "cobogo": "github:franklinbaldo/cobogo#9c45d79dcd1c669db6fbc76c24f5518c3dc97069",
+    "maplibre-gl": "^6.6.0"
   },
   "devDependencies": {
     "@astrojs/check": "^0.9.9",
