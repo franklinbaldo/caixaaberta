@@ -191,7 +191,7 @@ section[data-callout] article {
 
 [data-explorer-app] {
   display: grid;
-  grid-template-columns: minmax(23rem, 0.86fr) minmax(0, 1.3fr);
+  grid-template-columns: minmax(24rem, 0.9fr) minmax(0, 1.25fr);
   grid-template-areas:
     "intro intro"
     "filters filters"
@@ -234,18 +234,19 @@ section[data-callout] article {
   margin: 0;
 }
 
-[data-explorer-app] fieldset {
+[data-primary-filters] {
   display: grid;
-  grid-template-columns: minmax(16rem, 2fr) repeat(6, minmax(8rem, 1fr));
+  grid-template-columns: minmax(18rem, 2fr) repeat(6, minmax(8rem, 1fr));
   gap: 0.65rem 0.8rem;
   align-items: end;
   margin: 0;
-  padding: 1rem 0;
+  padding: 1rem 0 0.75rem;
   border-inline: 0;
   border-bottom: 0;
 }
 
-[data-explorer-app] fieldset legend {
+[data-primary-filters] legend,
+[data-advanced-filters] legend {
   grid-column: 1 / -1;
   margin-bottom: 0;
   font-size: 0.82rem;
@@ -266,12 +267,33 @@ section[data-callout] article {
   margin-bottom: 0;
 }
 
-[data-explorer-app] fieldset button {
+[data-primary-filters] button {
   grid-column: 1 / -1;
   justify-self: start;
   width: auto;
   margin: 0;
   padding-block: 0.55rem;
+}
+
+[data-advanced-filters] {
+  margin: 0 0 0.85rem;
+  padding-block: 0.45rem 0.75rem;
+  border-bottom: 1px solid var(--caixa-rule);
+}
+
+[data-advanced-filters] > summary {
+  color: var(--caixa-accent);
+  font-size: 0.84rem;
+  font-weight: 700;
+}
+
+[data-advanced-filters] fieldset {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(10rem, 1fr));
+  gap: 0.7rem 0.9rem;
+  margin: 0.75rem 0 0;
+  padding: 0;
+  border: 0;
 }
 
 [data-explorer-summary] {
@@ -314,8 +336,8 @@ section[data-callout] article {
 
 #map {
   width: 100%;
-  height: min(68vh, 46rem);
-  min-height: 34rem;
+  height: min(72vh, 49rem);
+  min-height: 36rem;
   border: 1px solid var(--caixa-rule);
   background: var(--caixa-soft);
 }
@@ -352,16 +374,146 @@ section[data-callout] article {
   font-size: 0.78rem;
 }
 
+[data-property-list] {
+  display: grid;
+  gap: 0.7rem;
+  max-height: min(72vh, 49rem);
+  padding-right: 0.25rem;
+  overflow-y: auto;
+  scrollbar-gutter: stable;
+}
+
+[data-property-card] {
+  margin: 0;
+  padding: 1rem;
+  border: 1px solid var(--caixa-rule);
+  border-radius: 0;
+  box-shadow: none;
+  background: color-mix(in srgb, var(--caixa-paper) 92%, white);
+}
+
+[data-property-card]:hover {
+  border-color: color-mix(in srgb, var(--caixa-accent) 55%, var(--caixa-rule));
+  background: color-mix(in srgb, var(--caixa-accent) 3%, var(--caixa-paper));
+}
+
+[data-property-card] > header {
+  display: flex;
+  gap: 0.5rem 1rem;
+  align-items: baseline;
+  justify-content: space-between;
+  margin-bottom: 0.45rem;
+  padding: 0;
+  border: 0;
+  background: transparent;
+}
+
+[data-property-card] > header strong {
+  color: var(--caixa-accent);
+  font-size: 0.86rem;
+  letter-spacing: 0.025em;
+  text-transform: uppercase;
+}
+
+[data-property-card] > header small {
+  color: var(--pico-muted-color);
+  text-align: right;
+}
+
+[data-property-card] h3 {
+  margin-bottom: 0.35rem;
+  font-size: clamp(1.05rem, 1.6vw, 1.3rem);
+  line-height: 1.15;
+}
+
+[data-property-address] {
+  margin-bottom: 0.75rem;
+  color: var(--pico-muted-color);
+  font-size: 0.86rem;
+}
+
+[data-property-metrics] {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 1px;
+  margin: 0 0 0.7rem;
+  padding: 1px;
+  background: var(--caixa-rule);
+}
+
+[data-property-metrics] > div {
+  min-width: 0;
+  padding: 0.55rem 0.65rem;
+  background: var(--caixa-paper);
+}
+
+[data-property-metrics] dt {
+  margin-bottom: 0.1rem;
+  color: var(--pico-muted-color);
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+[data-property-metrics] dd {
+  margin: 0;
+  font-size: 0.9rem;
+  font-variant-numeric: tabular-nums;
+}
+
+[data-property-metrics] dd[data-emphasis="true"] {
+  color: var(--caixa-accent);
+  font-size: 1.05rem;
+  font-weight: 800;
+}
+
+[data-property-context] {
+  min-height: 1.25rem;
+  margin-bottom: 0.7rem;
+  color: var(--pico-muted-color);
+  font-size: 0.78rem;
+}
+
+[data-property-card] > footer {
+  display: flex;
+  gap: 0.5rem 1rem;
+  align-items: baseline;
+  justify-content: space-between;
+  margin: 0;
+  padding: 0.6rem 0 0;
+  border-top: 1px solid var(--caixa-rule);
+  background: transparent;
+  font-size: 0.84rem;
+}
+
+[data-property-card] > footer small,
+[data-property-card] > footer span {
+  color: var(--pico-muted-color);
+}
+
+[data-power-table] {
+  margin-top: 1rem;
+  padding-top: 0.65rem;
+  border-top: 1px solid var(--caixa-rule);
+}
+
+[data-power-table] > summary {
+  font-size: 0.82rem;
+  font-weight: 700;
+}
+
 [data-table-scroll] {
-  max-height: min(68vh, 46rem);
+  max-height: 32rem;
+  margin-top: 0.65rem;
   overflow: auto;
   border-top: 1px solid var(--caixa-rule);
 }
 
 [data-table-scroll] table {
-  min-width: 62rem;
+  min-width: 78rem;
   margin-bottom: 0;
-  font-size: 0.84rem;
+  font-size: 0.8rem;
 }
 
 [data-table-scroll] thead {
@@ -397,12 +549,12 @@ section[data-callout] article {
   gap: 0.35rem;
 }
 
-@media (max-width: 1180px) {
-  [data-explorer-app] fieldset {
+@media (max-width: 1220px) {
+  [data-primary-filters] {
     grid-template-columns: repeat(3, minmax(0, 1fr));
   }
 
-  [data-explorer-app] fieldset label:first-of-type {
+  [data-primary-filters] label:first-of-type {
     grid-column: 1 / -1;
   }
 }
@@ -432,7 +584,7 @@ section[data-callout] article {
     min-height: 26rem;
   }
 
-  [data-table-scroll] {
+  [data-property-list] {
     max-height: none;
   }
 }
@@ -465,11 +617,12 @@ section[data-callout] article {
   }
 
   [data-snapshot],
-  [data-explorer-app] fieldset {
+  [data-primary-filters],
+  [data-advanced-filters] fieldset {
     grid-template-columns: 1fr;
   }
 
-  [data-explorer-app] fieldset label:first-of-type {
+  [data-primary-filters] label:first-of-type {
     grid-column: auto;
   }
 
@@ -477,8 +630,21 @@ section[data-callout] article {
     padding: 0.8rem;
   }
 
-  [data-results] > header {
+  [data-results] > header,
+  [data-property-card] > header,
+  [data-property-card] > footer {
     display: block;
+  }
+
+  [data-property-card] > header small,
+  [data-property-card] > footer small {
+    display: block;
+    margin-top: 0.25rem;
+    text-align: left;
+  }
+
+  [data-property-metrics] {
+    grid-template-columns: 1fr;
   }
 
   section[data-callout] > header {
