@@ -7,7 +7,7 @@ import sys
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "src"))
 
-from archive_names import BRUTO_LATEST, BRUTO_PREFIX, bruto_datado
+from archive_names import BRUTO_PREFIX, bruto_datado
 from upload_to_archive import upload_files_to_archive
 
 
@@ -104,9 +104,7 @@ def test_upload_files_to_archive_no_parquet_files_fails(mock_upload, tmp_path):
 
 @pytest.mark.usefixtures("mock_env")
 @patch("upload_to_archive.upload")
-def test_upload_files_to_archive_exception_propagates(
-    mock_upload, dummy_files_dir
-):
+def test_upload_files_to_archive_exception_propagates(mock_upload, dummy_files_dir):
     mock_upload.side_effect = RuntimeError("Simulated upload error")
 
     with pytest.raises(RuntimeError, match="Simulated upload error"):
@@ -248,13 +246,13 @@ def test_upload_pede_espera_ao_archive(mock_upload, dummy_files_dir):
 
 @pytest.mark.usefixtures("mock_env")
 @patch("upload_to_archive.upload")
-def test_o_retrato_datado_e_o_estavel_sobem_juntos(mock_upload, tmp_path):
-    """O datado preserva a série; o estável serve o consumo corrente."""
-    from archive_names import PARQUET_LATEST, parquet_datado
+def test_sobem_os_dois_retratos_do_dia(mock_upload, tmp_path):
+    """Parquet e bruto do mesmo dia sobem juntos, ambos datados."""
+    from archive_names import parquet_datado
 
     directory = tmp_path / "output_data"
     directory.mkdir()
-    for nome in (PARQUET_LATEST, parquet_datado(), BRUTO_LATEST, bruto_datado()):
+    for nome in (parquet_datado(), bruto_datado()):
         (directory / nome).write_text("dummy")
 
     upload_files_to_archive(
@@ -265,9 +263,4 @@ def test_o_retrato_datado_e_o_estavel_sobem_juntos(mock_upload, tmp_path):
     )
 
     enviados = [Path(f).name for f in mock_upload.call_args.kwargs["files"]]
-    assert set(enviados) == {
-        PARQUET_LATEST,
-        parquet_datado(),
-        BRUTO_LATEST,
-        bruto_datado(),
-    }
+    assert set(enviados) == {parquet_datado(), bruto_datado()}

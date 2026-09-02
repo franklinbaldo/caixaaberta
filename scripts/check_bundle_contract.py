@@ -76,7 +76,7 @@ def _one(bundle, concept_type: str) -> dict:
 
 
 def check_identifier(bundle) -> list[str]:
-    """O item do Archive é um por ano; o prefixo é que precisa bater."""
+    """O item é um por ano e o arquivo tem data; o DDL calcula os dois."""
     declarado = _one(bundle, "Distribution")["identifier_prefix"]
     nomes = REPO / "src" / "archive_names.py"
     problems = []
@@ -88,35 +88,21 @@ def check_identifier(bundle) -> list[str]:
             f"o bundle declara {declarado!r}"
         )
 
-    estaveis = {
-        "PARQUET_LATEST": f"{_literal(nomes, 'PARQUET_PREFIX')}.parquet",
-        "BRUTO_LATEST": f"{_literal(nomes, 'BRUTO_PREFIX')}.zip",
-    }
-
     ddl = (REPO / "imoveis_caixa.sql").read_text(encoding="utf-8")
-    urls = re.findall(r"archive\.org/download/([^/]+)/([^'\"\s]+)", ddl)
-    if not urls:
-        problems.append("imoveis_caixa.sql não referencia item algum do Archive")
-    for item, arquivo in urls:
-        if not re.fullmatch(rf"{re.escape(declarado)}-\d{{4}}", item):
-            problems.append(
-                f"imoveis_caixa.sql aponta para o item {item!r}, "
-                f"que não é {declarado!r} seguido de um ano"
-            )
-        if arquivo != estaveis["PARQUET_LATEST"]:
-            problems.append(
-                f"imoveis_caixa.sql lê {arquivo!r}, mas o nome estável do "
-                f"Parquet é {estaveis['PARQUET_LATEST']!r}"
-            )
-
-    texto = (REPO / "knowledge" / "concepts" / "publicacao-archive.md").read_text(
-        encoding="utf-8"
-    )
-    for nome, valor in estaveis.items():
-        if valor not in texto:
-            problems.append(
-                f"o conceito Distribution não menciona {valor!r} ({nome})"
-            )
+    if declarado not in ddl:
+        problems.append(
+            f"imoveis_caixa.sql não referencia o item {declarado!r} do Archive"
+        )
+    if _literal(nomes, "PARQUET_PREFIX") not in ddl:
+        problems.append(
+            "imoveis_caixa.sql não referencia o Parquet publicado "
+            f"({_literal(nomes, 'PARQUET_PREFIX')})"
+        )
+    if "current_date" not in ddl and not re.search(r"\d{4}-\d{2}-\d{2}", ddl):
+        problems.append(
+            "imoveis_caixa.sql não calcula nem fixa uma data: publicação "
+            "alguma tem nome sem data"
+        )
 
     return problems
 
@@ -124,7 +110,9 @@ def check_identifier(bundle) -> list[str]:
 def check_required_columns(bundle) -> list[str]:
     """O gate de publicação e o conceito Schema descrevem o mesmo contrato."""
     declared = set(_one(bundle, "Schema")["colunas_obrigatorias"])
-    in_code = set(_literal(REPO / "src" / "reporter.py", "REQUIRED_PUBLICATION_COLUMNS"))
+    in_code = set(
+        _literal(REPO / "src" / "reporter.py", "REQUIRED_PUBLICATION_COLUMNS")
+    )
     problems = []
 
     if declared != in_code:

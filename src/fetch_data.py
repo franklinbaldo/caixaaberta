@@ -1,7 +1,6 @@
 import csv
 import io
 import os
-import shutil
 import random
 import time
 from pathlib import Path
@@ -10,7 +9,7 @@ import pandas as pd
 import ibis
 import requests
 
-from archive_names import PARQUET_LATEST, parquet_datado
+from archive_names import parquet_datado
 from geocode_cnefe import cobertura, geocodificar
 from utils import converter_valor_monetario_para_float, converter_percentual_para_float
 
@@ -20,15 +19,49 @@ OUTPUT_DIR = "output_data"
 DEFAULT_URL_BASE = "https://venda-imoveis.caixa.gov.br/listaweb/Lista_imoveis_{}.csv"
 
 UFS = [
-    "AC", "AL", "AM", "AP", "BA", "CE", "DF", "ES", "GO", "MA", "MG", "MS",
-    "MT", "PA", "PB", "PE", "PI", "PR", "RJ", "RN", "RO", "RR", "RS", "SC",
-    "SE", "SP", "TO",
+    "AC",
+    "AL",
+    "AM",
+    "AP",
+    "BA",
+    "CE",
+    "DF",
+    "ES",
+    "GO",
+    "MA",
+    "MG",
+    "MS",
+    "MT",
+    "PA",
+    "PB",
+    "PE",
+    "PI",
+    "PR",
+    "RJ",
+    "RN",
+    "RO",
+    "RR",
+    "RS",
+    "SC",
+    "SE",
+    "SP",
+    "TO",
 ]
 
 # Ordem das colunas gravadas em data/imoveis_<UF>.csv.
 CSV_COLUMNS = [
-    "link", "endereco", "bairro", "descricao", "preco", "avaliacao",
-    "desconto", "modalidade", "foto", "cidade", "estado", "financiamento",
+    "link",
+    "endereco",
+    "bairro",
+    "descricao",
+    "preco",
+    "avaliacao",
+    "desconto",
+    "modalidade",
+    "foto",
+    "cidade",
+    "estado",
+    "financiamento",
 ]
 
 # Cabeçalho da Caixa -> coluna do nosso CSV.
@@ -102,20 +135,24 @@ def parse_caixa_csv(content):
             break
 
     if header_index is None:
-        raise FetchError("Cabeçalho da lista de imóveis não encontrado no CSV da Caixa.")
+        raise FetchError(
+            "Cabeçalho da lista de imóveis não encontrado no CSV da Caixa."
+        )
 
     header = [cell.strip() for cell in rows[header_index]]
     header = ["N° do imóvel" if cell == "Nº do imóvel" else cell for cell in header]
     records = []
-    for row in rows[header_index + 1:]:
+    for row in rows[header_index + 1 :]:
         if not any(cell.strip() for cell in row):
             continue
         record = dict(zip(header, row))
-        records.append({
-            CAIXA_COLUMNS[name]: value.strip()
-            for name, value in record.items()
-            if name in CAIXA_COLUMNS
-        })
+        records.append(
+            {
+                CAIXA_COLUMNS[name]: value.strip()
+                for name, value in record.items()
+                if name in CAIXA_COLUMNS
+            }
+        )
 
     df = pd.DataFrame(records)
     if df.empty:
@@ -132,7 +169,9 @@ def parse_caixa_csv(content):
     return df[CSV_COLUMNS]
 
 
-def fetch_state(uf, url_base=None, session=None, timeout=60, jitter=(0.8, 2.5), raw_dir=None):
+def fetch_state(
+    uf, url_base=None, session=None, timeout=60, jitter=(0.8, 2.5), raw_dir=None
+):
     """Baixa e interpreta a lista de imóveis de um estado, uma tentativa.
 
     Cada chamada usa uma sessão HTTP nova de propósito. O anti-bot da Caixa
@@ -250,10 +289,10 @@ def process_local_data():
         table_name = f"imoveis_{csv_file.stem.split('_')[1]}"
         df = pd.read_csv(csv_file)
         # Ensure 'foto' and 'bairro' columns are string type
-        if 'foto' in df.columns:
-            df['foto'] = df['foto'].astype(str)
-        if 'bairro' in df.columns:
-            df['bairro'] = df['bairro'].astype(str)
+        if "foto" in df.columns:
+            df["foto"] = df["foto"].astype(str)
+        if "bairro" in df.columns:
+            df["bairro"] = df["bairro"].astype(str)
         conn.create_table(table_name, df, overwrite=True)
         all_tables.append(conn.table(table_name))
 
@@ -261,34 +300,36 @@ def process_local_data():
     imoveis_table = ibis.union(*all_tables)
 
     # Basic transformations
-    imoveis_table = imoveis_table.mutate(bairro=imoveis_table.bairro.fill_null("").upper().strip())
-    imoveis_table = imoveis_table.drop_null('link')
+    imoveis_table = imoveis_table.mutate(
+        bairro=imoveis_table.bairro.fill_null("").upper().strip()
+    )
+    imoveis_table = imoveis_table.drop_null("link")
     imoveis_table = imoveis_table.distinct()
 
     # Geocodificação por CNEFE: um join em DuckDB, sem rede no caminho
     # crítico. Ver src/geocode_cnefe.py e knowledge/concepts/geocodificacao.md.
     df = imoveis_table.to_pandas()
 
-    if 'latitude' not in df.columns:
-        df['latitude'] = pd.NA
-    if 'longitude' not in df.columns:
-        df['longitude'] = pd.NA
-    df['latitude'] = pd.to_numeric(df['latitude'], errors='coerce')
-    df['longitude'] = pd.to_numeric(df['longitude'], errors='coerce')
+    if "latitude" not in df.columns:
+        df["latitude"] = pd.NA
+    if "longitude" not in df.columns:
+        df["longitude"] = pd.NA
+    df["latitude"] = pd.to_numeric(df["latitude"], errors="coerce")
+    df["longitude"] = pd.to_numeric(df["longitude"], errors="coerce")
 
-    pendentes = int(df['latitude'].isnull().sum())
+    pendentes = int(df["latitude"].isnull().sum())
     if pendentes:
         print(f"Geocodificando {pendentes} endereços pelo CNEFE...")
         df = geocodificar(df)
         for nivel, quantos in cobertura(df).items():
             print(f"  {nivel}: {quantos}")
 
-    # Dois nomes para o mesmo conteúdo: o datado é o retrato que fica no
-    # Archive, o estável é o que imoveis_caixa.sql consulta sem saber a data.
-    output_file = output_path / PARQUET_LATEST
+    # Só o nome datado: o retrato de hoje não é o de ontem, e quem consulta
+    # calcula a data em vez de seguir um apelido.
+    output_file = output_path / parquet_datado()
     df.to_parquet(output_file, index=False)
-    shutil.copy2(output_file, output_path / parquet_datado())
     print(f"Salvo dados processados para {output_file}")
+
 
 if __name__ == "__main__":
     process_local_data()

@@ -21,15 +21,14 @@ SELECT estado, count(*) FROM imoveis_caixa GROUP BY estado;
 Os retratos diários se acumulam em um item por ano
 (`imoveis-caixa-economica-federal-2026`), cada publicação sob um nome datado
 — `imoveis_geocoded_2026-09-02.parquet` — porque a lista da Caixa é um retrato
-do dia e o imóvel vendido some dela. Ao lado dos datados, `imoveis_geocoded.parquet`
-e `imoveis_csv_bruto.zip` apontam sempre para a publicação mais recente; é
-deles que o DDL lê.
+do dia e o imóvel vendido some dela. Não há apelido para o mais recente: o DDL
+monta a URL em SQL a partir de `current_date`, então nem a virada do dia nem a
+do ano exigem regerá-lo.
 
-Quando o ano vira, o DDL precisa ser regerado:
+Para congelar a view num retrato específico da série:
 
 ```bash
-python src/generate_ddl.py            # item do ano corrente
-python src/generate_ddl.py --identifier <ID_DO_ITEM>
+python src/generate_ddl.py --data 2026-09-02
 ```
 
 ### O download e o anti-bot da Caixa

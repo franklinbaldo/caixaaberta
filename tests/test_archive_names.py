@@ -12,9 +12,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "src"))
 
 from archive_names import (
-    BRUTO_LATEST,
     BRUTO_PREFIX,
-    PARQUET_LATEST,
     PARQUET_PREFIX,
     bruto_datado,
     item_do_ano,
@@ -43,16 +41,21 @@ def test_o_bruto_acompanha_a_data_do_parquet():
     assert parquet_datado(quando).endswith("2026-09-02.parquet")
 
 
-def test_os_nomes_estaveis_nao_carregam_data():
-    """imoveis_caixa.sql precisa de um alvo que não mude a cada publicação."""
-    assert PARQUET_LATEST == "imoveis_geocoded.parquet"
-    assert BRUTO_LATEST == "imoveis_csv_bruto.zip"
-    assert not any(c.isdigit() for c in PARQUET_LATEST + BRUTO_LATEST)
+def test_nenhum_nome_publicado_dispensa_a_data():
+    """Não existe apelido para o mais recente: quem consulta calcula a data."""
+    import archive_names
+
+    publicaveis = [
+        valor
+        for nome, valor in vars(archive_names).items()
+        if isinstance(valor, str)
+        and not nome.startswith("_")
+        and (valor.endswith(".parquet") or valor.endswith(".zip"))
+    ]
+    assert publicaveis == []
 
 
-def test_datado_e_estavel_compartilham_o_prefixo():
+def test_datado_carrega_o_prefixo():
     """O gate de proveniência reconhece a fonte pelo prefixo."""
     assert parquet_datado().startswith(PARQUET_PREFIX)
     assert bruto_datado().startswith(BRUTO_PREFIX)
-    assert PARQUET_LATEST.startswith(PARQUET_PREFIX)
-    assert BRUTO_LATEST.startswith(BRUTO_PREFIX)

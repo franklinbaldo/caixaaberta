@@ -1,4 +1,3 @@
-from pathlib import Path
 import sys
 
 import pandas as pd
@@ -64,16 +63,16 @@ def test_validate_publication_parquet_accepts_structurally_valid_file(tmp_path):
     pd.testing.assert_frame_equal(result, frame)
 
 
-def test_pipeline_does_not_upload_when_publication_gate_fails(
-    monkeypatch, tmp_path
-):
+def test_pipeline_does_not_upload_when_publication_gate_fails(monkeypatch, tmp_path):
     called = False
 
     def fake_upload(**kwargs):
         nonlocal called
         called = True
 
-    monkeypatch.setattr(run_pipeline, "DEFAULT_PARQUET_PATH", tmp_path / "missing.parquet")
+    monkeypatch.setattr(
+        run_pipeline, "parquet_do_dia", lambda: tmp_path / "missing.parquet"
+    )
     monkeypatch.setattr(run_pipeline, "upload_files_to_archive", fake_upload)
     monkeypatch.setattr(sys, "argv", ["run_pipeline.py", "--skip-processing"])
 
@@ -105,7 +104,9 @@ def test_pipeline_skip_fetch_does_not_download(monkeypatch, tmp_path):
 
     monkeypatch.setattr(run_pipeline, "fetch_all_states", fail_fetch)
     monkeypatch.setattr(run_pipeline, "process_local_data", lambda: None)
-    monkeypatch.setattr(sys, "argv", ["run_pipeline.py", "--skip-fetch", "--skip-upload"])
+    monkeypatch.setattr(
+        sys, "argv", ["run_pipeline.py", "--skip-fetch", "--skip-upload"]
+    )
 
     run_pipeline.main()
 
@@ -146,9 +147,7 @@ def test_skip_processing_alone_does_not_download(monkeypatch, tmp_path):
     monkeypatch.setattr(
         run_pipeline, "process_local_data", lambda: pytest.fail("não processa")
     )
-    monkeypatch.setattr(
-        run_pipeline, "validate_publication_parquet", lambda path: None
-    )
+    monkeypatch.setattr(run_pipeline, "validate_publication_parquet", lambda path: None)
     monkeypatch.setattr(
         run_pipeline, "upload_files_to_archive", lambda **kw: uploaded.append(kw)
     )
@@ -171,9 +170,7 @@ def test_skip_processing_republica_sem_exigir_o_bruto(monkeypatch, tmp_path):
     monkeypatch.setattr(
         run_pipeline, "process_local_data", lambda: pytest.fail("não processa")
     )
-    monkeypatch.setattr(
-        run_pipeline, "validate_publication_parquet", lambda path: None
-    )
+    monkeypatch.setattr(run_pipeline, "validate_publication_parquet", lambda path: None)
     monkeypatch.setattr(
         run_pipeline, "upload_files_to_archive", lambda **kw: chamadas.append(kw)
     )
@@ -191,9 +188,7 @@ def test_publicacao_normal_exige_o_bruto(monkeypatch, tmp_path):
 
     monkeypatch.setattr(run_pipeline, "fetch_all_states", lambda **kw: None)
     monkeypatch.setattr(run_pipeline, "process_local_data", lambda: None)
-    monkeypatch.setattr(
-        run_pipeline, "validate_publication_parquet", lambda path: None
-    )
+    monkeypatch.setattr(run_pipeline, "validate_publication_parquet", lambda path: None)
     monkeypatch.setattr(
         run_pipeline, "upload_files_to_archive", lambda **kw: chamadas.append(kw)
     )

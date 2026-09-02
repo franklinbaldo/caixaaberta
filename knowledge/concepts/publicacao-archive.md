@@ -7,25 +7,22 @@ identifier_prefix: imoveis-caixa-economica-federal
 
 # Publicação no Internet Archive
 
-Cada execução publica quatro arquivos: dois datados e dois estáveis.
+Cada execução publica dois arquivos, ambos datados:
 
-| Arquivo                                | O que é                                                                 |
-| -------------------------------------- | ----------------------------------------------------------------------- |
-| `imoveis_geocoded_AAAA-MM-DD.parquet`  | O [dataset](dataset-imoveis.md) consolidado daquele dia.                |
-| `imoveis_csv_bruto_AAAA-MM-DD.zip`     | Os CSVs como a [Caixa](fonte-caixa.md) os serviu naquele dia, um por UF.|
-| `imoveis_geocoded.parquet`             | Cópia da publicação mais recente, sob nome fixo.                        |
-| `imoveis_csv_bruto.zip`                | Idem, para o bruto.                                                     |
+| Arquivo                               | O que é                                                                 |
+| ------------------------------------- | ----------------------------------------------------------------------- |
+| `imoveis_geocoded_AAAA-MM-DD.parquet` | O [dataset](dataset-imoveis.md) consolidado daquele dia.                |
+| `imoveis_csv_bruto_AAAA-MM-DD.zip`    | Os CSVs como a [Caixa](fonte-caixa.md) os serviu naquele dia, um por UF.|
 
 O acervo da Caixa é um retrato do dia: imóvel vendido some da lista e a fonte
-não guarda histórico. Se todo dia sobrescrevesse um nome fixo, a série temporal
-que este projeto existe para preservar seria destruída a cada execução — o
-Archive não versiona arquivo homônimo dentro de um item. Por isso o nome
-carrega a data. Os dois nomes estáveis existem só porque `imoveis_caixa.sql`
-precisa de um alvo que não mude a cada dia; o histórico vive nos datados.
+não guarda histórico. Se toda publicação sobrescrevesse um nome fixo, a série
+temporal que este projeto existe para preservar seria destruída a cada
+execução — o Archive não versiona arquivo homônimo dentro de um item. Por isso
+o nome carrega a data, e **não existe apelido para o mais recente**: quem
+consulta calcula a data.
 
 Os retratos se acumulam em **um item por ano** — `imoveis-caixa-economica-federal-2026`,
-`-2027`, e assim por diante — para nenhum item crescer sem limite. Vira o ano,
-vira o item, e o DDL precisa ser regerado.
+`-2027`, e assim por diante — para nenhum item crescer sem limite.
 
 O bruto vai junto porque é a fonte primária e some assim que a Caixa atualiza a
 lista: o Parquet é derivado e pode ser regerado, o CSV daquele dia não. É
@@ -44,12 +41,18 @@ incompleto ou um conjunto em que nenhuma linha tem `link` publicável — o
 [pipeline](pipeline.md) falha em vez de publicar dado inútil.
 
 O DDL em `imoveis_caixa.sql` cria uma view DuckDB que lê o Parquet direto do
-Archive, sem download do arquivo inteiro:
+Archive, sem download do arquivo inteiro. Ele não guarda data nem ano: monta a
+URL em SQL a partir de `current_date`, e o DuckDB dobra a expressão no bind.
+Nem a virada do dia nem a do ano exigem regerar o arquivo.
 
 ```sql
 .read imoveis_caixa.sql
 SELECT estado, count(*) FROM imoveis_caixa GROUP BY estado;
 ```
+
+A contrapartida é que a view aponta para o retrato de hoje, que só existe
+depois da publicação do dia. Para congelar um retrato específico:
+`python src/generate_ddl.py --data 2026-09-02`.
 
 Publicar exige `IA_ACCESS_KEY` e `IA_SECRET_KEY`; `--upload-dry-run` dispensa
 as duas.

@@ -104,8 +104,14 @@ def upload_files_to_archive(
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="Upload de arquivos para o Internet Archive.")
-    parser.add_argument("--identifier", required=True, help="O identificador do item no Internet Archive.")
+    parser = argparse.ArgumentParser(
+        description="Upload de arquivos para o Internet Archive."
+    )
+    parser.add_argument(
+        "--identifier",
+        required=True,
+        help="O identificador do item no Internet Archive.",
+    )
     parser.add_argument("--title", required=True, help="O título do item.")
     parser.add_argument("--description", required=True, help="A descrição do item.")
     parser.add_argument(
@@ -113,7 +119,9 @@ if __name__ == "__main__":
         default="output_data",
         help="O diretório que contém os arquivos a serem carregados.",
     )
-    parser.add_argument("--dry-run", action="store_true", help="Simula o upload sem enviar arquivos.")
+    parser.add_argument(
+        "--dry-run", action="store_true", help="Simula o upload sem enviar arquivos."
+    )
     args = parser.parse_args()
 
     upload_files_to_archive(
