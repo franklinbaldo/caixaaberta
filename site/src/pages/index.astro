@@ -95,8 +95,8 @@ import Base from "../layouts/Base.astro";
     const snapshot = document.querySelector("[data-snapshot]");
     const date = document.querySelector("#snapshot-date");
     const item = document.querySelector("#snapshot-item");
-    const archive = document.querySelector("#snapshot-archive");
-    const parquet = document.querySelector("#snapshot-parquet");
+    const archive = document.querySelector<HTMLAnchorElement>("#snapshot-archive");
+    const parquet = document.querySelector<HTMLAnchorElement>("#snapshot-parquet");
     const status = document.querySelector("#snapshot-status");
 
     try {
