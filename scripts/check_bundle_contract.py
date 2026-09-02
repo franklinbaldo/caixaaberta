@@ -21,7 +21,6 @@ from __future__ import annotations
 
 import ast
 import json
-import re
 import sys
 from pathlib import Path
 
@@ -60,24 +59,6 @@ def _literal(module: Path, name: str):
     raise LookupError(f"{name} não encontrado em {module.relative_to(REPO)}")
 
 
-def _argparse_default(module: Path, option: str):
-    """Lê o default de uma opção de linha de comando sem importar o módulo."""
-    tree = ast.parse(module.read_text(encoding="utf-8"))
-    for node in ast.walk(tree):
-        if not isinstance(node, ast.Call):
-            continue
-        if getattr(node.func, "attr", None) != "add_argument":
-            continue
-        if not any(
-            isinstance(a, ast.Constant) and a.value == option for a in node.args
-        ):
-            continue
-        for keyword in node.keywords:
-            if keyword.arg == "default":
-                return ast.literal_eval(keyword.value)
-    raise LookupError(f"default de {option} não encontrado em {module.name}")
-
-
 def _frontmatter(bundle, concept_type: str) -> list[dict]:
     frame = bundle.concepts.to_pandas()
     rows = frame[frame["concept_type"] == concept_type]
@@ -94,31 +75,37 @@ def _one(bundle, concept_type: str) -> dict:
 
 
 def check_identifier(bundle) -> list[str]:
-    """O identificador do item no Archive tem quatro cópias. Uma manda."""
-    expected = _one(bundle, "Distribution")["identifier"]
+    """O item é um por ano, o arquivo tem data, e o DDL segue o manifesto."""
+    distribution = _one(bundle, "Distribution")
+    nomes = REPO / "src" / "archive_names.py"
     problems = []
 
-    for module, option in (
-        ("run_pipeline.py", "--archive-item-identifier"),
-        ("generate_ddl.py", "--identifier"),
-    ):
-        found = _argparse_default(REPO / "src" / module, option)
-        if found != expected:
-            problems.append(
-                f"src/{module}: default de {option} é {found!r}, "
-                f"o bundle declara {expected!r}"
-            )
+    prefixo = _literal(nomes, "ITEM_PREFIX")
+    if prefixo != distribution["identifier_prefix"]:
+        problems.append(
+            f"src/archive_names.py: ITEM_PREFIX é {prefixo!r}, "
+            f"o bundle declara {distribution['identifier_prefix']!r}"
+        )
+
+    ponteiro = _literal(nomes, "MANIFESTO")
+    if ponteiro != distribution["manifesto"]:
+        problems.append(
+            f"src/archive_names.py: MANIFESTO é {ponteiro!r}, "
+            f"o bundle declara {distribution['manifesto']!r}"
+        )
 
     ddl = (REPO / "imoveis_caixa.sql").read_text(encoding="utf-8")
-    urls = re.findall(r"archive\.org/download/([^/]+)/", ddl)
-    for found in urls:
-        if found != expected:
-            problems.append(
-                f"imoveis_caixa.sql aponta para o item {found!r}, "
-                f"o bundle declara {expected!r}"
-            )
-    if not urls:
-        problems.append("imoveis_caixa.sql não referencia item algum do Archive")
+    if ponteiro not in ddl:
+        problems.append(
+            f"imoveis_caixa.sql não lê o manifesto ({ponteiro}): sem ele, o "
+            "alvo da view seria derivado do calendário, que não sabe se a "
+            "publicação do dia aconteceu"
+        )
+    if "current_date" in ddl:
+        problems.append(
+            "imoveis_caixa.sql deriva o alvo de current_date, que depende do "
+            "fuso da sessão de quem consulta"
+        )
 
     return problems
 
@@ -126,7 +113,9 @@ def check_identifier(bundle) -> list[str]:
 def check_required_columns(bundle) -> list[str]:
     """O gate de publicação e o conceito Schema descrevem o mesmo contrato."""
     declared = set(_one(bundle, "Schema")["colunas_obrigatorias"])
-    in_code = set(_literal(REPO / "src" / "reporter.py", "REQUIRED_PUBLICATION_COLUMNS"))
+    in_code = set(
+        _literal(REPO / "src" / "reporter.py", "REQUIRED_PUBLICATION_COLUMNS")
+    )
     problems = []
 
     if declared != in_code:

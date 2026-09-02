@@ -29,14 +29,22 @@ def cnefe(tmp_path):
         "municipio_logradouro_localidade",
         [
             {
-                "estado": "RO", "municipio": "PORTO VELHO",
-                "logradouro": "AVENIDA SETE DE SETEMBRO", "localidade": "CENTRO",
-                "lat": -8.76, "lon": -63.90, "desvio_metros": 30.0,
+                "estado": "RO",
+                "municipio": "PORTO VELHO",
+                "logradouro": "AVENIDA SETE DE SETEMBRO",
+                "localidade": "CENTRO",
+                "lat": -8.76,
+                "lon": -63.90,
+                "desvio_metros": 30.0,
             },
             {
-                "estado": "RO", "municipio": "PORTO VELHO",
-                "logradouro": "RUA DAS ACACIAS", "localidade": "OUTRO BAIRRO",
-                "lat": -8.70, "lon": -63.80, "desvio_metros": 50.0,
+                "estado": "RO",
+                "municipio": "PORTO VELHO",
+                "logradouro": "RUA DAS ACACIAS",
+                "localidade": "OUTRO BAIRRO",
+                "lat": -8.70,
+                "lon": -63.80,
+                "desvio_metros": 50.0,
             },
         ],
     )
@@ -45,8 +53,12 @@ def cnefe(tmp_path):
         "municipio_localidade",
         [
             {
-                "estado": "RO", "municipio": "PORTO VELHO", "localidade": "TRES MARIAS",
-                "lat": -8.75, "lon": -63.85, "desvio_metros": 900.0,
+                "estado": "RO",
+                "municipio": "PORTO VELHO",
+                "localidade": "TRES MARIAS",
+                "lat": -8.75,
+                "lon": -63.85,
+                "desvio_metros": 900.0,
             }
         ],
     )
@@ -55,8 +67,11 @@ def cnefe(tmp_path):
         "municipio",
         [
             {
-                "estado": "RO", "municipio": "PORTO VELHO",
-                "lat": -8.74, "lon": -63.88, "desvio_metros": 12000.0,
+                "estado": "RO",
+                "municipio": "PORTO VELHO",
+                "lat": -8.74,
+                "lon": -63.88,
+                "desvio_metros": 12000.0,
             }
         ],
     )
@@ -65,8 +80,11 @@ def cnefe(tmp_path):
 
 def _imovel(endereco, bairro, cidade="Porto Velho", estado="RO"):
     return {
-        "endereco": endereco, "bairro": bairro,
-        "cidade": cidade, "estado": estado, "latitude": None,
+        "endereco": endereco,
+        "bairro": bairro,
+        "cidade": cidade,
+        "estado": estado,
+        "latitude": None,
     }
 
 

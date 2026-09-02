@@ -11,6 +11,13 @@ on:
   # anterior.
   workflow_dispatch:
 
+# Duas publicações simultâneas disputariam o ponteiro do último retrato, e a
+# que terminasse primeiro perderia. `cancel-in-progress: false` porque uma
+# publicação já em curso deve terminar: ela vai subir dado real ao Archive.
+concurrency:
+  group: publicacao-imoveis-caixa
+  cancel-in-progress: false
+
 jobs:
   validate:
     runs-on: ubuntu-latest

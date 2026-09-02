@@ -30,12 +30,17 @@ CACHE_DIR = Path("cnefe_cache")
 # etapa só recebe os endereços que a anterior não resolveu, e o rótulo entra no
 # Parquet publicado para que ninguém confunda porta com centroide de município.
 CASCATA = (
-    ("logradouro_localidade", "municipio_logradouro_localidade",
-     ("estado", "municipio", "logradouro", "localidade")),
-    ("logradouro", "municipio_logradouro_localidade",
-     ("estado", "municipio", "logradouro")),
-    ("localidade", "municipio_localidade",
-     ("estado", "municipio", "localidade")),
+    (
+        "logradouro_localidade",
+        "municipio_logradouro_localidade",
+        ("estado", "municipio", "logradouro", "localidade"),
+    ),
+    (
+        "logradouro",
+        "municipio_logradouro_localidade",
+        ("estado", "municipio", "logradouro"),
+    ),
+    ("localidade", "municipio_localidade", ("estado", "municipio", "localidade")),
     ("municipio", "municipio", ("estado", "municipio")),
 )
 
@@ -104,8 +109,8 @@ def geocodificar(
         CREATE OR REPLACE TEMP TABLE alvo AS
         SELECT
             _linha,
-            {_normalizado('estado')} AS estado,
-            {_normalizado('cidade')} AS municipio,
+            {_normalizado("estado")} AS estado,
+            {_normalizado("cidade")} AS municipio,
             {_normalizado("split_part(endereco, ',', 1)")} AS logradouro,
             {_normalizado("coalesce(bairro, '')")} AS localidade
         FROM entrada
@@ -123,9 +128,7 @@ def geocodificar(
             break
 
         caminho = baixar_tabela(tabela, cache_dir)
-        colunas = ", ".join(
-            f"{_normalizado(chave)} AS {chave}" for chave in chaves
-        )
+        colunas = ", ".join(f"{_normalizado(chave)} AS {chave}" for chave in chaves)
         juncao = " AND ".join(f"a.{chave} = c.{chave}" for chave in chaves)
         agrupamento = ", ".join(chaves)
 

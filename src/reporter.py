@@ -2,8 +2,16 @@ from pathlib import Path
 
 import pandas as pd
 
+from archive_names import parquet_datado
 
-DEFAULT_PARQUET_PATH = Path("output_data/imoveis_geocoded.parquet")
+OUTPUT_DIR = Path("output_data")
+
+
+def parquet_do_dia(quando) -> Path:
+    """Caminho local do retrato de um dia. Não existe nome sem data."""
+    return OUTPUT_DIR / parquet_datado(quando)
+
+
 REQUIRED_PUBLICATION_COLUMNS = {
     "link",
     "endereco",
@@ -34,7 +42,7 @@ def undocumented_modalidades(df: pd.DataFrame) -> list[str]:
 
 
 def validate_publication_parquet(
-    parquet_path: Path | str = DEFAULT_PARQUET_PATH,
+    parquet_path: Path | str,
 ) -> pd.DataFrame:
     """Validate structural invariants required before publication."""
     path = Path(parquet_path)
@@ -68,7 +76,7 @@ def format_currency(value):
     return f"R$ {value:,.2f}"
 
 
-def generate_report(parquet_path: Path | str = DEFAULT_PARQUET_PATH):
+def generate_report(parquet_path: Path | str):
     """Print summary statistics for the Parquet produced by the current pipeline."""
     path = Path(parquet_path)
     df = validate_publication_parquet(path)
@@ -117,10 +125,7 @@ def generate_report(parquet_path: Path | str = DEFAULT_PARQUET_PATH):
         for nivel, count in df["precisao"].value_counts().items():
             print(f"  {nivel}: {count} ({count / len(df) * 100:.1f}%)")
         rua = df["precisao"].isin(["logradouro_localidade", "logradouro"]).sum()
-        print(
-            f"  ao nível de logradouro ou melhor: {rua} "
-            f"({rua / len(df) * 100:.1f}%)"
-        )
+        print(f"  ao nível de logradouro ou melhor: {rua} ({rua / len(df) * 100:.1f}%)")
 
 
 def main():
