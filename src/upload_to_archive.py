@@ -12,8 +12,9 @@ from internetarchive import upload
 from archive_names import (
     ITEM_PONTEIRO,
     MANIFESTO,
-    data_de_publicacao,
     bruto_datado,
+    data_de_publicacao,
+    mudancas_datado,
     parquet_datado,
     url_do_manifesto,
     url_no_item,
@@ -51,8 +52,9 @@ def artefatos_da_publicacao(
 
     Varrer o diretório publicaria o que estivesse ali: o Parquet de hoje ao
     lado do bruto de ontem passaria pelo gate de proveniência, e na virada do
-    ano retratos velhos subiriam para o item novo. O contrato é um par
-    ``(data, parquet, bruto)``, e é assim que ele é montado.
+    ano retratos velhos subiriam para o item novo. O contrato base é um par
+    ``(data, parquet, bruto)``. Derivados auditáveis, como mudanças e evidências
+    CNO, são acrescentados explicitamente por quem orquestra a publicação.
     """
     diretorio = Path(files_dir)
     parquet = diretorio / parquet_datado(quando)
@@ -98,7 +100,10 @@ def manifesto_publicado() -> dict | None:
 
 
 def publicar_manifesto(
-    quando: date, identifier: str, dry_run: bool = False
+    quando: date,
+    identifier: str,
+    dry_run: bool = False,
+    mudancas_desde: date | None = None,
 ) -> dict | None:
     """Aponta o item-ponteiro para o retrato recém-publicado.
 
@@ -106,6 +111,11 @@ def publicar_manifesto(
     aponta para um arquivo que não existe. Este manifesto é o único nome
     sobrescrito a cada publicação, e não guarda dado — só o endereço do último
     retrato que de fato subiu.
+
+    Quando ``mudancas_desde`` existe, o manifesto também aponta para o derivado
+    temporal publicado no mesmo item. A data explicita contra qual snapshot o
+    derivado foi calculado; consumidores não precisam inferir "ontem" pelo
+    calendário, que estaria errado após dias sem publicação.
 
     O ponteiro é **monotônico**: republicar um retrato histórico com ``--data``
     não rebaixa o "mais recente". Maior data publicada vence; empate sobrescreve,
@@ -121,6 +131,9 @@ def publicar_manifesto(
         "parquet_url": url_no_item(identifier, parquet_datado(quando)),
         "bruto_url": url_no_item(identifier, bruto_datado(quando)),
     }
+    if mudancas_desde is not None:
+        manifesto["mudancas_desde"] = mudancas_desde.isoformat()
+        manifesto["mudancas_url"] = url_no_item(identifier, mudancas_datado(quando))
 
     if dry_run:
         print(f"[Dry Run] Manifesto que seria publicado: {manifesto}")
@@ -163,10 +176,10 @@ def publicar_manifesto(
 def upload_files_to_archive(identifier, title, description, files, dry_run=False):
     """Publica os arquivos de uma publicação em um item do Internet Archive.
 
-    Recebe a lista exata de arquivos — montada por ``artefatos_da_publicacao``,
-    que garante que todos são do mesmo dia. Publication is part of the pipeline
-    contract: when a real upload is requested, missing credentials or an upload
-    error must propagate so CI cannot report a false green.
+    Recebe a lista exata de arquivos — montada por ``artefatos_da_publicacao``
+    e complementada explicitamente pelo pipeline. Publication is part of the
+    pipeline contract: when a real upload is requested, missing credentials or
+    an upload error must propagate so CI cannot report a false green.
     """
     load_dotenv()
 
