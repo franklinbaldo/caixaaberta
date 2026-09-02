@@ -1,48 +1,54 @@
 import argparse
 from datetime import date
 
-from archive_names import ITEM_PREFIX, PARQUET_PREFIX, item_do_ano, parquet_datado
+from archive_names import parquet_datado, url_do_manifesto, url_no_archive
 
-# O DDL não guarda data nem ano: monta a URL em SQL a partir de `current_date`.
-# DuckDB dobra a expressão no bind, então a view aponta sozinha para o retrato
-# de hoje — sem nome estável no Archive e sem regerar o arquivo na virada do
-# ano. Para fixar um dia, use --data.
-URL_CORRENTE = f"""'https://archive.org/download/{ITEM_PREFIX}-'
-    || strftime(current_date, '%Y')
-    || '/{PARQUET_PREFIX}_'
-    || strftime(current_date, '%Y-%m-%d')
-    || '.parquet'"""
-
+# O calendário não serve como ponteiro para o último retrato. Duas razões:
+# a publicação do dia pode falhar, e aí "hoje" aponta para um arquivo que não
+# existe; e `current_date` no DuckDB é o dia no fuso da sessão, que é o do
+# sistema do consumidor — em UTC-3 ou UTC+9 ele calcula outro dia por horas ao
+# redor da meia-noite, e outro item inteiro na virada do ano.
+#
+# Por isso a view lê um manifesto: um JSON minúsculo, o único nome sobrescrito
+# a cada publicação, que guarda o endereço do retrato que de fato subiu.
+# `SET VARIABLE` existe porque read_parquet não aceita subconsulta.
 DDL_CORRENTE = f"""INSTALL httpfs;
 LOAD httpfs;
+INSTALL json;
+LOAD json;
 
--- A view lê o retrato do dia corrente. O nome do arquivo e o item do ano são
--- calculados a partir da data: nada aqui precisa ser atualizado.
-CREATE OR REPLACE VIEW imoveis_caixa AS
-SELECT * FROM read_parquet(
-    {URL_CORRENTE}
+-- O manifesto aponta para o último retrato efetivamente publicado. Nada aqui
+-- depende do relógio nem do fuso de quem consulta, e nada precisa ser
+-- regerado — nem na virada do ano.
+SET VARIABLE imoveis_caixa_snapshot = (
+    SELECT parquet_url FROM read_json_auto('{url_do_manifesto()}')
 );
+
+CREATE OR REPLACE VIEW imoveis_caixa AS
+SELECT * FROM read_parquet(getvariable('imoveis_caixa_snapshot'));
 """
 
 DDL_FIXO = """INSTALL httpfs;
 LOAD httpfs;
 
+-- Retrato de {data}, congelado.
 CREATE OR REPLACE VIEW imoveis_caixa AS
-SELECT * FROM read_parquet('https://archive.org/download/{item}/{arquivo}');
+SELECT * FROM read_parquet('{url}');
 """
 
 
 def generate_ddl(output_file="imoveis_caixa.sql", quando: date | None = None):
     """Gera uma view DuckDB sobre o Parquet publicado no Internet Archive.
 
-    Sem `quando`, o DDL calcula a data em SQL e nunca precisa ser regerado.
+    Sem `quando`, a view segue o manifesto e nunca precisa ser regerada.
     Com `quando`, congela um retrato específico da série.
     """
     if quando is None:
         sql_command = DDL_CORRENTE
     else:
         sql_command = DDL_FIXO.format(
-            item=item_do_ano(quando), arquivo=parquet_datado(quando)
+            data=quando.isoformat(),
+            url=url_no_archive(quando, parquet_datado(quando)),
         )
 
     with open(output_file, "w", encoding="utf-8") as f:
@@ -61,7 +67,7 @@ if __name__ == "__main__":
         "--data",
         type=date.fromisoformat,
         help="Congela a view num retrato específico (AAAA-MM-DD). "
-        "Sem isso, a view acompanha o dia corrente.",
+        "Sem isso, a view segue o manifesto do último retrato publicado.",
     )
     parser.add_argument(
         "--output-file",

@@ -66,9 +66,9 @@ def test_process_local_data(
             process_local_data()
 
     # Verify that parquet file was created
-    from archive_names import parquet_datado
+    from archive_names import data_de_publicacao, parquet_datado
 
-    output_file = tmp_path / parquet_datado()
+    output_file = tmp_path / parquet_datado(data_de_publicacao())
     assert output_file.exists()
 
     # Read output and verify geocoding was applied

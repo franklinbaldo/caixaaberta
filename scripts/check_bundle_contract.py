@@ -21,7 +21,6 @@ from __future__ import annotations
 
 import ast
 import json
-import re
 import sys
 from pathlib import Path
 
@@ -76,32 +75,36 @@ def _one(bundle, concept_type: str) -> dict:
 
 
 def check_identifier(bundle) -> list[str]:
-    """O item é um por ano e o arquivo tem data; o DDL calcula os dois."""
-    declarado = _one(bundle, "Distribution")["identifier_prefix"]
+    """O item é um por ano, o arquivo tem data, e o DDL segue o manifesto."""
+    distribution = _one(bundle, "Distribution")
     nomes = REPO / "src" / "archive_names.py"
     problems = []
 
     prefixo = _literal(nomes, "ITEM_PREFIX")
-    if prefixo != declarado:
+    if prefixo != distribution["identifier_prefix"]:
         problems.append(
             f"src/archive_names.py: ITEM_PREFIX é {prefixo!r}, "
-            f"o bundle declara {declarado!r}"
+            f"o bundle declara {distribution['identifier_prefix']!r}"
+        )
+
+    ponteiro = _literal(nomes, "MANIFESTO")
+    if ponteiro != distribution["manifesto"]:
+        problems.append(
+            f"src/archive_names.py: MANIFESTO é {ponteiro!r}, "
+            f"o bundle declara {distribution['manifesto']!r}"
         )
 
     ddl = (REPO / "imoveis_caixa.sql").read_text(encoding="utf-8")
-    if declarado not in ddl:
+    if ponteiro not in ddl:
         problems.append(
-            f"imoveis_caixa.sql não referencia o item {declarado!r} do Archive"
+            f"imoveis_caixa.sql não lê o manifesto ({ponteiro}): sem ele, o "
+            "alvo da view seria derivado do calendário, que não sabe se a "
+            "publicação do dia aconteceu"
         )
-    if _literal(nomes, "PARQUET_PREFIX") not in ddl:
+    if "current_date" in ddl:
         problems.append(
-            "imoveis_caixa.sql não referencia o Parquet publicado "
-            f"({_literal(nomes, 'PARQUET_PREFIX')})"
-        )
-    if "current_date" not in ddl and not re.search(r"\d{4}-\d{2}-\d{2}", ddl):
-        problems.append(
-            "imoveis_caixa.sql não calcula nem fixa uma data: publicação "
-            "alguma tem nome sem data"
+            "imoveis_caixa.sql deriva o alvo de current_date, que depende do "
+            "fuso da sessão de quem consulta"
         )
 
     return problems

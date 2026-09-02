@@ -3,6 +3,7 @@ type: Distribution
 title: Publicação no Internet Archive
 description: Onde o Parquet é publicado e como consultá-lo sem baixar o arquivo
 identifier_prefix: imoveis-caixa-economica-federal
+manifesto: latest.json
 ---
 
 # Publicação no Internet Archive
@@ -24,6 +25,17 @@ consulta calcula a data.
 Os retratos se acumulam em **um item por ano** — `imoveis-caixa-economica-federal-2026`,
 `-2027`, e assim por diante — para nenhum item crescer sem limite.
 
+A data é propriedade da **execução**, lida uma vez no início do
+[pipeline](pipeline.md) e passada adiante. Se cada etapa consultasse o relógio,
+uma execução atravessando a meia-noite gravaria o zip num dia e o Parquet no
+outro; na virada do ano, mandaria o retrato de 31/12 para o item de 2027. O
+fuso é UTC, sempre: o produtor roda em runner UTC e o consumidor pode estar em
+qualquer lugar. `--data` fixa a data, para republicação e reprodutibilidade.
+
+Publica-se o par exato daquela data, nunca o que estiver no diretório: varrer
+`output_data/` deixaria o Parquet de hoje passar pelo gate acompanhado do bruto
+de ontem, e mandaria retratos velhos para o item novo na virada do ano.
+
 O bruto vai junto porque é a fonte primária e some assim que a Caixa atualiza a
 lista: o Parquet é derivado e pode ser regerado, o CSV daquele dia não. É
 também por isso que os CSVs **não são versionados no repositório** — o git
@@ -40,18 +52,40 @@ O [Parquet](dataset-imoveis.md) é enviado ao item do ano corrente. Antes do env
 incompleto ou um conjunto em que nenhuma linha tem `link` publicável — o
 [pipeline](pipeline.md) falha em vez de publicar dado inútil.
 
-O DDL em `imoveis_caixa.sql` cria uma view DuckDB que lê o Parquet direto do
-Archive, sem download do arquivo inteiro. Ele não guarda data nem ano: monta a
-URL em SQL a partir de `current_date`, e o DuckDB dobra a expressão no bind.
-Nem a virada do dia nem a do ano exigem regerar o arquivo.
+## O ponteiro para o último retrato
+
+"O mais recente" não é derivável do calendário. Duas razões: a publicação do
+dia pode falhar, e aí "hoje" aponta para um arquivo que não existe; e o dia
+corrente no DuckDB é o dia no **fuso da sessão de quem consulta**, então em
+UTC-3 ou UTC+9 o consumidor calcularia outro dia ao redor da meia-noite — e
+outro item inteiro na virada do ano.
+
+Por isso existe um item sem ano, `imoveis-caixa-economica-federal`, que não
+guarda dado: guarda `latest.json`, o único nome sobrescrito a cada publicação.
+
+```json
+{
+  "data": "2026-09-02",
+  "item": "imoveis-caixa-economica-federal-2026",
+  "parquet_url": "https://archive.org/download/imoveis-caixa-economica-federal-2026/imoveis_geocoded_2026-09-02.parquet",
+  "bruto_url": "https://archive.org/download/imoveis-caixa-economica-federal-2026/imoveis_csv_bruto_2026-09-02.zip"
+}
+```
+
+Ele é publicado **depois** do upload dos dados, para o ponteiro só prometer
+arquivo que existe.
+
+O DDL em `imoveis_caixa.sql` cria uma view DuckDB que lê o manifesto e, dele, o
+Parquet — direto do Archive, sem download do arquivo inteiro. `SET VARIABLE`
+existe porque `read_parquet` não aceita subconsulta. Nada ali depende do
+relógio nem do fuso, e nada precisa ser regerado, nem na virada do ano:
 
 ```sql
 .read imoveis_caixa.sql
 SELECT estado, count(*) FROM imoveis_caixa GROUP BY estado;
 ```
 
-A contrapartida é que a view aponta para o retrato de hoje, que só existe
-depois da publicação do dia. Para congelar um retrato específico:
+Para congelar um retrato específico da série:
 `python src/generate_ddl.py --data 2026-09-02`.
 
 Publicar exige `IA_ACCESS_KEY` e `IA_SECRET_KEY`; `--upload-dry-run` dispensa

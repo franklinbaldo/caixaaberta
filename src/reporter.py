@@ -7,7 +7,7 @@ from archive_names import parquet_datado
 OUTPUT_DIR = Path("output_data")
 
 
-def parquet_do_dia(quando=None) -> Path:
+def parquet_do_dia(quando) -> Path:
     """Caminho local do retrato de um dia. Não existe nome sem data."""
     return OUTPUT_DIR / parquet_datado(quando)
 
@@ -42,10 +42,10 @@ def undocumented_modalidades(df: pd.DataFrame) -> list[str]:
 
 
 def validate_publication_parquet(
-    parquet_path: Path | str | None = None,
+    parquet_path: Path | str,
 ) -> pd.DataFrame:
     """Validate structural invariants required before publication."""
-    path = Path(parquet_path) if parquet_path is not None else parquet_do_dia()
+    path = Path(parquet_path)
     if not path.exists():
         raise FileNotFoundError(f"Parquet não encontrado: {path}")
 
@@ -76,9 +76,9 @@ def format_currency(value):
     return f"R$ {value:,.2f}"
 
 
-def generate_report(parquet_path: Path | str | None = None):
+def generate_report(parquet_path: Path | str):
     """Print summary statistics for the Parquet produced by the current pipeline."""
-    path = Path(parquet_path) if parquet_path is not None else parquet_do_dia()
+    path = Path(parquet_path)
     df = validate_publication_parquet(path)
 
     print(f"Real Estate Data Report: {path}")

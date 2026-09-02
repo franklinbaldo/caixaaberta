@@ -1,13 +1,14 @@
 INSTALL httpfs;
 LOAD httpfs;
+INSTALL json;
+LOAD json;
 
--- A view lê o retrato do dia corrente. O nome do arquivo e o item do ano são
--- calculados a partir da data: nada aqui precisa ser atualizado.
-CREATE OR REPLACE VIEW imoveis_caixa AS
-SELECT * FROM read_parquet(
-    'https://archive.org/download/imoveis-caixa-economica-federal-'
-    || strftime(current_date, '%Y')
-    || '/imoveis_geocoded_'
-    || strftime(current_date, '%Y-%m-%d')
-    || '.parquet'
+-- O manifesto aponta para o último retrato efetivamente publicado. Nada aqui
+-- depende do relógio nem do fuso de quem consulta, e nada precisa ser
+-- regerado — nem na virada do ano.
+SET VARIABLE imoveis_caixa_snapshot = (
+    SELECT parquet_url FROM read_json_auto('https://archive.org/download/imoveis-caixa-economica-federal/latest.json')
 );
+
+CREATE OR REPLACE VIEW imoveis_caixa AS
+SELECT * FROM read_parquet(getvariable('imoveis_caixa_snapshot'));

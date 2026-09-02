@@ -21,9 +21,13 @@ SELECT estado, count(*) FROM imoveis_caixa GROUP BY estado;
 Os retratos diários se acumulam em um item por ano
 (`imoveis-caixa-economica-federal-2026`), cada publicação sob um nome datado
 — `imoveis_geocoded_2026-09-02.parquet` — porque a lista da Caixa é um retrato
-do dia e o imóvel vendido some dela. Não há apelido para o mais recente: o DDL
-monta a URL em SQL a partir de `current_date`, então nem a virada do dia nem a
-do ano exigem regerá-lo.
+do dia e o imóvel vendido some dela.
+
+"O mais recente" não é derivável do calendário: a publicação do dia pode falhar,
+e o dia corrente no DuckDB depende do fuso de quem consulta. Então um item sem
+ano, `imoveis-caixa-economica-federal`, guarda `latest.json` apontando para o
+retrato que de fato subiu — e é ele que o DDL lê. O arquivo não envelhece nem
+na virada do ano.
 
 Para congelar a view num retrato específico da série:
 

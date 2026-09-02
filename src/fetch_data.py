@@ -9,7 +9,7 @@ import pandas as pd
 import ibis
 import requests
 
-from archive_names import parquet_datado
+from archive_names import data_de_publicacao, parquet_datado
 from geocode_cnefe import cobertura, geocodificar
 from utils import converter_valor_monetario_para_float, converter_percentual_para_float
 
@@ -264,11 +264,15 @@ def fetch_all_states(
     return frames
 
 
-def process_local_data():
+def process_local_data(quando=None):
     """
     Processes local CSV files, unnions them, transforms with Ibis,
     geocodes, and saves as a single Parquet file.
+
+    ``quando`` é a data da publicação, congelada pelo pipeline. O default só
+    serve à execução direta deste módulo.
     """
+    quando = quando or data_de_publicacao()
     input_path = Path(INPUT_DIR)
     output_path = Path(OUTPUT_DIR)
     output_path.mkdir(parents=True, exist_ok=True)
@@ -326,7 +330,7 @@ def process_local_data():
 
     # Só o nome datado: o retrato de hoje não é o de ontem, e quem consulta
     # calcula a data em vez de seguir um apelido.
-    output_file = output_path / parquet_datado()
+    output_file = output_path / parquet_datado(quando)
     df.to_parquet(output_file, index=False)
     print(f"Salvo dados processados para {output_file}")
 
