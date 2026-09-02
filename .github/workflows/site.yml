@@ -10,6 +10,10 @@ on:
     paths:
       - "site/**"
       - ".github/workflows/site.yml"
+  # O scraping principal roda às 06:17 UTC. O site espelha o snapshot atual
+  # mais tarde, sem acoplar o browser ao CORS do Internet Archive.
+  schedule:
+    - cron: "17 8 * * *"
   workflow_dispatch:
 
 permissions:
@@ -18,7 +22,7 @@ permissions:
   id-token: write
 
 concurrency:
-  group: pages
+  group: pages-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
@@ -41,7 +45,7 @@ jobs:
       - name: Type-check the Astro site
         run: npm run check --prefix site
 
-      - name: Build the static site
+      - name: Build the static site and mirror latest snapshot
         run: npm run build --prefix site
 
       - name: Upload Pages artifact
