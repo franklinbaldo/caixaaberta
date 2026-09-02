@@ -84,4 +84,4 @@ def test_publicacao_com_cno_leva_tabela_de_evidencias(monkeypatch, tmp_path):
 
     run_pipeline.main()
 
-    assert str(evidence) in uploaded
+    assert str(Path("output_data") / cno_matches_datado(QUANDO)) in uploaded
