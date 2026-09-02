@@ -1,0 +1,119 @@
+---
+import Base from "../layouts/Base.astro";
+---
+
+<Base>
+  <section data-hero aria-labelledby="titulo">
+    <div>
+      <span data-kicker>Uma observação do Brasil, todos os dias</span>
+      <h1 id="titulo">Imóveis da Caixa. <em>Com memória.</em></h1>
+      <p>
+        O Caixa Aberta observa diariamente os imóveis que a Caixa oferece, organiza o retrato nacional em uma tabela aberta e preserva cada dia no Internet Archive.
+      </p>
+      <p>
+        <a href="#explorar" role="button">Explorar o acervo</a>
+        <a href="https://github.com/franklinbaldo/caixaaberta" role="button" class="secondary outline">Ver como é produzido</a>
+      </p>
+    </div>
+    <aside>
+      <p><strong>O que este projeto preserva</strong></p>
+      <p>
+        A fonte da Caixa mostra o estado corrente. Quando um imóvel some, o passado não fica disponível ali. Aqui, cada scraping vira um snapshot imutável.
+      </p>
+    </aside>
+  </section>
+
+  <section aria-labelledby="retrato-atual">
+    <header>
+      <span data-kicker>Agora</span>
+      <h2 id="retrato-atual">O último retrato publicado</h2>
+    </header>
+    <div data-snapshot data-snapshot-status="loading" aria-live="polite">
+      <article>
+        <small>Data do scraping</small>
+        <strong data-live-value id="snapshot-date">carregando…</strong>
+        <p>A data que o próprio Caixa Aberta observou a fonte.</p>
+      </article>
+      <article>
+        <small>Formato principal</small>
+        <strong>Parquet</strong>
+        <p>Consulta direta com DuckDB ou pelo explorador deste site.</p>
+      </article>
+      <article>
+        <small>Preservação</small>
+        <strong data-live-value id="snapshot-item">Internet Archive</strong>
+        <p><a id="snapshot-archive" href="https://archive.org/details/imoveis-caixa-economica-federal">Abrir o item publicado</a></p>
+      </article>
+    </div>
+  </section>
+
+  <section id="explorar" data-callout aria-labelledby="explorar-titulo">
+    <header>
+      <span data-kicker>Consulta nacional</span>
+      <h2 id="explorar-titulo">Do mapa para a tabela — e da tabela para a fonte.</h2>
+      <p>
+        A interface vai ler o Parquet publicado, sem manter uma segunda base de dados. O mesmo snapshot usado no DuckDB será a fonte do mapa e dos filtros.
+      </p>
+    </header>
+    <div data-explorer-shell>
+      <header>
+        <h3>Explorador</h3>
+        <p>
+          A fundação já está conectada ao último snapshot. A próxima camada desta pilha adiciona busca, filtros, mapa e lista acessível diretamente sobre o Parquet.
+        </p>
+      </header>
+      <p role="status" id="snapshot-status">Descobrindo a publicação mais recente…</p>
+      <p>
+        <a id="snapshot-parquet" href="https://archive.org/download/imoveis-caixa-economica-federal/imoveis_geocoded.parquet">Abrir o Parquet</a>
+      </p>
+    </div>
+  </section>
+
+  <section id="como-funciona" data-callout aria-labelledby="como-titulo">
+    <header>
+      <span data-kicker>Método</span>
+      <h2 id="como-titulo">Simples de propósito.</h2>
+    </header>
+    <div>
+      <article>
+        <h3>1. Observar</h3>
+        <p>Um GitHub Action roda diariamente e baixa a lista nacional publicada pela Caixa.</p>
+      </article>
+      <article>
+        <h3>2. Organizar</h3>
+        <p>Os CSVs são normalizados, geocodificados com CNEFE e publicados como um único Parquet nacional com <code>scrape_date</code>.</p>
+      </article>
+      <article>
+        <h3>3. Preservar</h3>
+        <p>Cada dia ganha arquivos datados no Internet Archive. O site só projeta esses dados; ele não cria uma verdade paralela.</p>
+      </article>
+    </div>
+  </section>
+
+  <script>
+    const MANIFEST_URL = "https://archive.org/download/imoveis-caixa-economica-federal/latest.json";
+    const snapshot = document.querySelector("[data-snapshot]");
+    const date = document.querySelector("#snapshot-date");
+    const item = document.querySelector("#snapshot-item");
+    const archive = document.querySelector("#snapshot-archive");
+    const parquet = document.querySelector("#snapshot-parquet");
+    const status = document.querySelector("#snapshot-status");
+
+    try {
+      const response = await fetch(MANIFEST_URL, { cache: "no-store" });
+      if (!response.ok) throw new Error(`manifesto respondeu ${response.status}`);
+      const manifest = await response.json();
+
+      if (date) date.textContent = manifest.data ?? "data indisponível";
+      if (item) item.textContent = manifest.item ?? "Internet Archive";
+      if (archive && manifest.item) archive.href = `https://archive.org/details/${manifest.item}`;
+      if (parquet && manifest.parquet_url) parquet.href = manifest.parquet_url;
+      if (status) status.textContent = `Snapshot ${manifest.data} encontrado. A superfície de exploração usará este mesmo arquivo.`;
+      if (snapshot instanceof HTMLElement) snapshot.dataset.snapshotStatus = "ready";
+    } catch (error) {
+      if (status) status.textContent = "Não foi possível resolver o snapshot mais recente agora. Os dados continuam disponíveis no Internet Archive.";
+      if (snapshot instanceof HTMLElement) snapshot.dataset.snapshotStatus = "error";
+      console.error("Falha ao ler latest.json", error);
+    }
+  </script>
+</Base>
