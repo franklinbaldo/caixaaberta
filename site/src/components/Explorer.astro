@@ -9,6 +9,8 @@ import "maplibre-gl/dist/maplibre-gl.css";
     <p>
       Os filtros rodam no seu navegador sobre o Parquet publicado. O mapa é uma
       visualização; a lista abaixo continua sendo a superfície principal e acessível.
+      Quando há CNO, o vínculo é uma inferência auditável do Caixa Aberta — não um
+      identificador fornecido pela Caixa ou pela Receita.
     </p>
   </header>
 
@@ -17,7 +19,7 @@ import "maplibre-gl/dist/maplibre-gl.css";
       <legend>Filtrar o retrato</legend>
       <label>
         Buscar
-        <input id="filter-query" type="search" placeholder="cidade, bairro, endereço ou número do imóvel" autocomplete="off" />
+        <input id="filter-query" type="search" placeholder="cidade, endereço, imóvel ou CNO" autocomplete="off" />
       </label>
       <label>
         Estado
@@ -28,6 +30,23 @@ import "maplibre-gl/dist/maplibre-gl.css";
       <label>
         Modalidade
         <select id="filter-modality">
+          <option value="">Todas</option>
+        </select>
+      </label>
+      <label>
+        Vínculo com CNO
+        <select id="filter-cno-match">
+          <option value="">Todos</option>
+          <option value="forte">Associado — forte</option>
+          <option value="provavel">Provável — não associado</option>
+          <option value="ambiguo">Ambíguo — não associado</option>
+          <option value="sem_match">Sem candidato</option>
+          <option value="sem_dados">Snapshot sem CNO</option>
+        </select>
+      </label>
+      <label>
+        Situação da obra
+        <select id="filter-cno-situation">
           <option value="">Todas</option>
         </select>
       </label>
@@ -59,7 +78,8 @@ import "maplibre-gl/dist/maplibre-gl.css";
     <div id="map" role="img" aria-label="Mapa do Brasil com os imóveis filtrados"></div>
     <figcaption>
       Coordenadas vêm do CNEFE. Pontos com precisão <code>municipio</code> representam
-      o município, não o endereço exato do imóvel.
+      o município, não o endereço exato do imóvel. CNO forte significa correspondência
+      única segundo as chaves de endereço do snapshot, não certificação de identidade.
     </figcaption>
   </figure>
 
@@ -77,6 +97,7 @@ import "maplibre-gl/dist/maplibre-gl.css";
             <th scope="col">Preço</th>
             <th scope="col">Desconto</th>
             <th scope="col">Modalidade</th>
+            <th scope="col">CNO / obra</th>
             <th scope="col">Precisão</th>
           </tr>
         </thead>
