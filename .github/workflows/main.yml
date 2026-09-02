@@ -1,8 +1,8 @@
 name: Real Estate Data Pipeline
 
 on:
+  # Qualquer PR deve validar, inclusive PR empilhada cuja base é outra branch.
   pull_request:
-    branches: [main]
   push:
     branches: [main]
   # A observação é diária, independente da atividade do repositório. O horário
