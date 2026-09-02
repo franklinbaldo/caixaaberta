@@ -1,20 +1,29 @@
-"""Normalização conservadora das relações abertas do CNO.
+"""Normalização conservadora e em streaming das relações abertas do CNO.
 
-Os valores publicados pela Receita são preservados; colunas derivadas existem
+O CNO tem milhões de registros. Os CSVs são processados em lotes e escritos
+incrementalmente em Parquet para não materializar a base inteira em memória.
+Valores publicados pela Receita são preservados; colunas derivadas existem
 apenas para tipagem, consulta e comparação de endereços.
 """
 
 from __future__ import annotations
 
 import argparse
+import csv
 import re
+import shutil
+import tempfile
 import unicodedata
+from collections.abc import Iterator
 from pathlib import Path
 
 import pandas as pd
+import pyarrow as pa
+import pyarrow.parquet as pq
 
 RAW_DIR = Path("cno_data/raw")
 OUTPUT_DIR = Path("cno_data/normalized")
+CHUNK_SIZE = 100_000
 TABLES = {
     "cno.csv": "cno.parquet",
     "cno_areas.csv": "cno_areas.parquet",
@@ -60,23 +69,42 @@ def normalize_number(value: object) -> str:
     return re.sub(r"\s+", "", text)
 
 
-def _read_csv(path: Path) -> pd.DataFrame:
-    last_error: Exception | None = None
-    for encoding in ("utf-8-sig", "latin-1"):
-        try:
-            frame = pd.read_csv(
-                path,
-                sep=None,
-                engine="python",
-                dtype=str,
-                encoding=encoding,
-                keep_default_na=False,
-            )
-            frame.columns = [slug(column) for column in frame.columns]
-            return frame
-        except (UnicodeDecodeError, pd.errors.ParserError) as error:
-            last_error = error
-    raise CNOTransformError(f"Não foi possível ler {path.name}: {last_error}")
+def _csv_options(path: Path) -> tuple[str, str]:
+    sample = path.read_bytes()[:65_536]
+    try:
+        text = sample.decode("utf-8-sig")
+        encoding = "utf-8-sig"
+    except UnicodeDecodeError:
+        text = sample.decode("latin-1")
+        encoding = "latin-1"
+
+    try:
+        delimiter = csv.Sniffer().sniff(text, delimiters=";,|").delimiter
+    except csv.Error:
+        first_line = text.splitlines()[0] if text.splitlines() else ""
+        delimiter = ";" if first_line.count(";") >= first_line.count(",") else ","
+    return encoding, delimiter
+
+
+def _iter_csv(path: Path, chunk_size: int = CHUNK_SIZE) -> Iterator[pd.DataFrame]:
+    encoding, delimiter = _csv_options(path)
+    reader = pd.read_csv(
+        path,
+        sep=delimiter,
+        engine="c",
+        dtype=str,
+        encoding=encoding,
+        keep_default_na=False,
+        chunksize=chunk_size,
+    )
+    for frame in reader:
+        frame.columns = [slug(column) for column in frame.columns]
+        yield frame
+
+
+def _read_small_csv(path: Path) -> pd.DataFrame:
+    chunks = list(_iter_csv(path, chunk_size=10_000))
+    return pd.concat(chunks, ignore_index=True) if chunks else pd.DataFrame()
 
 
 def _parse_date(series: pd.Series) -> pd.Series:
@@ -166,47 +194,74 @@ def _int_value(value: object) -> int | None:
     return int(digits) if digits else None
 
 
-def validate_totals(raw_dir: Path, frames: dict[str, pd.DataFrame]) -> None:
-    totals = _read_csv(raw_dir / "cno_totais.csv")
+def _expected_totals(raw_dir: Path) -> dict[str, int]:
+    totals = _read_small_csv(raw_dir / "cno_totais.csv")
     if totals.empty:
         raise CNOTransformError("CNO_TOTAIS.CSV está vazio.")
     row = totals.iloc[0]
+    expected: dict[str, int] = {}
     for total_column, filename in TOTAL_COLUMNS.items():
-        if total_column not in totals.columns:
-            continue
-        expected = _int_value(row[total_column])
-        if expected is not None and expected != len(frames[filename]):
-            raise CNOTransformError(
-                f"{filename}: CNO_TOTAIS declara {expected} registros, "
-                f"mas foram lidos {len(frames[filename])}."
+        if total_column in totals.columns:
+            value = _int_value(row[total_column])
+            if value is not None:
+                expected[filename] = value
+    return expected
+
+
+def _write_stream(path: Path, source: Path, filename: str) -> int:
+    writer: pq.ParquetWriter | None = None
+    count = 0
+    try:
+        for chunk in _iter_csv(source):
+            normalized = (
+                _canonical_cno(chunk)
+                if filename == "cno.csv"
+                else _canonical_aux(chunk, filename)
             )
+            table = pa.Table.from_pandas(normalized, preserve_index=False)
+            if writer is None:
+                writer = pq.ParquetWriter(path, table.schema, compression="zstd")
+            writer.write_table(table)
+            count += len(normalized)
+    finally:
+        if writer is not None:
+            writer.close()
+    if writer is None:
+        raise CNOTransformError(f"{filename} está vazio.")
+    return count
 
 
 def normalize_snapshot(
     raw_dir: Path | str = RAW_DIR, output_dir: Path | str = OUTPUT_DIR
 ) -> dict[str, Path]:
-    """Converte as quatro relações úteis do snapshot para Parquet."""
+    """Converte as relações úteis do snapshot para Parquet com memória limitada."""
     raw_dir = Path(raw_dir)
     output_dir = Path(output_dir)
-    frames = {filename: _read_csv(raw_dir / filename) for filename in TABLES}
-    validate_totals(raw_dir, frames)
+    output_dir.parent.mkdir(parents=True, exist_ok=True)
+    expected = _expected_totals(raw_dir)
 
-    normalized = {
-        "cno.csv": _canonical_cno(frames["cno.csv"]),
-        **{
-            filename: _canonical_aux(frame, filename)
-            for filename, frame in frames.items()
-            if filename != "cno.csv"
-        },
-    }
+    with tempfile.TemporaryDirectory(prefix="cno-normalized-", dir=output_dir.parent) as temp:
+        stage = Path(temp) / "snapshot"
+        stage.mkdir()
+        counts: dict[str, int] = {}
+        for filename, target_name in TABLES.items():
+            counts[filename] = _write_stream(stage / target_name, raw_dir / filename, filename)
 
-    output_dir.mkdir(parents=True, exist_ok=True)
-    outputs: dict[str, Path] = {}
-    for filename, target_name in TABLES.items():
-        target = output_dir / target_name
-        normalized[filename].to_parquet(target, index=False)
-        outputs[filename] = target
-    return outputs
+        for filename, declared in expected.items():
+            actual = counts[filename]
+            if actual != declared:
+                raise CNOTransformError(
+                    f"{filename}: CNO_TOTAIS declara {declared} registros, "
+                    f"mas foram lidos {actual}."
+                )
+
+        installed = Path(temp) / "installed"
+        stage.replace(installed)
+        if output_dir.exists():
+            shutil.rmtree(output_dir)
+        shutil.copytree(installed, output_dir)
+
+    return {filename: output_dir / target for filename, target in TABLES.items()}
 
 
 def main() -> None:
