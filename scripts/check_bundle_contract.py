@@ -60,24 +60,6 @@ def _literal(module: Path, name: str):
     raise LookupError(f"{name} não encontrado em {module.relative_to(REPO)}")
 
 
-def _argparse_default(module: Path, option: str):
-    """Lê o default de uma opção de linha de comando sem importar o módulo."""
-    tree = ast.parse(module.read_text(encoding="utf-8"))
-    for node in ast.walk(tree):
-        if not isinstance(node, ast.Call):
-            continue
-        if getattr(node.func, "attr", None) != "add_argument":
-            continue
-        if not any(
-            isinstance(a, ast.Constant) and a.value == option for a in node.args
-        ):
-            continue
-        for keyword in node.keywords:
-            if keyword.arg == "default":
-                return ast.literal_eval(keyword.value)
-    raise LookupError(f"default de {option} não encontrado em {module.name}")
-
-
 def _frontmatter(bundle, concept_type: str) -> list[dict]:
     frame = bundle.concepts.to_pandas()
     rows = frame[frame["concept_type"] == concept_type]
@@ -94,31 +76,47 @@ def _one(bundle, concept_type: str) -> dict:
 
 
 def check_identifier(bundle) -> list[str]:
-    """O identificador do item no Archive tem quatro cópias. Uma manda."""
-    expected = _one(bundle, "Distribution")["identifier"]
+    """O item do Archive é um por ano; o prefixo é que precisa bater."""
+    declarado = _one(bundle, "Distribution")["identifier_prefix"]
+    nomes = REPO / "src" / "archive_names.py"
     problems = []
 
-    for module, option in (
-        ("run_pipeline.py", "--archive-item-identifier"),
-        ("generate_ddl.py", "--identifier"),
-    ):
-        found = _argparse_default(REPO / "src" / module, option)
-        if found != expected:
-            problems.append(
-                f"src/{module}: default de {option} é {found!r}, "
-                f"o bundle declara {expected!r}"
-            )
+    prefixo = _literal(nomes, "ITEM_PREFIX")
+    if prefixo != declarado:
+        problems.append(
+            f"src/archive_names.py: ITEM_PREFIX é {prefixo!r}, "
+            f"o bundle declara {declarado!r}"
+        )
+
+    estaveis = {
+        "PARQUET_LATEST": f"{_literal(nomes, 'PARQUET_PREFIX')}.parquet",
+        "BRUTO_LATEST": f"{_literal(nomes, 'BRUTO_PREFIX')}.zip",
+    }
 
     ddl = (REPO / "imoveis_caixa.sql").read_text(encoding="utf-8")
-    urls = re.findall(r"archive\.org/download/([^/]+)/", ddl)
-    for found in urls:
-        if found != expected:
-            problems.append(
-                f"imoveis_caixa.sql aponta para o item {found!r}, "
-                f"o bundle declara {expected!r}"
-            )
+    urls = re.findall(r"archive\.org/download/([^/]+)/([^'\"\s]+)", ddl)
     if not urls:
         problems.append("imoveis_caixa.sql não referencia item algum do Archive")
+    for item, arquivo in urls:
+        if not re.fullmatch(rf"{re.escape(declarado)}-\d{{4}}", item):
+            problems.append(
+                f"imoveis_caixa.sql aponta para o item {item!r}, "
+                f"que não é {declarado!r} seguido de um ano"
+            )
+        if arquivo != estaveis["PARQUET_LATEST"]:
+            problems.append(
+                f"imoveis_caixa.sql lê {arquivo!r}, mas o nome estável do "
+                f"Parquet é {estaveis['PARQUET_LATEST']!r}"
+            )
+
+    texto = (REPO / "knowledge" / "concepts" / "publicacao-archive.md").read_text(
+        encoding="utf-8"
+    )
+    for nome, valor in estaveis.items():
+        if valor not in texto:
+            problems.append(
+                f"o conceito Distribution não menciona {valor!r} ({nome})"
+            )
 
     return problems
 

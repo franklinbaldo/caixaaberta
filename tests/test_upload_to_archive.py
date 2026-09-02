@@ -7,7 +7,8 @@ import sys
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "src"))
 
-from upload_to_archive import BRUTO_FILENAME, upload_files_to_archive
+from archive_names import BRUTO_LATEST, BRUTO_PREFIX, bruto_datado
+from upload_to_archive import upload_files_to_archive
 
 
 @pytest.fixture
@@ -22,7 +23,7 @@ def dummy_files_dir(tmp_path):
     directory.mkdir()
     (directory / "imoveis_1.parquet").write_text("dummy")
     (directory / "imoveis_2.parquet").write_text("dummy")
-    (directory / "imoveis_csv_bruto.zip").write_text("dummy")
+    (directory / bruto_datado()).write_text("dummy")
     (directory / "ignore.txt").write_text("ignore")
     return directory
 
@@ -164,7 +165,7 @@ def test_publicacao_sem_o_bruto_e_recusada(mock_upload, tmp_path):
     directory.mkdir()
     (directory / "imoveis_geocoded.parquet").write_text("dummy")
 
-    with pytest.raises(FileNotFoundError, match=BRUTO_FILENAME):
+    with pytest.raises(FileNotFoundError, match=BRUTO_PREFIX):
         upload_files_to_archive(
             identifier="test-identifier",
             title="Test Title",
@@ -205,7 +206,7 @@ def test_o_bruto_sobe_junto_do_parquet(mock_upload, dummy_files_dir):
     )
 
     enviados = mock_upload.call_args.kwargs["files"]
-    assert any(f.endswith("imoveis_csv_bruto.zip") for f in enviados)
+    assert any(bruto_datado() in f for f in enviados)
     assert not any(f.endswith(".txt") for f in enviados)
 
 
@@ -218,7 +219,7 @@ def test_um_zip_qualquer_nao_satisfaz_o_gate(mock_upload, tmp_path):
     (directory / "imoveis_geocoded.parquet").write_text("dummy")
     (directory / "foo.zip").write_text("dummy")
 
-    with pytest.raises(FileNotFoundError, match=BRUTO_FILENAME):
+    with pytest.raises(FileNotFoundError, match=BRUTO_PREFIX):
         upload_files_to_archive(
             identifier="test-identifier",
             title="Test Title",
@@ -243,3 +244,30 @@ def test_upload_pede_espera_ao_archive(mock_upload, dummy_files_dir):
     kwargs = mock_upload.call_args.kwargs
     assert kwargs["retries"] >= 1
     assert kwargs["retries_sleep"] >= 1
+
+
+@pytest.mark.usefixtures("mock_env")
+@patch("upload_to_archive.upload")
+def test_o_retrato_datado_e_o_estavel_sobem_juntos(mock_upload, tmp_path):
+    """O datado preserva a série; o estável serve o consumo corrente."""
+    from archive_names import PARQUET_LATEST, parquet_datado
+
+    directory = tmp_path / "output_data"
+    directory.mkdir()
+    for nome in (PARQUET_LATEST, parquet_datado(), BRUTO_LATEST, bruto_datado()):
+        (directory / nome).write_text("dummy")
+
+    upload_files_to_archive(
+        identifier="test-identifier",
+        title="Test Title",
+        description="Test Description",
+        files_dir=str(directory),
+    )
+
+    enviados = [Path(f).name for f in mock_upload.call_args.kwargs["files"]]
+    assert set(enviados) == {
+        PARQUET_LATEST,
+        parquet_datado(),
+        BRUTO_LATEST,
+        bruto_datado(),
+    }

@@ -5,7 +5,8 @@ from pathlib import Path
 
 from fetch_data import fetch_all_states, process_local_data
 from reporter import DEFAULT_PARQUET_PATH, validate_publication_parquet
-from upload_to_archive import BRUTO_FILENAME, upload_files_to_archive
+from archive_names import BRUTO_LATEST, bruto_datado, item_do_ano
+from upload_to_archive import upload_files_to_archive
 
 
 def main():
@@ -37,7 +38,7 @@ def main():
     )
     parser.add_argument(
         "--archive-item-identifier",
-        default="imoveis-caixa-economica-federal",
+        default=item_do_ano(),
         help="O identificador do item no Internet Archive.",
     )
     parser.add_argument(
@@ -67,9 +68,11 @@ def main():
             # a fonte primária, e some assim que a Caixa atualiza a lista.
             saida = Path("output_data")
             saida.mkdir(parents=True, exist_ok=True)
-            shutil.make_archive(
-                str(saida / Path(BRUTO_FILENAME).stem), "zip", root_dir=bruto
-            )
+            # Um zip datado, que fica, e uma cópia de nome estável, que
+            # o consumo corrente encontra sem saber a data de hoje.
+            datado = saida / bruto_datado()
+            shutil.make_archive(str(datado.with_suffix("")), "zip", root_dir=bruto)
+            shutil.copy2(datado, saida / BRUTO_LATEST)
         print("Download dos dados da Caixa concluído.")
 
     if not args.skip_processing:

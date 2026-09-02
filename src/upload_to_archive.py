@@ -5,10 +5,10 @@ from pathlib import Path
 from dotenv import load_dotenv
 from internetarchive import upload
 
-# O nome é parte do contrato de publicação, não um detalhe do empacotamento:
-# é por ele que o gate abaixo reconhece a fonte primária, e é ele que
-# run_pipeline gera. Um zip qualquer no diretório não substitui o bruto.
-BRUTO_FILENAME = "imoveis_csv_bruto.zip"
+# O prefixo é parte do contrato de publicação, não um detalhe do
+# empacotamento: é por ele que o gate abaixo reconhece a fonte primária, e é
+# dele que run_pipeline deriva o nome. Um zip qualquer não substitui o bruto.
+from archive_names import BRUTO_PREFIX
 
 # O Archive raciona uploads quando a fila GLOBAL dele se aproxima do teto, e
 # recusa com "Please reduce your request rate - total_tasks_queued exceeds
@@ -48,11 +48,14 @@ def upload_files_to_archive(
     # Parquet é derivado e some do rastro quem o originou. A exceção é a
     # republicação de um Parquet já existente, onde não há bruto novo a
     # preservar — e nesse caso quem chama declara isso com exigir_bruto=False.
-    if exigir_bruto and not (Path(files_dir) / BRUTO_FILENAME).is_file():
+    if exigir_bruto and not any(
+        Path(caminho).name.startswith(BRUTO_PREFIX) and caminho.endswith(".zip")
+        for caminho in files_to_upload
+    ):
         raise FileNotFoundError(
-            f"{BRUTO_FILENAME} não encontrado em {files_dir}. Toda publicação "
-            "de dado novo leva a fonte junto; para republicar um Parquet "
-            "existente, chame com exigir_bruto=False."
+            f"Nenhum {BRUTO_PREFIX}*.zip encontrado em {files_dir}. Toda "
+            "publicação de dado novo leva a fonte junto; para republicar um "
+            "Parquet existente, chame com exigir_bruto=False."
         )
 
     metadata = {

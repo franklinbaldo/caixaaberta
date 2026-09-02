@@ -1,6 +1,7 @@
 import csv
 import io
 import os
+import shutil
 import random
 import time
 from pathlib import Path
@@ -9,6 +10,7 @@ import pandas as pd
 import ibis
 import requests
 
+from archive_names import PARQUET_LATEST, parquet_datado
 from geocode_cnefe import cobertura, geocodificar
 from utils import converter_valor_monetario_para_float, converter_percentual_para_float
 
@@ -281,9 +283,11 @@ def process_local_data():
         for nivel, quantos in cobertura(df).items():
             print(f"  {nivel}: {quantos}")
 
-    # Save as a single Parquet file
-    output_file = output_path / "imoveis_geocoded.parquet"
+    # Dois nomes para o mesmo conteúdo: o datado é o retrato que fica no
+    # Archive, o estável é o que imoveis_caixa.sql consulta sem saber a data.
+    output_file = output_path / PARQUET_LATEST
     df.to_parquet(output_file, index=False)
+    shutil.copy2(output_file, output_path / parquet_datado())
     print(f"Salvo dados processados para {output_file}")
 
 if __name__ == "__main__":

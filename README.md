@@ -18,9 +18,17 @@ Parquet publicado no Internet Archive:
 SELECT estado, count(*) FROM imoveis_caixa GROUP BY estado;
 ```
 
-Para regerar esse DDL apontando para outro item do Archive:
+Os retratos diários se acumulam em um item por ano
+(`imoveis-caixa-economica-federal-2026`), cada publicação sob um nome datado
+— `imoveis_geocoded_2026-09-02.parquet` — porque a lista da Caixa é um retrato
+do dia e o imóvel vendido some dela. Ao lado dos datados, `imoveis_geocoded.parquet`
+e `imoveis_csv_bruto.zip` apontam sempre para a publicação mais recente; é
+deles que o DDL lê.
+
+Quando o ano vira, o DDL precisa ser regerado:
 
 ```bash
+python src/generate_ddl.py            # item do ano corrente
 python src/generate_ddl.py --identifier <ID_DO_ITEM>
 ```
 
@@ -35,13 +43,13 @@ deles. As 27 UFs vêm em 86 segundos.
 O download roda por padrão na publicação — confirmado no runner do GitHub em
 01/09/2026, com as 27 UFs. Os CSVs **não são versionados**: `data/` está no
 `.gitignore`, e cada publicação leva ao Archive tanto o Parquet quanto
-`imoveis_csv_bruto.zip`, com os CSVs como a Caixa os serviu. O dado vive no
+o zip datado com os CSVs como a Caixa os serviu. O dado vive no
 Archive; o repositório guarda código.
 
 ## Documentação do dataset
 
 `knowledge/` é um bundle [OKF v0.2](https://github.com/GoogleCloudPlatform/knowledge-catalog/blob/main/okf/SPEC.md)
-com 25 conceitos: a fonte, o pipeline, o esquema do Parquet, a publicação, as
+com 26 conceitos: a fonte, o pipeline, o esquema do Parquet, a publicação, as
 quatro modalidades de venda, as armadilhas conhecidas do dado e consultas
 prontas. É a documentação para quem consome o dataset sem ler o código.
 

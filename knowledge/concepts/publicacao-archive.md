@@ -2,17 +2,30 @@
 type: Distribution
 title: Publicação no Internet Archive
 description: Onde o Parquet é publicado e como consultá-lo sem baixar o arquivo
-identifier: imoveis-caixa-economica-federal
+identifier_prefix: imoveis-caixa-economica-federal
 ---
 
 # Publicação no Internet Archive
 
-Cada execução publica dois arquivos:
+Cada execução publica quatro arquivos: dois datados e dois estáveis.
 
-| Arquivo                    | O que é                                                                 |
-| -------------------------- | ----------------------------------------------------------------------- |
-| `imoveis_geocoded.parquet` | O [dataset](dataset-imoveis.md) consolidado e geocodificado.            |
-| `imoveis_csv_bruto.zip`    | Os CSVs exatamente como a [Caixa](fonte-caixa.md) os serviu, um por UF. |
+| Arquivo                                | O que é                                                                 |
+| -------------------------------------- | ----------------------------------------------------------------------- |
+| `imoveis_geocoded_AAAA-MM-DD.parquet`  | O [dataset](dataset-imoveis.md) consolidado daquele dia.                |
+| `imoveis_csv_bruto_AAAA-MM-DD.zip`     | Os CSVs como a [Caixa](fonte-caixa.md) os serviu naquele dia, um por UF.|
+| `imoveis_geocoded.parquet`             | Cópia da publicação mais recente, sob nome fixo.                        |
+| `imoveis_csv_bruto.zip`                | Idem, para o bruto.                                                     |
+
+O acervo da Caixa é um retrato do dia: imóvel vendido some da lista e a fonte
+não guarda histórico. Se todo dia sobrescrevesse um nome fixo, a série temporal
+que este projeto existe para preservar seria destruída a cada execução — o
+Archive não versiona arquivo homônimo dentro de um item. Por isso o nome
+carrega a data. Os dois nomes estáveis existem só porque `imoveis_caixa.sql`
+precisa de um alvo que não mude a cada dia; o histórico vive nos datados.
+
+Os retratos se acumulam em **um item por ano** — `imoveis-caixa-economica-federal-2026`,
+`-2027`, e assim por diante — para nenhum item crescer sem limite. Vira o ano,
+vira o item, e o DDL precisa ser regerado.
 
 O bruto vai junto porque é a fonte primária e some assim que a Caixa atualiza a
 lista: o Parquet é derivado e pode ser regerado, o CSV daquele dia não. É
@@ -25,8 +38,7 @@ sem o zip. A única exceção é `--skip-processing`, que republica um Parquet j
 existente e portanto não tem bruto novo a preservar — e a declara passando
 `exigir_bruto=False`, em vez de deixar a ausência passar em silêncio.
 
-O [Parquet](dataset-imoveis.md) é enviado ao item
-`imoveis-caixa-economica-federal` do Internet Archive. Antes do envio,
+O [Parquet](dataset-imoveis.md) é enviado ao item do ano corrente. Antes do envio,
 `validate_publication_parquet` recusa arquivo ausente, arquivo vazio, esquema
 incompleto ou um conjunto em que nenhuma linha tem `link` publicável — o
 [pipeline](pipeline.md) falha em vez de publicar dado inútil.
