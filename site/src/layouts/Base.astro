@@ -10,7 +10,7 @@ interface Props {
 
 const {
   title = "Caixa Aberta",
-  description = "Histórico diário e consulta nacional dos imóveis ofertados pela Caixa.",
+  description = "Busque imóveis da Caixa no Brasil inteiro e acompanhe um histórico diário preservado.",
 } = Astro.props;
 ---
 
@@ -28,11 +28,12 @@ const {
       <nav aria-label="Navegação principal">
         <a href={import.meta.env.BASE_URL} data-brand aria-label="Caixa Aberta — início">
           <strong>CAIXA ABERTA</strong>
-          <small>imóveis públicos, história preservada</small>
+          <small>oportunidades imobiliárias, memória pública</small>
         </a>
         <ul>
           <li><a href="#explorar">Explorar</a></li>
-          <li><a href="#como-funciona">Como funciona</a></li>
+          <li><a href="#dados">Dados</a></li>
+          <li><a href="#como-funciona">Método</a></li>
           <li><a href="https://github.com/franklinbaldo/caixaaberta">Código</a></li>
         </ul>
       </nav>
