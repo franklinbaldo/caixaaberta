@@ -1,7 +1,7 @@
 ---
 type: Procedure
 title: Estimativa independente de avaliação
-_description: Baseline reproduzível que aprende uma proxy de avaliação por localização e tipo sem usar o preço mínimo como feature
+description: Baseline reproduzível que aprende uma proxy de avaliação por localização e tipo sem usar o preço mínimo como feature
 coverage: parcial
 ---
 
