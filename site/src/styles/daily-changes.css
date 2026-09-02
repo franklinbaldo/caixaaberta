@@ -1,0 +1,130 @@
+[data-explorer-app] {
+  grid-template-areas:
+    "intro intro"
+    "changes changes"
+    "filters filters"
+    "summary summary"
+    "results map";
+}
+
+[data-daily-changes] {
+  grid-area: changes;
+  margin: 0 0 0.8rem;
+  padding: 0.9rem 0;
+  border-block: 1px solid var(--caixa-rule);
+  background: transparent;
+}
+
+[data-daily-changes] > header {
+  display: flex;
+  gap: 1rem 2rem;
+  align-items: end;
+  justify-content: space-between;
+  margin-bottom: 0.75rem;
+}
+
+[data-daily-changes] > header h3 {
+  margin: 0;
+  font-size: clamp(1.25rem, 2vw, 1.8rem);
+  letter-spacing: -0.025em;
+}
+
+[data-daily-changes] > header p {
+  margin: 0 0 0.15rem;
+  color: var(--pico-muted-color);
+  font-size: 0.84rem;
+  font-variant-numeric: tabular-nums;
+}
+
+[data-change-metrics] {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 1px;
+  padding: 1px;
+  background: var(--caixa-rule);
+}
+
+[data-change-metrics] article {
+  min-height: 7.5rem;
+  margin: 0;
+  padding: 0.8rem;
+  border-radius: 0;
+  box-shadow: none;
+  background: color-mix(in srgb, var(--caixa-paper) 94%, white);
+}
+
+[data-change-metrics] small {
+  display: block;
+  color: var(--pico-muted-color);
+  font-size: 0.7rem;
+  font-weight: 750;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+}
+
+[data-change-metrics] strong {
+  display: block;
+  margin-block: 0.15rem 0.25rem;
+  color: var(--caixa-accent);
+  font-size: clamp(1.65rem, 3vw, 2.6rem);
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+}
+
+[data-change-metrics] article:last-child strong {
+  color: var(--caixa-warm);
+}
+
+[data-change-metrics] p {
+  margin: 0;
+  color: var(--pico-muted-color);
+  font-size: 0.76rem;
+  line-height: 1.35;
+}
+
+#daily-changes-note {
+  margin: 0.6rem 0 0;
+  color: var(--pico-muted-color);
+  font-size: 0.78rem;
+}
+
+[data-daily-changes][data-state="loading"] [data-change-metrics],
+[data-daily-changes][data-state="unavailable"] [data-change-metrics] {
+  opacity: 0.5;
+}
+
+[data-daily-changes][data-state="error"] {
+  border-color: var(--pico-del-color);
+}
+
+@media (max-width: 980px) {
+  [data-explorer-app] {
+    grid-template-areas:
+      "intro"
+      "changes"
+      "filters"
+      "summary"
+      "map"
+      "results";
+  }
+}
+
+@media (max-width: 760px) {
+  [data-daily-changes] > header {
+    display: block;
+  }
+
+  [data-daily-changes] > header p {
+    margin-top: 0.35rem;
+  }
+
+  [data-change-metrics] {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 460px) {
+  [data-change-metrics] {
+    grid-template-columns: 1fr;
+  }
+}
