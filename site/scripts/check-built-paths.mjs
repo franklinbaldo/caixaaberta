@@ -1,7 +1,8 @@
 import { readdir, readFile, stat } from "node:fs/promises";
 import { join } from "node:path";
+import { fileURLToPath } from "node:url";
 
-const dist = new URL("../dist/", import.meta.url);
+const dist = fileURLToPath(new URL("../dist/", import.meta.url));
 const badPath = "/caixaabertadata/";
 const expectedPath = "/caixaaberta/data/latest.json";
 
@@ -30,7 +31,7 @@ if (!joined.includes(expectedPath)) {
 }
 
 for (const relative of ["data/latest.json", "data/snapshot.parquet"]) {
-  await stat(new URL(`../dist/${relative}`, import.meta.url));
+  await stat(join(dist, relative));
 }
 
 console.log("Caminhos publicados e mirror de dados: OK.");
