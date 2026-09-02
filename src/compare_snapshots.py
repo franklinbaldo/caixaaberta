@@ -15,6 +15,16 @@ import pandas as pd
 
 TRACKED_FIELDS = ("preco", "avaliacao", "desconto", "modalidade")
 CONTEXT_FIELDS = ("estado", "cidade", "endereco")
+RESULT_COLUMNS = (
+    "link",
+    "mudanca",
+    "scrape_date_anterior",
+    "scrape_date_atual",
+    "campos_alterados",
+    *CONTEXT_FIELDS,
+    *(f"{field}_anterior" for field in TRACKED_FIELDS),
+    *(f"{field}_atual" for field in TRACKED_FIELDS),
+)
 
 
 def _snapshot_date(df: pd.DataFrame, origem: str) -> date:
@@ -118,7 +128,9 @@ def compare_snapshots(
             row[f"{field}_atual"] = new_row[field] if new_row is not None else None
         rows.append(row)
 
-    result = pd.DataFrame(rows)
+    # O derivado tem schema mesmo quando não há mudança. Isso permite gravar um
+    # Parquet vazio válido sem transformar "zero eventos" em caso especial.
+    result = pd.DataFrame(rows, columns=RESULT_COLUMNS)
     if not result.empty:
         result = result.sort_values(
             ["mudanca", "estado", "cidade", "link"],
