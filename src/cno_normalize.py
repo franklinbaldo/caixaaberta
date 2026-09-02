@@ -84,8 +84,15 @@ def _parse_date(series: pd.Series) -> pd.Series:
 
 
 def _parse_decimal(series: pd.Series) -> pd.Series:
-    clean = series.astype(str).str.replace(".", "", regex=False).str.replace(",", ".", regex=False)
-    return pd.to_numeric(clean.replace("", pd.NA), errors="coerce")
+    def parse(value: object):
+        text = str(value).strip()
+        if not text:
+            return pd.NA
+        if "," in text:
+            text = text.replace(".", "").replace(",", ".")
+        return pd.to_numeric(text, errors="coerce")
+
+    return series.map(parse)
 
 
 def _canonical_cno(frame: pd.DataFrame) -> pd.DataFrame:
@@ -115,22 +122,29 @@ def _canonical_cno(frame: pd.DataFrame) -> pd.DataFrame:
     aliases = {
         "estado": "estado_normalizado",
         "nome_do_municipio": "municipio_normalizado",
+        "tipo_de_logradouro": "tipo_logradouro_normalizado",
         "logradouro": "logradouro_normalizado",
         "numero_do_logradouro": "numero_normalizado",
         "bairro": "bairro_normalizado",
         "complemento": "complemento_normalizado",
-        "cep": "cep_normalizado",
     }
     for source, target in aliases.items():
         if source not in result.columns:
             result[target] = ""
         elif source == "numero_do_logradouro":
             result[target] = result[source].map(normalize_number)
-        elif source == "cep":
-            result[target] = result[source].astype(str).str.replace(r"\D", "", regex=True).str.zfill(8)
         else:
             result[target] = result[source].map(normalize_text)
 
+    if "cep" in result.columns:
+        cep = result["cep"].astype(str).str.replace(r"\D", "", regex=True)
+        result["cep_normalizado"] = cep.str.zfill(8).where(cep.ne(""), "")
+    else:
+        result["cep_normalizado"] = ""
+
+    result["logradouro_completo_normalizado"] = (
+        result["tipo_logradouro_normalizado"] + " " + result["logradouro_normalizado"]
+    ).str.strip()
     return result
 
 
