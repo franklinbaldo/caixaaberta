@@ -1,34 +1,33 @@
 from pathlib import Path
 
-import yaml
-
 
 WORKFLOW = Path(".github/workflows/main.yml")
 
 
-def _workflow():
-    return yaml.safe_load(WORKFLOW.read_text(encoding="utf-8"))
+def _texto():
+    return WORKFLOW.read_text(encoding="utf-8")
 
 
 def test_workflow_tem_agendamento_diario():
-    workflow = _workflow()
-    schedule = workflow["on"]["schedule"]
+    texto = _texto()
 
-    assert len(schedule) == 1
-    assert schedule[0]["cron"].count("*") == 3
+    assert "schedule:" in texto
+    assert 'cron: "17 6 * * *"' in texto
 
 
 def test_push_nao_publica_snapshot():
-    workflow = _workflow()
-    publish_if = workflow["jobs"]["publish"]["if"]
+    texto = _texto()
+    publish = texto.split("\n  publish:\n", 1)[1]
 
-    assert "schedule" in publish_if
-    assert "workflow_dispatch" in publish_if
-    assert "push" not in publish_if
+    assert "github.event_name == 'schedule'" in publish
+    assert "github.event_name == 'workflow_dispatch'" in publish
+    assert "github.event_name == 'push'" not in publish
 
 
 def test_concorrencia_e_so_da_publicacao():
-    workflow = _workflow()
+    texto = _texto()
+    antes_publish, publish = texto.split("\n  publish:\n", 1)
 
-    assert "concurrency" not in workflow
-    assert workflow["jobs"]["publish"]["concurrency"]["cancel-in-progress"] is False
+    assert "concurrency:" not in antes_publish
+    assert "concurrency:" in publish
+    assert "cancel-in-progress: false" in publish
