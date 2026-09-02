@@ -19,6 +19,7 @@ def _valid_frame() -> pd.DataFrame:
                 "cidade": "Porto Velho",
                 "estado": "RO",
                 "preco": 100000.0,
+                "scrape_date": date(2026, 9, 2),
             }
         ]
     )
@@ -56,7 +57,7 @@ def test_validate_publication_parquet_rejects_all_blank_links(tmp_path):
 
 
 def test_validate_publication_parquet_accepts_structurally_valid_file(tmp_path):
-    path = tmp_path / "valid.parquet"
+    path = tmp_path / "imoveis_geocoded_2026-09-02.parquet"
     frame = _valid_frame()
     frame.to_parquet(path)
 
