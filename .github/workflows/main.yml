@@ -73,11 +73,11 @@ jobs:
           "$HOME/.local/bin/uv" venv .venv --python "$(which python)"
           "$HOME/.local/bin/uv" pip install --python .venv/bin/python '.[dev]'
 
-      - name: Scrape, process and publish the daily snapshot
+      - name: Scrape, enrich with CNO, process and publish the daily snapshot
         env:
           IA_ACCESS_KEY: ${{ secrets.IA_ACCESS_KEY }}
           IA_SECRET_KEY: ${{ secrets.IA_SECRET_KEY }}
-        run: .venv/bin/python src/run_pipeline.py
+        run: .venv/bin/python src/run_pipeline.py --with-cno
 
       - name: Upload generated Parquet as workflow artifact
         uses: actions/upload-artifact@v4
