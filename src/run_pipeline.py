@@ -122,7 +122,10 @@ def main():
 
     if not args.skip_processing:
         print("Iniciando o processamento de dados locais...")
-        process_local_data(quando=quando, cno_dir=cno_dir)
+        if cno_dir is None:
+            process_local_data(quando=quando)
+        else:
+            process_local_data(quando=quando, cno_dir=cno_dir)
         print("Processamento de dados locais concluído.")
     else:
         print("Pulando o processamento de dados locais.")
