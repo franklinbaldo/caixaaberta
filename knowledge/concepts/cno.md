@@ -1,6 +1,12 @@
 ---
+type: Procedure
 title: Cadastro Nacional de Obras (CNO)
+description: Ingere e enriquece imóveis com o cadastro aberto de obras da Receita Federal
+provider: Receita Federal / Portal Brasileiro de Dados Abertos
+coverage: nacional
 ---
+
+# Cadastro Nacional de Obras (CNO)
 
 O Caixa Aberta usa o Cadastro Nacional de Obras apenas como fonte pública de enriquecimento. A fonte canônica continua sendo a Receita Federal, catalogada no Portal Brasileiro de Dados Abertos em <https://dados.gov.br/dados/conjuntos-dados/cadastro-nacional-de-obras-cno>.
 
