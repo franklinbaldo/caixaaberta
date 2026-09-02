@@ -5,16 +5,23 @@ import "maplibre-gl/dist/maplibre-gl.css";
 <section id="explorar" data-explorer-app data-state="loading" aria-labelledby="explorer-title">
   <header>
     <span data-kicker>Explorador nacional</span>
-    <h2 id="explorer-title">Encontre imóveis no retrato mais recente.</h2>
+    <h2 id="explorer-title">Encontre imóveis em qualquer retrato preservado.</h2>
     <p>
-      Os filtros rodam no seu navegador sobre o Parquet publicado. O mapa é uma
+      Escolha um dia e filtre o Parquet publicado diretamente no navegador. O mapa é uma
       visualização; a lista abaixo continua sendo a superfície principal e acessível.
     </p>
   </header>
 
   <form id="explorer-filters" aria-label="Filtros de imóveis">
     <fieldset>
-      <legend>Filtrar o retrato</legend>
+      <legend>Escolher e filtrar o retrato</legend>
+      <label>
+        Data do snapshot
+        <select id="filter-date" aria-describedby="snapshot-history-help">
+          <option value="">Descobrindo histórico…</option>
+        </select>
+        <small id="snapshot-history-help">Datas disponíveis são lidas dos itens anuais no Internet Archive.</small>
+      </label>
       <label>
         Buscar
         <input id="filter-query" type="search" placeholder="cidade, bairro, endereço ou número do imóvel" autocomplete="off" />
