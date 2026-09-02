@@ -1,0 +1,54 @@
+---
+import "@picocss/pico/css/pico.classless.css";
+import "cobogo/styles";
+import "../styles/site.css";
+
+interface Props {
+  title?: string;
+  description?: string;
+}
+
+const {
+  title = "Caixa Aberta",
+  description = "Histórico diário e consulta nacional dos imóveis ofertados pela Caixa.",
+} = Astro.props;
+---
+
+<!doctype html>
+<html lang="pt-BR" data-theme="light">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width" />
+    <meta name="description" content={description} />
+    <meta name="theme-color" content="#f4efe4" />
+    <title>{title}</title>
+  </head>
+  <body>
+    <header data-site-header>
+      <nav aria-label="Navegação principal">
+        <a href={import.meta.env.BASE_URL} data-brand aria-label="Caixa Aberta — início">
+          <strong>CAIXA ABERTA</strong>
+          <small>imóveis públicos, história preservada</small>
+        </a>
+        <ul>
+          <li><a href="#explorar">Explorar</a></li>
+          <li><a href="#como-funciona">Como funciona</a></li>
+          <li><a href="https://github.com/franklinbaldo/caixaaberta">Código</a></li>
+        </ul>
+      </nav>
+    </header>
+    <main>
+      <slot />
+    </main>
+    <footer data-site-footer>
+      <p>
+        Caixa Aberta é um projeto independente. Os dados de oferta vêm da Caixa Econômica Federal e cada observação diária é preservada no Internet Archive.
+      </p>
+      <nav aria-label="Links do projeto">
+        <a href="https://github.com/franklinbaldo/caixaaberta">GitHub</a>
+        <a href="https://archive.org/details/imoveis-caixa-economica-federal">Internet Archive</a>
+        <a href="https://github.com/franklinbaldo/cobogo">Cobogó</a>
+      </nav>
+    </footer>
+  </body>
+</html>
