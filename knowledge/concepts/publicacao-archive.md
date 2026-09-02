@@ -42,6 +42,22 @@ SELECT estado, count(*) FROM imoveis_caixa GROUP BY estado;
 Publicar exige `IA_ACCESS_KEY` e `IA_SECRET_KEY`; `--upload-dry-run` dispensa
 as duas.
 
+O Archive raciona uploads quando **a fila global dele** se aproxima do teto:
+
+```
+Please reduce your request rate. - total_tasks_queued exceeds global_limit
+```
+
+O limite não é do item nem da conta. Em 02/09/2026 a recusa veio com
+`bucket_tasks_queued` e `accesskey_tasks_queued` zerados e
+`total_tasks_queued` em 11.639 de 11.999, com `rationing_engaged: 1` — ou
+seja, o Archive inteiro estava congestionado. Publicar menos não evita isso;
+só esperar. O upload espera e tenta de novo, e nada é publicado pela metade
+porque o envio dos dois arquivos é uma operação só.
+
+O estado do racionamento é público em
+`https://s3.us.archive.org/?check_limit=1`.
+
 O item sobe **sem coleção declarada**. O Archive recusa o upload inteiro quando
 o metadata nomeia uma coleção em que a conta não pode escrever — foi o que
 aconteceu com `opensource_data`, em 01/09/2026, com credencial válida:
