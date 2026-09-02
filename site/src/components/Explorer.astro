@@ -15,6 +15,41 @@ import "maplibre-gl/dist/maplibre-gl.css";
     </p>
   </header>
 
+  <aside data-daily-changes data-state="loading" aria-labelledby="daily-changes-title">
+    <header>
+      <div>
+        <span data-kicker>Hoje no radar</span>
+        <h3 id="daily-changes-title">O que mudou desde o retrato anterior.</h3>
+      </div>
+      <p id="daily-changes-period">Carregando a memória temporal…</p>
+    </header>
+    <div data-change-metrics>
+      <article>
+        <small>Entraram</small>
+        <strong id="daily-entered">—</strong>
+        <p>Imóveis que não estavam no retrato anterior.</p>
+      </article>
+      <article>
+        <small>Preço caiu</small>
+        <strong id="daily-price-drops">—</strong>
+        <p>Ofertas cujo preço publicado diminuiu.</p>
+      </article>
+      <article>
+        <small>Outras alterações</small>
+        <strong id="daily-altered">—</strong>
+        <p>Mudanças de avaliação, desconto, modalidade ou preço sem queda.</p>
+      </article>
+      <article>
+        <small>Saíram</small>
+        <strong id="daily-exited">—</strong>
+        <p>Não aparecem mais no retrato atual; isso não prova venda ou arrematação.</p>
+      </article>
+    </div>
+    <p id="daily-changes-note" role="status">
+      A série temporal aparecerá aqui assim que houver um derivado publicado para o retrato atual.
+    </p>
+  </aside>
+
   <form id="explorer-filters" aria-label="Filtros de imóveis">
     <fieldset data-primary-filters>
       <legend>Buscar oportunidades</legend>
