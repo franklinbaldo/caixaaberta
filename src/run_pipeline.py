@@ -4,7 +4,14 @@ import tempfile
 from datetime import date
 from pathlib import Path
 
-from archive_names import bruto_datado, data_de_publicacao, item_do_ano
+from archive_names import (
+    bruto_datado,
+    cno_matches_datado,
+    data_de_publicacao,
+    item_do_ano,
+)
+from cno_ingest import fetch_cno_snapshot
+from cno_normalize import normalize_snapshot
 from fetch_data import fetch_all_states, process_local_data
 from reporter import parquet_do_dia, validate_publication_parquet
 from upload_to_archive import (
@@ -30,6 +37,14 @@ def main():
         "--skip-processing",
         action="store_true",
         help="Pula a etapa de processamento de dados locais.",
+    )
+    parser.add_argument(
+        "--with-cno",
+        action="store_true",
+        help=(
+            "Baixa o snapshot aberto do CNO, normaliza e cruza com os imóveis. "
+            "A publicação diária oficial usa esta opção."
+        ),
     )
     parser.add_argument(
         "--skip-upload",
@@ -95,9 +110,19 @@ def main():
             shutil.make_archive(str(datado.with_suffix("")), "zip", root_dir=bruto)
         print("Download dos dados da Caixa concluído.")
 
+    cno_dir = None
+    if args.with_cno and not args.skip_processing:
+        print("Baixando o snapshot aberto do CNO...")
+        raw_cno = fetch_cno_snapshot()
+        cno_dir = Path("cno_data/normalized")
+        normalize_snapshot(raw_cno, cno_dir)
+        print("CNO normalizado e pronto para matching.")
+    elif args.with_cno:
+        print("Pulando o CNO porque o processamento foi pulado.")
+
     if not args.skip_processing:
         print("Iniciando o processamento de dados locais...")
-        process_local_data(quando=quando)
+        process_local_data(quando=quando, cno_dir=cno_dir)
         print("Processamento de dados locais concluído.")
     else:
         print("Pulando o processamento de dados locais.")
@@ -110,18 +135,27 @@ def main():
     validate_publication_parquet(parquet_do_dia(quando))
     print("Parquet validado para publicação.")
 
+    arquivos = artefatos_da_publicacao(
+        quando,
+        "output_data",
+        # --skip-processing republica o Parquet que já existe; não há bruto
+        # novo a preservar, e é a única publicação sem a fonte junto.
+        exigir_bruto=not args.skip_processing,
+    )
+    if args.with_cno and not args.skip_processing:
+        evidencias = Path("output_data") / cno_matches_datado(quando)
+        if not evidencias.exists():
+            raise FileNotFoundError(
+                f"Matching CNO foi solicitado, mas a evidência não existe: {evidencias}"
+            )
+        arquivos.append(str(evidencias))
+
     print("Iniciando o upload para o Internet Archive...")
     upload_files_to_archive(
         identifier=identifier,
         title=args.archive_item_title,
         description=args.archive_item_description,
-        files=artefatos_da_publicacao(
-            quando,
-            "output_data",
-            # --skip-processing republica o Parquet que já existe; não há bruto
-            # novo a preservar, e é a única publicação sem a fonte junto.
-            exigir_bruto=not args.skip_processing,
-        ),
+        files=arquivos,
         dry_run=args.upload_dry_run,
     )
 
