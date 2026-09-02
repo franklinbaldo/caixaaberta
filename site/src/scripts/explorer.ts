@@ -1,9 +1,9 @@
 import * as duckdb from "@duckdb/duckdb-wasm";
 import {
-  GeoJSONSource,
   Map,
   NavigationControl,
   Popup,
+  type GeoJSONSource,
   type StyleSpecification,
 } from "maplibre-gl";
 
@@ -17,6 +17,7 @@ type RawRow = Record<string, unknown>;
 
 type Property = {
   link: string;
+  link_acesso: string;
   endereco: string;
   bairro: string;
   cidade: string;
@@ -46,6 +47,7 @@ const number = (value: unknown): number | null => {
 function normalize(row: RawRow): Property {
   return {
     link: text(row.link),
+    link_acesso: text(row.link_acesso),
     endereco: text(row.endereco),
     bairro: text(row.bairro),
     cidade: text(row.cidade),
@@ -95,14 +97,10 @@ async function loadProperties(onStatus: (message: string) => void) {
     await db.registerFileBuffer("snapshot.parquet", parquet);
     const connection = await db.connect();
     try {
-      const table = await connection.query(`
-        SELECT
-          CAST(link AS VARCHAR) AS link,
-          endereco, bairro, cidade, estado, descricao,
-          preco, avaliacao, desconto, financiamento, modalidade,
-          latitude, longitude, precisao
-        FROM 'snapshot.parquet'
-      `);
+      // SELECT * é intencional: snapshots antigos não têm `link_acesso`; o
+      // normalizador trata a ausência como string vazia, e snapshots novos
+      // ganham o link para a fonte sem criar duas versões do explorador.
+      const table = await connection.query("SELECT * FROM 'snapshot.parquet'");
       const rows = table.toArray().map((row) => row.toJSON() as RawRow).map(normalize);
       return { manifest, rows };
     } finally {
@@ -133,6 +131,16 @@ function precisionLabel(value: string) {
       municipio: "município",
     }[value] ?? value ?? ""
   );
+}
+
+function safeSourceUrl(value: string) {
+  if (!value) return "";
+  try {
+    const url = new URL(value);
+    return url.protocol === "https:" || url.protocol === "http:" ? url.href : "";
+  } catch {
+    return "";
+  }
 }
 
 function mapStyle(): StyleSpecification {
@@ -244,6 +252,15 @@ function setupMap() {
         const detail = document.createElement("small");
         detail.textContent = `Imóvel ${props.link ?? ""} · precisão: ${precisionLabel(props.precisao ?? "")}`;
         content.append(title, address, detail);
+        const href = safeSourceUrl(String(props.link_acesso ?? ""));
+        if (href) {
+          const sourceLink = document.createElement("a");
+          sourceLink.href = href;
+          sourceLink.target = "_blank";
+          sourceLink.rel = "noopener noreferrer";
+          sourceLink.textContent = "Ver oferta na Caixa";
+          content.append(document.createElement("br"), sourceLink);
+        }
         new Popup({ closeButton: true })
           .setLngLat(feature.geometry.coordinates as [number, number])
           .setDOMContent(content)
@@ -274,6 +291,7 @@ function toGeoJSON(rows: Property[]) {
         },
         properties: {
           link: row.link,
+          link_acesso: row.link_acesso,
           endereco: row.endereco,
           cidade: row.cidade,
           estado: row.estado,
@@ -296,7 +314,17 @@ function renderTable(tbody: HTMLTableSectionElement, rows: Property[]) {
 
     const propertyCell = document.createElement("td");
     const id = document.createElement("strong");
-    id.textContent = property.link || "—";
+    const href = safeSourceUrl(property.link_acesso);
+    if (href) {
+      const sourceLink = document.createElement("a");
+      sourceLink.href = href;
+      sourceLink.target = "_blank";
+      sourceLink.rel = "noopener noreferrer";
+      sourceLink.textContent = property.link || "Abrir oferta";
+      id.append(sourceLink);
+    } else {
+      id.textContent = property.link || "—";
+    }
     const address = document.createElement("small");
     address.textContent = property.endereco || "Endereço não informado";
     propertyCell.append(id, document.createElement("br"), address);
