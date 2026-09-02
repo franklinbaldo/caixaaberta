@@ -34,7 +34,8 @@ const number = (value: unknown): number | null => {
 };
 
 function localDataUrl(file: string) {
-  return new URL(`${import.meta.env.BASE_URL}data/${file}`, window.location.origin).href;
+  const basePath = import.meta.env.BASE_URL.replace(/\/?$/, "/");
+  return new URL(`${basePath}data/${file}`, window.location.origin).href;
 }
 
 function normalize(row: RawRow): Property {
@@ -99,7 +100,7 @@ async function loadProperties(onStatus: (message: string) => void) {
   }
 }
 
-function addOptions(select: HTMLSelectElement, values: string[]) {
+function options(select: HTMLSelectElement, values: string[]) {
   for (const value of values.filter(Boolean).sort((a, b) => a.localeCompare(b, "pt-BR"))) {
     const option = document.createElement("option");
     option.value = value;
@@ -109,19 +110,21 @@ function addOptions(select: HTMLSelectElement, values: string[]) {
 }
 
 function precisionLabel(value: string) {
-  return ({
-    logradouro_localidade: "logradouro + localidade",
-    logradouro: "logradouro",
-    localidade: "localidade",
-    municipio: "município",
-  } as Record<string, string>)[value] ?? value ?? "";
+  return (
+    {
+      logradouro_localidade: "logradouro + localidade",
+      logradouro: "logradouro",
+      localidade: "localidade",
+      municipio: "município",
+    }[value] ?? value ?? ""
+  );
 }
 
 function safeSourceUrl(value: string) {
   if (!value) return "";
   try {
     const url = new URL(value);
-    return ["http:", "https:"].includes(url.protocol) ? url.href : "";
+    return url.protocol === "https:" || url.protocol === "http:" ? url.href : "";
   } catch {
     return "";
   }
@@ -148,6 +151,7 @@ function setupMap() {
   const verde = styles.getPropertyValue("--verde").trim() || "#31735b";
   const ocre = styles.getPropertyValue("--ocre").trim() || "#ba7a2e";
   const concreto = styles.getPropertyValue("--concreto-600").trim() || "#74736d";
+
   const map = new MapLibreMap({
     container: "map",
     style: mapStyle(),
@@ -177,7 +181,7 @@ function setupMap() {
           "circle-opacity": 0.88,
           "circle-radius": ["step", ["get", "point_count"], 17, 50, 22, 250, 29, 1000, 36],
           "circle-stroke-width": 2,
-          "circle-stroke-color": "#fff",
+          "circle-stroke-color": "#ffffff",
         },
       });
       map.addLayer({
@@ -186,7 +190,7 @@ function setupMap() {
         source: "imoveis",
         filter: ["has", "point_count"],
         layout: { "text-field": ["get", "point_count_abbreviated"], "text-size": 12 },
-        paint: { "text-color": "#fff" },
+        paint: { "text-color": "#ffffff" },
       });
       map.addLayer({
         id: "unclustered-point",
@@ -194,19 +198,32 @@ function setupMap() {
         source: "imoveis",
         filter: ["!", ["has", "point_count"]],
         paint: {
-          "circle-color": ["match", ["get", "precisao"], "logradouro_localidade", verde, "logradouro", azul, "localidade", ocre, concreto],
+          "circle-color": [
+            "match",
+            ["get", "precisao"],
+            "logradouro_localidade",
+            verde,
+            "logradouro",
+            azul,
+            "localidade",
+            ocre,
+            concreto,
+          ],
           "circle-radius": 6,
           "circle-stroke-width": 1.5,
-          "circle-stroke-color": "#fff",
+          "circle-stroke-color": "#ffffff",
         },
       });
+
       map.on("click", "clusters", async (event) => {
         const feature = map.queryRenderedFeatures(event.point, { layers: ["clusters"] })[0];
         if (!feature || feature.geometry.type !== "Point") return;
+        const clusterId = Number(feature.properties?.cluster_id);
         const source = map.getSource("imoveis") as GeoJSONSource;
-        const zoom = await source.getClusterExpansionZoom(Number(feature.properties?.cluster_id));
+        const zoom = await source.getClusterExpansionZoom(clusterId);
         map.easeTo({ center: feature.geometry.coordinates as [number, number], zoom });
       });
+
       map.on("click", "unclustered-point", (event) => {
         const feature = event.features?.[0];
         if (!feature || feature.geometry.type !== "Point") return;
@@ -228,11 +245,20 @@ function setupMap() {
           sourceLink.textContent = "Ver oferta na Caixa";
           content.append(document.createElement("br"), sourceLink);
         }
-        new Popup().setLngLat(feature.geometry.coordinates as [number, number]).setDOMContent(content).addTo(map);
+        new Popup({ closeButton: true })
+          .setLngLat(feature.geometry.coordinates as [number, number])
+          .setDOMContent(content)
+          .addTo(map);
       });
+
+      for (const layer of ["clusters", "unclustered-point"]) {
+        map.on("mouseenter", layer, () => (map.getCanvas().style.cursor = "pointer"));
+        map.on("mouseleave", layer, () => (map.getCanvas().style.cursor = ""));
+      }
       resolve();
     });
   });
+
   return { map, ready };
 }
 
@@ -256,7 +282,7 @@ function toGeoJSON(rows: Property[]) {
   };
 }
 
-function textCell(row: HTMLTableRowElement, value: string) {
+function appendTextCell(row: HTMLTableRowElement, value: string) {
   const cell = document.createElement("td");
   cell.textContent = value || "—";
   row.append(cell);
@@ -270,22 +296,24 @@ function renderTable(tbody: HTMLTableSectionElement, rows: Property[]) {
     const id = document.createElement("strong");
     const href = safeSourceUrl(property.link_acesso);
     if (href) {
-      const anchor = document.createElement("a");
-      anchor.href = href;
-      anchor.target = "_blank";
-      anchor.rel = "noopener noreferrer";
-      anchor.textContent = property.link || "Abrir oferta";
-      id.append(anchor);
-    } else id.textContent = property.link || "—";
+      const sourceLink = document.createElement("a");
+      sourceLink.href = href;
+      sourceLink.target = "_blank";
+      sourceLink.rel = "noopener noreferrer";
+      sourceLink.textContent = property.link || "Abrir oferta";
+      id.append(sourceLink);
+    } else {
+      id.textContent = property.link || "—";
+    }
     const address = document.createElement("small");
     address.textContent = property.endereco || "Endereço não informado";
     propertyCell.append(id, document.createElement("br"), address);
     tr.append(propertyCell);
-    textCell(tr, [property.cidade, property.estado].filter(Boolean).join(" / "));
-    textCell(tr, property.preco == null ? "—" : currency.format(property.preco));
-    textCell(tr, property.desconto == null ? "—" : `${property.desconto.toLocaleString("pt-BR")} %`);
-    textCell(tr, property.modalidade);
-    textCell(tr, precisionLabel(property.precisao));
+    appendTextCell(tr, [property.cidade, property.estado].filter(Boolean).join(" / "));
+    appendTextCell(tr, property.preco == null ? "—" : currency.format(property.preco));
+    appendTextCell(tr, property.desconto == null ? "—" : `${property.desconto.toLocaleString("pt-BR")} %`);
+    appendTextCell(tr, property.modalidade);
+    appendTextCell(tr, precisionLabel(property.precisao));
     fragment.append(tr);
   }
   tbody.replaceChildren(fragment);
@@ -305,13 +333,13 @@ export async function initExplorer() {
   const date = required<HTMLElement>("#explorer-date");
   const status = required<HTMLElement>("#explorer-status");
   const tbody = required<HTMLTableSectionElement>("#explorer-rows");
-  const setStatus = (message: string) => (status.textContent = message);
+  const setStatus = (message: string) => { status.textContent = message; };
 
   try {
     const { map, ready } = setupMap();
     const { manifest, rows } = await loadProperties(setStatus);
-    addOptions(state, [...new Set(rows.map((row) => row.estado))]);
-    addOptions(modality, [...new Set(rows.map((row) => row.modalidade))]);
+    options(state, [...new Set(rows.map((row) => row.estado))]);
+    options(modality, [...new Set(rows.map((row) => row.modalidade))]);
     date.textContent = `Snapshot ${manifest.data}`;
 
     const render = async () => {
@@ -322,12 +350,21 @@ export async function initExplorer() {
         if (modality.value && property.modalidade !== modality.value) return false;
         if (precision.value && property.precisao !== precision.value) return false;
         if (minimumDiscount != null && (property.desconto ?? -Infinity) < minimumDiscount) return false;
-        if (!needle) return true;
-        return [property.link, property.endereco, property.bairro, property.cidade, property.estado, property.descricao]
-          .join(" ").toLocaleLowerCase("pt-BR").includes(needle);
+        if (needle) {
+          const haystack = [
+            property.link,
+            property.endereco,
+            property.bairro,
+            property.cidade,
+            property.estado,
+            property.descricao,
+          ].join(" ").toLocaleLowerCase("pt-BR");
+          if (!haystack.includes(needle)) return false;
+        }
+        return true;
       });
       count.textContent = `${integer.format(filtered.length)} imóvel${filtered.length === 1 ? "" : "is"}`;
-      const geocoded = filtered.filter((p) => p.latitude != null && p.longitude != null).length;
+      const geocoded = filtered.filter((property) => property.latitude != null && property.longitude != null).length;
       setStatus(`${integer.format(geocoded)} com coordenadas para o mapa; lista limitada a 100 linhas visíveis.`);
       renderTable(tbody, filtered);
       await ready;
@@ -335,19 +372,19 @@ export async function initExplorer() {
     };
 
     let timer = 0;
-    const schedule = () => {
+    const scheduleRender = () => {
       window.clearTimeout(timer);
       timer = window.setTimeout(() => void render(), 80);
     };
-    form.addEventListener("input", schedule);
-    form.addEventListener("change", schedule);
+    form.addEventListener("input", scheduleRender);
+    form.addEventListener("change", scheduleRender);
     form.addEventListener("reset", () => window.setTimeout(() => void render(), 0));
     app.dataset.state = "ready";
     await render();
   } catch (error) {
     app.dataset.state = "error";
     count.textContent = "Explorador indisponível";
-    status.textContent = "Não foi possível abrir o snapshot espelhado. O dado canônico continua no Internet Archive.";
+    setStatus("Não foi possível abrir o snapshot espelhado. O histórico continua disponível no Internet Archive.");
     console.error("Falha ao iniciar explorador", error);
   }
 }
