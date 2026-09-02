@@ -1,4 +1,5 @@
 import * as duckdb from "@duckdb/duckdb-wasm";
+import "../styles/daily-changes.css";
 
 type Manifest = {
   data: string;
