@@ -18,8 +18,10 @@ type Property = {
   estado: string;
   descricao: string;
   preco: number | null;
+  avaliacao: number | null;
   desconto: number | null;
   modalidade: string;
+  financiamento: string;
   latitude: number | null;
   longitude: number | null;
   precisao: string;
@@ -61,8 +63,10 @@ function normalize(row: RawRow): Property {
     estado: text(row.estado),
     descricao: text(row.descricao),
     preco: number(row.preco),
+    avaliacao: number(row.avaliacao),
     desconto: number(row.desconto),
     modalidade: text(row.modalidade),
+    financiamento: text(row.financiamento),
     latitude: number(row.latitude),
     longitude: number(row.longitude),
     precisao: text(row.precisao),
@@ -270,9 +274,16 @@ function setupMap() {
         title.textContent = `${props.cidade ?? ""} / ${props.estado ?? ""}`;
         const address = document.createElement("p");
         address.textContent = props.endereco ?? "Endereço não informado";
+        const offer = document.createElement("p");
+        const price = Number(props.preco);
+        const discount = Number(props.desconto);
+        offer.textContent = [
+          Number.isFinite(price) ? currency.format(price) : "preço não informado",
+          Number.isFinite(discount) ? `${decimal.format(discount)}% de desconto` : "",
+        ].filter(Boolean).join(" · ");
         const detail = document.createElement("small");
-        detail.textContent = `Imóvel ${props.link ?? ""} · precisão: ${precisionLabel(props.precisao ?? "")}`;
-        content.append(title, address, detail);
+        detail.textContent = `Imóvel ${props.link ?? ""} · precisão: ${precisionLabel(String(props.precisao ?? ""))}`;
+        content.append(title, address, offer, detail);
 
         if (props.cno) {
           const cnoDetail = document.createElement("p");
@@ -280,10 +291,6 @@ function setupMap() {
           const areaLabel = Number.isFinite(area) ? ` · ${decimal.format(area)} m²` : "";
           cnoDetail.textContent = `CNO ${props.cno} · ${props.cno_situacao || "situação não informada"}${areaLabel}`;
           content.append(cnoDetail);
-        } else if (props.cno_match_status && props.cno_match_status !== "sem_dados") {
-          const match = document.createElement("p");
-          match.textContent = matchLabel(String(props.cno_match_status));
-          content.append(match);
         }
 
         const href = safeSourceUrl(String(props.link_acesso ?? ""));
@@ -292,7 +299,7 @@ function setupMap() {
           sourceLink.href = href;
           sourceLink.target = "_blank";
           sourceLink.rel = "noopener noreferrer";
-          sourceLink.textContent = "Ver oferta na Caixa";
+          sourceLink.textContent = "Ver oferta oficial";
           content.append(document.createElement("br"), sourceLink);
         }
         new Popup({ closeButton: true })
@@ -326,9 +333,10 @@ function toGeoJSON(rows: Property[]) {
           endereco: row.endereco,
           cidade: row.cidade,
           estado: row.estado,
+          preco: row.preco,
+          desconto: row.desconto,
           precisao: row.precisao,
           cno: row.cno,
-          cno_match_status: row.cno_match_status,
           cno_situacao: row.cno_situacao,
           cno_area_total: row.cno_area_total,
         },
@@ -389,8 +397,10 @@ function renderTable(tbody: HTMLTableSectionElement, rows: Property[]) {
     tr.append(propertyCell);
     appendTextCell(tr, [property.cidade, property.estado].filter(Boolean).join(" / "));
     appendTextCell(tr, property.preco == null ? "—" : currency.format(property.preco));
-    appendTextCell(tr, property.desconto == null ? "—" : `${property.desconto.toLocaleString("pt-BR")} %`);
+    appendTextCell(tr, property.avaliacao == null ? "—" : currency.format(property.avaliacao));
+    appendTextCell(tr, property.desconto == null ? "—" : `${decimal.format(property.desconto)} %`);
     appendTextCell(tr, property.modalidade);
+    appendTextCell(tr, property.financiamento);
     appendCnoCell(tr, property);
     appendTextCell(tr, precisionLabel(property.precisao));
     fragment.append(tr);
@@ -398,21 +408,111 @@ function renderTable(tbody: HTMLTableSectionElement, rows: Property[]) {
   tbody.replaceChildren(fragment);
 }
 
+function metric(term: string, value: string, emphasis = false) {
+  const wrapper = document.createElement("div");
+  const dt = document.createElement("dt");
+  const dd = document.createElement("dd");
+  dt.textContent = term;
+  dd.textContent = value;
+  if (emphasis) dd.dataset.emphasis = "true";
+  wrapper.append(dt, dd);
+  return wrapper;
+}
+
+function renderCards(container: HTMLElement, rows: Property[]) {
+  const fragment = document.createDocumentFragment();
+  for (const property of rows.slice(0, 100)) {
+    const card = document.createElement("article");
+    card.dataset.propertyCard = "";
+
+    const header = document.createElement("header");
+    const place = document.createElement("strong");
+    place.textContent = [property.cidade, property.estado].filter(Boolean).join(" / ") || "Local não informado";
+    const modality = document.createElement("small");
+    modality.textContent = property.modalidade || "Modalidade não informada";
+    header.append(place, modality);
+
+    const title = document.createElement("h3");
+    title.textContent = property.descricao || `Imóvel ${property.link || "Caixa"}`;
+    const address = document.createElement("p");
+    address.dataset.propertyAddress = "";
+    address.textContent = [property.bairro, property.endereco].filter(Boolean).join(" · ") || "Endereço não informado";
+
+    const metrics = document.createElement("dl");
+    metrics.dataset.propertyMetrics = "";
+    metrics.append(
+      metric("Preço", property.preco == null ? "—" : currency.format(property.preco), true),
+      metric("Avaliação", property.avaliacao == null ? "—" : currency.format(property.avaliacao)),
+      metric("Desconto", property.desconto == null ? "—" : `${decimal.format(property.desconto)}%`, true),
+    );
+
+    const context = document.createElement("p");
+    context.dataset.propertyContext = "";
+    const contextParts = [];
+    if (property.financiamento) contextParts.push(`Financiamento: ${property.financiamento}`);
+    if (property.cno) contextParts.push(`CNO ${property.cno}${property.cno_situacao ? ` · ${property.cno_situacao}` : ""}`);
+    else if (property.cno_match_status && property.cno_match_status !== "sem_dados") contextParts.push(matchLabel(property.cno_match_status));
+    context.textContent = contextParts.join(" · ") || "Sem contexto adicional publicado";
+
+    const footer = document.createElement("footer");
+    const source = safeSourceUrl(property.link_acesso);
+    if (source) {
+      const link = document.createElement("a");
+      link.href = source;
+      link.target = "_blank";
+      link.rel = "noopener noreferrer";
+      link.textContent = "Ver oferta oficial ↗";
+      footer.append(link);
+    } else {
+      const unavailable = document.createElement("span");
+      unavailable.textContent = "Link oficial indisponível neste snapshot";
+      footer.append(unavailable);
+    }
+    const identifier = document.createElement("small");
+    identifier.textContent = property.link ? `Imóvel ${property.link}` : "Identificador não informado";
+    footer.append(identifier);
+
+    card.append(header, title, address, metrics, context, footer);
+    fragment.append(card);
+  }
+  container.replaceChildren(fragment);
+}
+
+function sortRows(rows: Property[], order: string) {
+  const sorted = [...rows];
+  const finite = (value: number | null, fallback: number) => value ?? fallback;
+  switch (order) {
+    case "price-asc":
+      return sorted.sort((a, b) => finite(a.preco, Infinity) - finite(b.preco, Infinity));
+    case "price-desc":
+      return sorted.sort((a, b) => finite(b.preco, -Infinity) - finite(a.preco, -Infinity));
+    case "city-asc":
+      return sorted.sort((a, b) => `${a.cidade}-${a.estado}`.localeCompare(`${b.cidade}-${b.estado}`, "pt-BR"));
+    default:
+      return sorted.sort((a, b) => finite(b.desconto, -Infinity) - finite(a.desconto, -Infinity));
+  }
+}
+
 export async function initExplorer() {
   const app = document.querySelector<HTMLElement>("[data-explorer-app]");
   if (!app || app.dataset.initialized === "true") return;
   app.dataset.initialized = "true";
+
   const form = required<HTMLFormElement>("#explorer-filters");
   const query = required<HTMLInputElement>("#filter-query");
   const state = required<HTMLSelectElement>("#filter-state");
   const modality = required<HTMLSelectElement>("#filter-modality");
+  const priceMax = required<HTMLInputElement>("#filter-price-max");
+  const discount = required<HTMLInputElement>("#filter-discount");
+  const financing = required<HTMLSelectElement>("#filter-financing");
+  const sort = required<HTMLSelectElement>("#filter-sort");
   const cnoMatch = required<HTMLSelectElement>("#filter-cno-match");
   const cnoSituation = required<HTMLSelectElement>("#filter-cno-situation");
   const precision = required<HTMLSelectElement>("#filter-precision");
-  const discount = required<HTMLInputElement>("#filter-discount");
   const count = required<HTMLElement>("#explorer-count");
   const date = required<HTMLElement>("#explorer-date");
   const status = required<HTMLElement>("#explorer-status");
+  const cards = required<HTMLElement>("#explorer-cards");
   const tbody = required<HTMLTableSectionElement>("#explorer-rows");
   const setStatus = (message: string) => { status.textContent = message; };
 
@@ -421,18 +521,22 @@ export async function initExplorer() {
     const { manifest, rows } = await loadProperties(setStatus);
     options(state, [...new Set(rows.map((row) => row.estado))]);
     options(modality, [...new Set(rows.map((row) => row.modalidade))]);
+    options(financing, [...new Set(rows.map((row) => row.financiamento))]);
     options(cnoSituation, [...new Set(rows.map((row) => row.cno_situacao))]);
     date.textContent = `Snapshot ${manifest.data}`;
 
     const render = async () => {
       const needle = query.value.trim().toLocaleLowerCase("pt-BR");
+      const maximumPrice = priceMax.value === "" ? null : Number(priceMax.value);
       const minimumDiscount = discount.value === "" ? null : Number(discount.value);
       const filtered = rows.filter((property) => {
         if (state.value && property.estado !== state.value) return false;
         if (modality.value && property.modalidade !== modality.value) return false;
+        if (financing.value && property.financiamento !== financing.value) return false;
         if (cnoMatch.value && property.cno_match_status !== cnoMatch.value) return false;
         if (cnoSituation.value && property.cno_situacao !== cnoSituation.value) return false;
         if (precision.value && property.precisao !== precision.value) return false;
+        if (maximumPrice != null && (property.preco ?? Infinity) > maximumPrice) return false;
         if (minimumDiscount != null && (property.desconto ?? -Infinity) < minimumDiscount) return false;
         if (needle) {
           const haystack = [
@@ -442,6 +546,8 @@ export async function initExplorer() {
             property.cidade,
             property.estado,
             property.descricao,
+            property.modalidade,
+            property.financiamento,
             property.cno,
             property.cno_nome_obra,
             property.cno_categorias,
@@ -452,15 +558,15 @@ export async function initExplorer() {
         }
         return true;
       });
-      count.textContent = `${integer.format(filtered.length)} imóvel${filtered.length === 1 ? "" : "is"}`;
-      const geocoded = filtered.filter((property) => property.latitude != null && property.longitude != null).length;
-      const linked = filtered.filter((property) => Boolean(property.cno)).length;
-      setStatus(
-        `${integer.format(geocoded)} com coordenadas para o mapa · ${integer.format(linked)} com CNO forte; lista limitada a 100 linhas visíveis.`,
-      );
-      renderTable(tbody, filtered);
+
+      const ordered = sortRows(filtered, sort.value);
+      count.textContent = `${integer.format(ordered.length)} imóvel${ordered.length === 1 ? "" : "is"}`;
+      const geocoded = ordered.filter((property) => property.latitude != null && property.longitude != null).length;
+      setStatus(`${integer.format(geocoded)} com coordenadas para o mapa · até 100 oportunidades visíveis na lista.`);
+      renderCards(cards, ordered);
+      renderTable(tbody, ordered);
       await ready;
-      (map.getSource("imoveis") as GeoJSONSource).setData(toGeoJSON(filtered));
+      (map.getSource("imoveis") as GeoJSONSource).setData(toGeoJSON(ordered));
     };
 
     let timer = 0;
@@ -471,12 +577,11 @@ export async function initExplorer() {
     form.addEventListener("input", scheduleRender);
     form.addEventListener("change", scheduleRender);
     form.addEventListener("reset", () => window.setTimeout(() => void render(), 0));
-    app.dataset.state = "ready";
     await render();
+    app.dataset.state = "ready";
   } catch (error) {
     app.dataset.state = "error";
-    count.textContent = "Explorador indisponível";
-    setStatus("Não foi possível abrir o snapshot espelhado. O histórico continua disponível no Internet Archive.");
-    console.error("Falha ao iniciar explorador", error);
+    setStatus("Não foi possível abrir o retrato. Os dados preservados continuam disponíveis no Internet Archive.");
+    console.error("Falha ao inicializar o explorador", error);
   }
 }
