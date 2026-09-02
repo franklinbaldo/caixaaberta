@@ -131,3 +131,7 @@ dmypy.json
 
 # Pyre type checker
 .pyre/
+cache.sqlite
+cache.duckdb
+cnefe_cache/
+data/

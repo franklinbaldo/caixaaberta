@@ -1,0 +1,96 @@
+---
+import "maplibre-gl/dist/maplibre-gl.css";
+---
+
+<section id="explorar" data-explorer-app data-state="loading" aria-labelledby="explorer-title">
+  <header>
+    <span data-kicker>Explorador nacional</span>
+    <h2 id="explorer-title">Encontre imóveis no retrato mais recente.</h2>
+    <p>
+      Os filtros rodam no seu navegador sobre o Parquet publicado. O mapa é uma
+      visualização; a lista abaixo continua sendo a superfície principal e acessível.
+    </p>
+  </header>
+
+  <form id="explorer-filters" aria-label="Filtros de imóveis">
+    <fieldset>
+      <legend>Filtrar o retrato</legend>
+      <label>
+        Buscar
+        <input id="filter-query" type="search" placeholder="cidade, bairro, endereço ou número do imóvel" autocomplete="off" />
+      </label>
+      <label>
+        Estado
+        <select id="filter-state">
+          <option value="">Brasil inteiro</option>
+        </select>
+      </label>
+      <label>
+        Modalidade
+        <select id="filter-modality">
+          <option value="">Todas</option>
+        </select>
+      </label>
+      <label>
+        Precisão geográfica
+        <select id="filter-precision">
+          <option value="">Todas</option>
+          <option value="logradouro_localidade">Logradouro + localidade</option>
+          <option value="logradouro">Logradouro</option>
+          <option value="localidade">Localidade</option>
+          <option value="municipio">Município</option>
+        </select>
+      </label>
+      <label>
+        Desconto mínimo
+        <input id="filter-discount" type="number" min="0" max="100" step="1" inputmode="numeric" placeholder="0" />
+      </label>
+      <button type="reset">Limpar filtros</button>
+    </fieldset>
+  </form>
+
+  <aside data-explorer-summary aria-live="polite">
+    <strong id="explorer-count">Carregando o snapshot…</strong>
+    <span id="explorer-date"></span>
+    <span id="explorer-status" role="status">Preparando DuckDB no navegador.</span>
+  </aside>
+
+  <figure data-map-figure>
+    <div id="map" role="img" aria-label="Mapa do Brasil com os imóveis filtrados"></div>
+    <figcaption>
+      Coordenadas vêm do CNEFE. Pontos com precisão <code>municipio</code> representam
+      o município, não o endereço exato do imóvel.
+    </figcaption>
+  </figure>
+
+  <section data-results aria-labelledby="results-title">
+    <header>
+      <h3 id="results-title">Resultados</h3>
+      <p>Mostrando até 100 linhas. O contador e o mapa consideram todos os imóveis filtrados.</p>
+    </header>
+    <div data-table-scroll>
+      <table>
+        <thead>
+          <tr>
+            <th scope="col">Imóvel</th>
+            <th scope="col">Local</th>
+            <th scope="col">Preço</th>
+            <th scope="col">Desconto</th>
+            <th scope="col">Modalidade</th>
+            <th scope="col">Precisão</th>
+          </tr>
+        </thead>
+        <tbody id="explorer-rows"></tbody>
+      </table>
+    </div>
+  </section>
+
+  <noscript>
+    <p>O explorador precisa de JavaScript. O Parquet continua disponível diretamente no Internet Archive.</p>
+  </noscript>
+</section>
+
+<script>
+  import { initExplorer } from "../scripts/explorer";
+  initExplorer();
+</script>

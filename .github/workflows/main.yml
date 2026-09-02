@@ -1,10 +1,16 @@
 name: Real Estate Data Pipeline
 
 on:
+  # Qualquer PR deve validar, inclusive PR empilhada cuja base é outra branch.
   pull_request:
-    branches: [main]
   push:
     branches: [main]
+  # A observação é diária, independente da atividade do repositório. O horário
+  # evita o topo da hora e corresponde a 02:17 em Porto Velho / 03:17 em
+  # Brasília enquanto ambos estiverem nos fusos atuais.
+  schedule:
+    - cron: "17 6 * * *"
+  # Mantém uma rota manual para recuperação, teste operacional e republicação.
   workflow_dispatch:
 
 jobs:
@@ -30,10 +36,26 @@ jobs:
       - name: Run Pytest tests
         run: .venv/bin/python -m pytest -v tests/
 
+      - name: Conferir bundle contra o código
+        run: |
+          "$HOME/.local/bin/uv" run scripts/check_bundle_contract.py
+
+      - name: Validar o bundle OKF
+        run: |
+          "$HOME/.local/bin/uvx" --from okf-parser==0.45.2 okf-parser check knowledge --require-spec 'types/{slug}.md' --normative-spec
+
   publish:
-    if: github.event_name != 'pull_request'
+    # Push e PR validam o código. Só o relógio ou uma ação manual criam uma
+    # observação pública nova.
+    if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
     needs: validate
     runs-on: ubuntu-latest
+    # Duas publicações simultâneas poderiam disputar o snapshot do mesmo dia e
+    # o ponteiro latest. Não cancelamos a que já começou porque ela pode estar
+    # enviando dado real ao Internet Archive.
+    concurrency:
+      group: publicacao-imoveis-caixa
+      cancel-in-progress: false
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -51,11 +73,10 @@ jobs:
           "$HOME/.local/bin/uv" venv .venv --python "$(which python)"
           "$HOME/.local/bin/uv" pip install --python .venv/bin/python '.[dev]'
 
-      - name: Process Parquet and publish to Internet Archive
+      - name: Scrape, process and publish the daily snapshot
         env:
           IA_ACCESS_KEY: ${{ secrets.IA_ACCESS_KEY }}
           IA_SECRET_KEY: ${{ secrets.IA_SECRET_KEY }}
-          GEOCODER_KEY: ${{ secrets.GEOCODER_KEY }}
         run: .venv/bin/python src/run_pipeline.py
 
       - name: Upload generated Parquet as workflow artifact

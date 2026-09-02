@@ -1,0 +1,65 @@
+name: Site
+
+on:
+  pull_request:
+    paths:
+      - "site/**"
+      - ".github/workflows/site.yml"
+  push:
+    branches: [main]
+    paths:
+      - "site/**"
+      - ".github/workflows/site.yml"
+  schedule:
+    - cron: "17 8 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pages: write
+
+concurrency:
+  group: pages-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+          cache: npm
+          cache-dependency-path: site/package.json
+
+      - name: Install site dependencies
+        run: npm install --prefix site --no-audit --no-fund
+
+      - name: Type-check the Astro site
+        run: npm run check --prefix site
+
+      - name: Build static site and mirror latest snapshot
+        run: npm run build --prefix site
+
+      - name: Publish static tree to gh-pages
+        if: github.event_name != 'pull_request'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          touch site/dist/.nojekyll
+          git -C site/dist init
+          git -C site/dist config user.name "github-actions[bot]"
+          git -C site/dist config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git -C site/dist add -A
+          git -C site/dist commit -m "Deploy ${GITHUB_SHA}"
+          git -C site/dist push --force "https://x-access-token:${GH_TOKEN}@github.com/${GITHUB_REPOSITORY}.git" HEAD:gh-pages
+
+      - name: Request GitHub Pages build
+        if: github.event_name != 'pull_request'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh api --method POST "repos/${GITHUB_REPOSITORY}/pages/builds"
