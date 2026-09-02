@@ -116,7 +116,7 @@ async function discoverSnapshots(latest: Manifest): Promise<Snapshot[]> {
     }),
   );
 
-  const byDate = new Map<string, Snapshot>();
+  const byDate = new globalThis.Map<string, Snapshot>();
   byDate.set(latest.data, { date: latest.data, url: latest.parquet_url });
   for (const snapshot of groups.flat()) byDate.set(snapshot.date, snapshot);
   return [...byDate.values()].sort((a, b) => b.date.localeCompare(a.date));
