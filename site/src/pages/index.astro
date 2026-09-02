@@ -1,5 +1,6 @@
 ---
 import Base from "../layouts/Base.astro";
+import Explorer from "../components/Explorer.astro";
 ---
 
 <Base>
@@ -47,27 +48,7 @@ import Base from "../layouts/Base.astro";
     </div>
   </section>
 
-  <section id="explorar" data-callout aria-labelledby="explorar-titulo">
-    <header>
-      <span data-kicker>Consulta nacional</span>
-      <h2 id="explorar-titulo">Do mapa para a tabela — e da tabela para a fonte.</h2>
-      <p>
-        A interface vai ler o Parquet publicado, sem manter uma segunda base de dados. O mesmo snapshot usado no DuckDB será a fonte do mapa e dos filtros.
-      </p>
-    </header>
-    <div data-explorer-shell>
-      <header>
-        <h3>Explorador</h3>
-        <p>
-          A fundação já está conectada ao último snapshot. A próxima camada desta pilha adiciona busca, filtros, mapa e lista acessível diretamente sobre o Parquet.
-        </p>
-      </header>
-      <p role="status" id="snapshot-status">Descobrindo a publicação mais recente…</p>
-      <p>
-        <a id="snapshot-parquet" href="https://archive.org/download/imoveis-caixa-economica-federal/imoveis_geocoded.parquet">Abrir o Parquet</a>
-      </p>
-    </div>
-  </section>
+  <Explorer />
 
   <section id="como-funciona" data-callout aria-labelledby="como-titulo">
     <header>
@@ -96,8 +77,6 @@ import Base from "../layouts/Base.astro";
     const date = document.querySelector("#snapshot-date");
     const item = document.querySelector("#snapshot-item");
     const archive = document.querySelector<HTMLAnchorElement>("#snapshot-archive");
-    const parquet = document.querySelector<HTMLAnchorElement>("#snapshot-parquet");
-    const status = document.querySelector("#snapshot-status");
 
     try {
       const response = await fetch(MANIFEST_URL, { cache: "no-store" });
@@ -107,11 +86,8 @@ import Base from "../layouts/Base.astro";
       if (date) date.textContent = manifest.data ?? "data indisponível";
       if (item) item.textContent = manifest.item ?? "Internet Archive";
       if (archive && manifest.item) archive.href = `https://archive.org/details/${manifest.item}`;
-      if (parquet && manifest.parquet_url) parquet.href = manifest.parquet_url;
-      if (status) status.textContent = `Snapshot ${manifest.data} encontrado. A superfície de exploração usará este mesmo arquivo.`;
       if (snapshot instanceof HTMLElement) snapshot.dataset.snapshotStatus = "ready";
     } catch (error) {
-      if (status) status.textContent = "Não foi possível resolver o snapshot mais recente agora. Os dados continuam disponíveis no Internet Archive.";
       if (snapshot instanceof HTMLElement) snapshot.dataset.snapshotStatus = "error";
       console.error("Falha ao ler latest.json", error);
     }
