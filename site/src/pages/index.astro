@@ -52,19 +52,19 @@ import Base from "../layouts/Base.astro";
       <span data-kicker>Consulta nacional</span>
       <h2 id="explorar-titulo">Do mapa para a tabela — e da tabela para a fonte.</h2>
       <p>
-        A interface vai ler o Parquet publicado, sem manter uma segunda base de dados. O mesmo snapshot usado no DuckDB será a fonte do mapa e dos filtros.
+        O Internet Archive continua sendo a fonte canônica. No build diário, o Pages espelha apenas o snapshot atual para que o navegador possa consultá-lo sem proxy ou backend.
       </p>
     </header>
     <div data-explorer-shell>
       <header>
         <h3>Explorador</h3>
         <p>
-          A fundação já está conectada ao último snapshot. A próxima camada desta pilha adiciona busca, filtros, mapa e lista acessível diretamente sobre o Parquet.
+          A fundação já está conectada ao último snapshot. A próxima camada desta pilha adiciona busca, filtros, mapa e lista acessível sobre o mesmo Parquet espelhado no site.
         </p>
       </header>
-      <p role="status" id="snapshot-status">Descobrindo a publicação mais recente…</p>
+      <p role="status" id="snapshot-status">Lendo a publicação espelhada no site…</p>
       <p>
-        <a id="snapshot-parquet" href="https://archive.org/download/imoveis-caixa-economica-federal/imoveis_geocoded.parquet">Abrir o Parquet</a>
+        <a id="snapshot-parquet" href="https://archive.org/download/imoveis-caixa-economica-federal/imoveis_geocoded.parquet">Abrir o Parquet no Internet Archive</a>
       </p>
     </div>
   </section>
@@ -84,14 +84,14 @@ import Base from "../layouts/Base.astro";
         <p>Os CSVs são normalizados, geocodificados com CNEFE e publicados como um único Parquet nacional com <code>scrape_date</code>.</p>
       </article>
       <article>
-        <h3>3. Preservar</h3>
-        <p>Cada dia ganha arquivos datados no Internet Archive. O site só projeta esses dados; ele não cria uma verdade paralela.</p>
+        <h3>3. Preservar e projetar</h3>
+        <p>Cada dia ganha arquivos datados no Internet Archive. O site espelha só o retrato corrente para consulta no browser; a história continua no Archive.</p>
       </article>
     </div>
   </section>
 
   <script>
-    const MANIFEST_URL = "https://archive.org/download/imoveis-caixa-economica-federal/latest.json";
+    const manifestUrl = new URL(`${import.meta.env.BASE_URL}data/latest.json`, window.location.origin);
     const snapshot = document.querySelector("[data-snapshot]");
     const date = document.querySelector("#snapshot-date");
     const item = document.querySelector("#snapshot-item");
@@ -100,7 +100,7 @@ import Base from "../layouts/Base.astro";
     const status = document.querySelector("#snapshot-status");
 
     try {
-      const response = await fetch(MANIFEST_URL, { cache: "no-store" });
+      const response = await fetch(manifestUrl, { cache: "no-store" });
       if (!response.ok) throw new Error(`manifesto respondeu ${response.status}`);
       const manifest = await response.json();
 
@@ -108,12 +108,12 @@ import Base from "../layouts/Base.astro";
       if (item) item.textContent = manifest.item ?? "Internet Archive";
       if (archive && manifest.item) archive.href = `https://archive.org/details/${manifest.item}`;
       if (parquet && manifest.parquet_url) parquet.href = manifest.parquet_url;
-      if (status) status.textContent = `Snapshot ${manifest.data} encontrado. A superfície de exploração usará este mesmo arquivo.`;
+      if (status) status.textContent = `Snapshot ${manifest.data} pronto para consulta no navegador.`;
       if (snapshot instanceof HTMLElement) snapshot.dataset.snapshotStatus = "ready";
     } catch (error) {
-      if (status) status.textContent = "Não foi possível resolver o snapshot mais recente agora. Os dados continuam disponíveis no Internet Archive.";
+      if (status) status.textContent = "Não foi possível resolver o snapshot espelhado agora. Os dados canônicos continuam disponíveis no Internet Archive.";
       if (snapshot instanceof HTMLElement) snapshot.dataset.snapshotStatus = "error";
-      console.error("Falha ao ler latest.json", error);
+      console.error("Falha ao ler o manifesto local", error);
     }
   </script>
 </Base>
