@@ -3,10 +3,15 @@ type: Pipeline
 title: Pipeline de consolidação
 description: Baixa as listas por estado, une com Ibis sobre DuckDB e grava um Parquet
 entrypoint: src/run_pipeline.py
-schedule: manual e a cada push em main
+schedule: diário às 06:17 UTC e manual por workflow_dispatch
 ---
 
 # Pipeline de consolidação
+
+O Caixa Aberta produz **uma observação nacional por dia**. Pull requests e
+pushes em `main` validam código; não são eventos de coleta. O GitHub Actions
+agenda a execução completa diariamente às 06:17 UTC, e `workflow_dispatch`
+permanece como rota manual para recuperação e operação.
 
 Quatro etapas, nesta ordem:
 
@@ -14,14 +19,13 @@ Quatro etapas, nesta ordem:
    [fonte da Caixa](fonte-caixa.md), escreve `data/imoveis_<UF>.csv` para o
    processamento e guarda o CSV original para
    [publicação](publicacao-archive.md). `data/` não é versionado: o dado vive
-   no Archive, não no git. É
-   all-or-nothing: os arquivos só são gravados depois que todos os estados
-   voltam com linhas. Os estados são percorridos em rodadas: um bloqueio devolve o estado à fila em
-   vez de insistir nele, que é o que o anti-bot da [fonte](fonte-caixa.md)
-   pune. Pode ser pulado com
-   `--skip-fetch`, e é pulado de todo modo sob `--skip-processing`, que não
-   teria o que fazer com dado novo. A publicação automática roda com o
-   download desligado — ver [fonte](fonte-caixa.md).
+   no Archive, não no git. É all-or-nothing: os arquivos só são gravados depois
+   que todos os estados voltam com linhas. Os estados são percorridos em
+   rodadas: um bloqueio devolve o estado à fila em vez de insistir nele, que é
+   o que o anti-bot da [fonte](fonte-caixa.md) pune. Pode ser pulado com
+   `--skip-fetch` em execução local, e é pulado de todo modo sob
+   `--skip-processing`, que não teria o que fazer com dado novo. A execução
+   diária automatizada faz o download das 27 UFs.
 2. **União** — `process_local_data` carrega os CSVs em DuckDB via Ibis, une as
    tabelas, normaliza `bairro`, descarta linhas sem `link` e deduplica.
 3. **[Geocodificação](geocodificacao.md)** — casa os endereços com o CNEFE em
@@ -30,4 +34,5 @@ Quatro etapas, nesta ordem:
    bruto junto e envia os dois ao Internet Archive.
 
 O resultado é [um único Parquet](dataset-imoveis.md), não uma tabela por
-estado.
+estado. Cada execução bem-sucedida preserva um snapshot datado; uma falha deixa
+o último snapshot válido intacto e o workflow vermelho.
