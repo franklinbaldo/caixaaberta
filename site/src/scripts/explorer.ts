@@ -13,6 +13,15 @@ type Manifest = {
   parquet_url: string;
 };
 
+type Snapshot = {
+  date: string;
+  url: string;
+};
+
+type ArchiveMetadata = {
+  files?: Array<{ name?: string }>;
+};
+
 type RawRow = Record<string, unknown>;
 
 type Property = {
@@ -34,6 +43,10 @@ type Property = {
 };
 
 const MANIFEST_URL = "https://archive.org/download/imoveis-caixa-economica-federal/latest.json";
+const ITEM_PREFIX = "imoveis-caixa-economica-federal";
+const FIRST_SNAPSHOT_YEAR = 2026;
+const SNAPSHOT_FILE = /^imoveis_geocoded_(\d{4}-\d{2}-\d{2})\.parquet$/;
+const DATE_VALUE = /^\d{4}-\d{2}-\d{2}$/;
 const currency = new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" });
 const integer = new Intl.NumberFormat("pt-BR");
 
@@ -70,17 +83,77 @@ function required<T extends Element>(selector: string): T {
   return element;
 }
 
+function snapshotUrl(date: string) {
+  const year = date.slice(0, 4);
+  return `https://archive.org/download/${ITEM_PREFIX}-${year}/imoveis_geocoded_${date}.parquet`;
+}
+
+async function discoverSnapshots(latest: Manifest): Promise<Snapshot[]> {
+  const latestYear = Number(latest.data.slice(0, 4));
+  const years = Array.from(
+    { length: Math.max(1, latestYear - FIRST_SNAPSHOT_YEAR + 1) },
+    (_, index) => latestYear - index,
+  );
+
+  const groups = await Promise.all(
+    years.map(async (year) => {
+      try {
+        const item = `${ITEM_PREFIX}-${year}`;
+        const response = await fetch(`https://archive.org/metadata/${item}`, {
+          cache: "no-store",
+        });
+        if (!response.ok) return [] as Snapshot[];
+        const metadata = (await response.json()) as ArchiveMetadata;
+        return (metadata.files ?? []).flatMap((file) => {
+          const match = SNAPSHOT_FILE.exec(file.name ?? "");
+          if (!match) return [];
+          const date = match[1];
+          return [{ date, url: snapshotUrl(date) }];
+        });
+      } catch {
+        return [] as Snapshot[];
+      }
+    }),
+  );
+
+  const byDate = new Map<string, Snapshot>();
+  byDate.set(latest.data, { date: latest.data, url: latest.parquet_url });
+  for (const snapshot of groups.flat()) byDate.set(snapshot.date, snapshot);
+  return [...byDate.values()].sort((a, b) => b.date.localeCompare(a.date));
+}
+
+function requestedSnapshot(latest: Manifest): Snapshot {
+  const value = new URL(window.location.href).searchParams.get("data") ?? "";
+  if (!DATE_VALUE.test(value)) {
+    return { date: latest.data, url: latest.parquet_url };
+  }
+  return { date: value, url: snapshotUrl(value) };
+}
+
+async function fetchSnapshotBytes(snapshot: Snapshot, latest: Manifest) {
+  let selected = snapshot;
+  let response = await fetch(selected.url);
+  if (!response.ok && selected.date !== latest.data) {
+    selected = { date: latest.data, url: latest.parquet_url };
+    response = await fetch(selected.url);
+  }
+  if (!response.ok) throw new Error(`Parquet respondeu ${response.status}`);
+  return { selected, bytes: new Uint8Array(await response.arrayBuffer()) };
+}
+
 async function loadProperties(onStatus: (message: string) => void) {
-  onStatus("Descobrindo o snapshot mais recente…");
+  onStatus("Descobrindo os snapshots preservados…");
   const manifestResponse = await fetch(MANIFEST_URL, { cache: "no-store" });
   if (!manifestResponse.ok) throw new Error(`latest.json respondeu ${manifestResponse.status}`);
   const manifest = (await manifestResponse.json()) as Manifest;
-  if (!manifest.parquet_url) throw new Error("latest.json não contém parquet_url");
+  if (!manifest.parquet_url || !DATE_VALUE.test(manifest.data)) {
+    throw new Error("latest.json não contém um snapshot válido");
+  }
 
-  onStatus(`Baixando o snapshot de ${manifest.data}…`);
-  const parquetResponse = await fetch(manifest.parquet_url);
-  if (!parquetResponse.ok) throw new Error(`Parquet respondeu ${parquetResponse.status}`);
-  const parquet = new Uint8Array(await parquetResponse.arrayBuffer());
+  const historyPromise = discoverSnapshots(manifest);
+  const wanted = requestedSnapshot(manifest);
+  onStatus(`Baixando o snapshot de ${wanted.date}…`);
+  const { selected, bytes: parquet } = await fetchSnapshotBytes(wanted, manifest);
 
   onStatus("Abrindo o Parquet com DuckDB no navegador…");
   const bundle = await duckdb.selectBundle(duckdb.getJsDelivrBundles());
@@ -97,12 +170,12 @@ async function loadProperties(onStatus: (message: string) => void) {
     await db.registerFileBuffer("snapshot.parquet", parquet);
     const connection = await db.connect();
     try {
-      // SELECT * é intencional: snapshots antigos não têm `link_acesso`; o
-      // normalizador trata a ausência como string vazia, e snapshots novos
-      // ganham o link para a fonte sem criar duas versões do explorador.
+      // SELECT * mantém compatibilidade entre snapshots: `link_acesso` só
+      // existe nas observações produzidas depois de sua introdução no schema.
       const table = await connection.query("SELECT * FROM 'snapshot.parquet'");
       const rows = table.toArray().map((row) => row.toJSON() as RawRow).map(normalize);
-      return { manifest, rows };
+      const snapshots = await historyPromise;
+      return { manifest, selected, snapshots, rows };
     } finally {
       await connection.close();
     }
@@ -120,6 +193,32 @@ function options(select: HTMLSelectElement, values: string[]) {
     option.textContent = value;
     select.append(option);
   }
+}
+
+function snapshotOptions(
+  select: HTMLSelectElement,
+  snapshots: Snapshot[],
+  selected: Snapshot,
+  latest: Manifest,
+) {
+  const fragment = document.createDocumentFragment();
+  for (const snapshot of snapshots) {
+    const option = document.createElement("option");
+    option.value = snapshot.date;
+    option.textContent = snapshot.date === latest.data ? `${snapshot.date} — mais recente` : snapshot.date;
+    option.selected = snapshot.date === selected.date;
+    option.defaultSelected = option.selected;
+    fragment.append(option);
+  }
+  if (!snapshots.some((snapshot) => snapshot.date === selected.date)) {
+    const option = document.createElement("option");
+    option.value = selected.date;
+    option.textContent = selected.date;
+    option.selected = true;
+    option.defaultSelected = true;
+    fragment.prepend(option);
+  }
+  select.replaceChildren(fragment);
 }
 
 function precisionLabel(value: string) {
@@ -346,6 +445,7 @@ export async function initExplorer() {
   app.dataset.initialized = "true";
 
   const form = required<HTMLFormElement>("#explorer-filters");
+  const snapshotDate = required<HTMLSelectElement>("#filter-date");
   const query = required<HTMLInputElement>("#filter-query");
   const state = required<HTMLSelectElement>("#filter-state");
   const modality = required<HTMLSelectElement>("#filter-modality");
@@ -362,10 +462,20 @@ export async function initExplorer() {
 
   try {
     const { map, ready } = setupMap();
-    const { manifest, rows } = await loadProperties(setStatus);
+    const { manifest, selected, snapshots, rows } = await loadProperties(setStatus);
+    snapshotOptions(snapshotDate, snapshots, selected, manifest);
     options(state, [...new Set(rows.map((row) => row.estado))]);
     options(modality, [...new Set(rows.map((row) => row.modalidade))]);
-    date.textContent = `Snapshot ${manifest.data}`;
+    date.textContent = `Snapshot ${selected.date}${selected.date === manifest.data ? " · mais recente" : ""}`;
+
+    snapshotDate.addEventListener("change", () => {
+      if (!DATE_VALUE.test(snapshotDate.value)) return;
+      const url = new URL(window.location.href);
+      if (snapshotDate.value === manifest.data) url.searchParams.delete("data");
+      else url.searchParams.set("data", snapshotDate.value);
+      url.hash = "explorar";
+      window.location.assign(url);
+    });
 
     const render = async () => {
       const needle = query.value.trim().toLocaleLowerCase("pt-BR");
@@ -407,7 +517,10 @@ export async function initExplorer() {
     };
     form.addEventListener("input", scheduleRender);
     form.addEventListener("change", scheduleRender);
-    form.addEventListener("reset", () => window.setTimeout(() => void render(), 0));
+    form.addEventListener("reset", () => {
+      snapshotDate.value = selected.date;
+      window.setTimeout(() => void render(), 0);
+    });
 
     app.dataset.state = "ready";
     await render();
