@@ -15,9 +15,8 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: read
+  contents: write
   pages: write
-  id-token: write
 
 concurrency:
   group: pages-${{ github.ref }}
@@ -46,20 +45,21 @@ jobs:
       - name: Build static site and mirror latest snapshot
         run: npm run build --prefix site
 
-      - name: Upload Pages artifact
+      - name: Publish static tree to gh-pages
         if: github.event_name != 'pull_request'
-        uses: actions/upload-pages-artifact@v3
-        with:
-          path: site/dist
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          touch site/dist/.nojekyll
+          git -C site/dist init
+          git -C site/dist config user.name "github-actions[bot]"
+          git -C site/dist config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git -C site/dist add -A
+          git -C site/dist commit -m "Deploy ${GITHUB_SHA}"
+          git -C site/dist push --force "https://x-access-token:${GH_TOKEN}@github.com/${GITHUB_REPOSITORY}.git" HEAD:gh-pages
 
-  deploy:
-    if: github.event_name != 'pull_request'
-    needs: build
-    runs-on: ubuntu-latest
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
-    steps:
-      - name: Deploy to GitHub Pages
-        id: deployment
-        uses: actions/deploy-pages@v4
+      - name: Request GitHub Pages build
+        if: github.event_name != 'pull_request'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh api --method POST "repos/${GITHUB_REPOSITORY}/pages/builds"
