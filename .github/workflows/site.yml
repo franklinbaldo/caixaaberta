@@ -39,6 +39,11 @@ jobs:
       - name: Install site dependencies
         run: npm install --prefix site --no-audit --no-fund
 
+      - name: Ensure Rolldown native binding
+        run: |
+          ROLLDOWN_VERSION="$(node -p "require('./site/node_modules/rolldown/package.json').version")"
+          npm install --prefix site --no-save --no-audit --no-fund "@rolldown/binding-linux-x64-gnu@${ROLLDOWN_VERSION}"
+
       - name: Type-check the Astro site
         run: npm run check --prefix site
 
