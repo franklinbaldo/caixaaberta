@@ -1,13 +1,18 @@
+const siteOrigin = "https://franklinbaldo.github.io";
 const manifestUrl = "https://archive.org/download/imoveis-caixa-economica-federal/latest.json";
+const browserHeaders = { Origin: siteOrigin };
 
 function requireCors(response, label) {
   const allowOrigin = response.headers.get("access-control-allow-origin");
-  if (allowOrigin !== "*") {
+  if (allowOrigin !== "*" && allowOrigin !== siteOrigin) {
     throw new Error(`${label}: CORS inesperado (${allowOrigin ?? "ausente"})`);
   }
 }
 
-const manifestResponse = await fetch(manifestUrl, { redirect: "follow" });
+const manifestResponse = await fetch(manifestUrl, {
+  redirect: "follow",
+  headers: browserHeaders,
+});
 if (!manifestResponse.ok) {
   throw new Error(`latest.json respondeu ${manifestResponse.status}`);
 }
@@ -19,6 +24,7 @@ if (!manifest.data || !manifest.item || !manifest.parquet_url) {
 
 const metadataResponse = await fetch(`https://archive.org/metadata/${manifest.item}`, {
   redirect: "follow",
+  headers: browserHeaders,
 });
 if (!metadataResponse.ok) {
   throw new Error(`Metadata API respondeu ${metadataResponse.status}`);
@@ -31,11 +37,12 @@ if (!Array.isArray(metadata.files)) {
 
 const parquetResponse = await fetch(manifest.parquet_url, {
   redirect: "follow",
-  headers: { Range: "bytes=0-0" },
+  headers: browserHeaders,
 });
 if (!parquetResponse.ok) {
   throw new Error(`Parquet respondeu ${parquetResponse.status}`);
 }
 requireCors(parquetResponse, "Parquet");
+await parquetResponse.body?.cancel();
 
 console.log(`Fontes browser OK: snapshot ${manifest.data}, ${metadata.files.length} arquivos no item.`);
