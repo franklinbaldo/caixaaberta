@@ -265,11 +265,9 @@ def fetch_all_states(
 
 
 def process_local_data(quando=None):
-    """
-    Processes local CSV files, unnions them, transforms with Ibis,
-    geocodes, and saves as a single Parquet file.
+    """Processa os CSVs locais e grava o snapshot nacional em Parquet.
 
-    ``quando`` é a data da publicação, congelada pelo pipeline. O default só
+    ``quando`` é a data do scraping, congelada pelo pipeline. O default só
     serve à execução direta deste módulo.
     """
     quando = quando or data_de_publicacao()
@@ -328,8 +326,10 @@ def process_local_data(quando=None):
         for nivel, quantos in cobertura(df).items():
             print(f"  {nivel}: {quantos}")
 
-    # Só o nome datado: o retrato de hoje não é o de ontem, e quem consulta
-    # calcula a data em vez de seguir um apelido.
+    # A identidade temporal viaja dentro do próprio dado: um Parquet copiado ou
+    # baixado fora do Archive continua dizendo de qual observação ele veio.
+    df["scrape_date"] = quando
+
     output_file = output_path / parquet_datado(quando)
     df.to_parquet(output_file, index=False)
     print(f"Salvo dados processados para {output_file}")

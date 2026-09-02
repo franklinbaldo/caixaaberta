@@ -13,10 +13,16 @@ Uma linha por imóvel anunciado, para todas as 27 unidades federativas, com
 [esquema estável](esquema-parquet.md) e coordenadas preenchidas quando a
 [geocodificação](geocodificacao.md) resolve o endereço.
 
-O arquivo é um retrato do dia em que o [pipeline](pipeline.md) rodou. A Caixa
-não publica histórico: imóveis vendidos desaparecem da lista — e tratar isso
-como série temporal é [uma armadilha](armadilhas/acervo-nao-tem-historico.md). Cada
-[publicação no Archive](publicacao-archive.md) preserva um desses retratos.
+Cada arquivo é um retrato do dia em que o Caixa Aberta fez o scraping. Essa
+data viaja também na coluna `scrape_date`, para o snapshot continuar
+identificável mesmo quando o Parquet é copiado ou consultado fora do nome
+original. A data declarada pela Caixa no CSV é preservada no bruto como
+proveniência, mas não define a identidade do snapshot.
+
+A Caixa não publica histórico: imóveis vendidos desaparecem da lista. Cada
+[publicação no Archive](publicacao-archive.md) preserva uma observação diária e,
+ao acumular essas observações, o Caixa Aberta constrói o histórico que a fonte
+não oferece.
 
 Antes de qualquer estatística de valor, segmentar por modalidade: só a
 [Venda Direta Online](modalidades/venda-direta-online.md) tem preço fixo. O

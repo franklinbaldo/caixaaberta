@@ -4,7 +4,7 @@
 # ///
 """Recusa divergência entre o bundle OKF e as constantes do código.
 
-O bundle em `knowledge/` é a fonte de verdade sobre o dataset. Três valores
+O bundle em `knowledge/` é a fonte de verdade sobre o dataset. Alguns valores
 dele estão repetidos no código, porque o pipeline roda em Python 3.10+ e o
 okf-parser exige 3.12 — importá-lo em produção custaria o suporte a 3.10/3.11.
 A repetição é aceita; a divergência silenciosa, não.
@@ -29,6 +29,10 @@ from okf_parser import load_bundle
 REPO = Path(__file__).resolve().parent.parent
 BUNDLE = REPO / "knowledge"
 
+# Colunas que não vêm da fonte normalizada: são acrescentadas pelo próprio
+# processamento antes da publicação. Elas continuam fazendo parte do contrato
+# do Parquet e podem ser obrigatórias no gate.
+PROCESS_DERIVED_COLUMNS = {"latitude", "longitude", "scrape_date"}
 
 _COLLECTIONS = {"frozenset", "set", "tuple", "list"}
 
@@ -125,12 +129,12 @@ def check_required_columns(bundle) -> list[str]:
             f"só no bundle {sorted(declared - in_code)}"
         )
 
-    produced = set(_literal(REPO / "src" / "fetch_data.py", "CSV_COLUMNS"))
-    faltando = sorted(declared - produced - {"latitude", "longitude"})
+    from_source = set(_literal(REPO / "src" / "fetch_data.py", "CSV_COLUMNS"))
+    faltando = sorted(declared - from_source - PROCESS_DERIVED_COLUMNS)
     if faltando:
         problems.append(
-            "colunas exigidas para publicar que o download não produz: "
-            + ", ".join(faltando)
+            "colunas exigidas para publicar que não vêm da fonte nem são "
+            "derivadas pelo processamento: " + ", ".join(faltando)
         )
 
     return problems

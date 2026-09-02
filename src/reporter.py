@@ -2,7 +2,7 @@ from pathlib import Path
 
 import pandas as pd
 
-from archive_names import parquet_datado
+from archive_names import PARQUET_PREFIX, parquet_datado
 
 OUTPUT_DIR = Path("output_data")
 
@@ -19,6 +19,7 @@ REQUIRED_PUBLICATION_COLUMNS = {
     "cidade",
     "estado",
     "preco",
+    "scrape_date",
 }
 
 # Espelha os conceitos Modalidade de knowledge/. A divergência entre as duas
@@ -41,10 +42,8 @@ def undocumented_modalidades(df: pd.DataFrame) -> list[str]:
     return sorted(observed - KNOWN_MODALIDADES - {""})
 
 
-def validate_publication_parquet(
-    parquet_path: Path | str,
-) -> pd.DataFrame:
-    """Validate structural invariants required before publication."""
+def validate_publication_parquet(parquet_path: Path | str) -> pd.DataFrame:
+    """Valida os invariantes estruturais de um snapshot antes da publicação."""
     path = Path(parquet_path)
     if not path.exists():
         raise FileNotFoundError(f"Parquet não encontrado: {path}")
@@ -67,6 +66,19 @@ def validate_publication_parquet(
     if not links.ne("").any():
         raise ValueError("Parquet sem nenhum 'link' publicável")
 
+    datas = pd.to_datetime(df["scrape_date"], errors="coerce").dt.date.dropna().unique()
+    if len(datas) != 1:
+        raise ValueError(
+            "scrape_date deve ser único e válido em todo o snapshot; "
+            f"encontrados: {list(datas)}"
+        )
+
+    esperado = parquet_datado(datas[0])
+    if path.name != esperado:
+        raise ValueError(
+            f"Nome do Parquet não corresponde a scrape_date: {path.name!r} != {esperado!r}"
+        )
+
     return df
 
 
@@ -77,12 +89,13 @@ def format_currency(value):
 
 
 def generate_report(parquet_path: Path | str):
-    """Print summary statistics for the Parquet produced by the current pipeline."""
+    """Imprime estatísticas do snapshot produzido pelo pipeline."""
     path = Path(parquet_path)
     df = validate_publication_parquet(path)
 
     print(f"Real Estate Data Report: {path}")
     print("--------------------------------------------------")
+    print(f"Scrape date: {df['scrape_date'].iloc[0]}")
     print(f"Total properties listed: {len(df)}")
 
     print("Properties per state:")
@@ -129,7 +142,10 @@ def generate_report(parquet_path: Path | str):
 
 
 def main():
-    generate_report()
+    candidatos = sorted(OUTPUT_DIR.glob(f"{PARQUET_PREFIX}_*.parquet"))
+    if not candidatos:
+        raise FileNotFoundError(f"Nenhum snapshot encontrado em {OUTPUT_DIR}")
+    generate_report(candidatos[-1])
 
 
 if __name__ == "__main__":
