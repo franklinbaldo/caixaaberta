@@ -1,0 +1,20 @@
+{
+  "name": "caixaaberta-site",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "astro dev",
+    "build": "astro build",
+    "check": "astro check",
+    "preview": "astro preview"
+  },
+  "dependencies": {
+    "@picocss/pico": "^2.1.1",
+    "astro": "^7.2.10",
+    "cobogo": "github:franklinbaldo/cobogo#9c45d79dcd1c669db6fbc76c24f5518c3dc97069"
+  },
+  "devDependencies": {
+    "@astrojs/check": "^0.9.9",
+    "typescript": "^5.9.3"
+  }
+}
