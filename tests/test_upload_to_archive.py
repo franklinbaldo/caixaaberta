@@ -227,3 +227,19 @@ def test_um_zip_qualquer_nao_satisfaz_o_gate(mock_upload, tmp_path):
         )
 
     mock_upload.assert_not_called()
+
+
+@pytest.mark.usefixtures("mock_env")
+@patch("upload_to_archive.upload")
+def test_upload_pede_espera_ao_archive(mock_upload, dummy_files_dir):
+    """O rate limit do Archive é esperado quando se publica a cada push."""
+    upload_files_to_archive(
+        identifier="test-identifier",
+        title="Test Title",
+        description="Test Description",
+        files_dir=str(dummy_files_dir),
+    )
+
+    kwargs = mock_upload.call_args.kwargs
+    assert kwargs["retries"] >= 1
+    assert kwargs["retries_sleep"] >= 1

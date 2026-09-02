@@ -1,5 +1,14 @@
 # Log
 
+## 2026-09-02
+
+- O primeiro push em main com o pipeline completo falhou no racionamento do
+  Archive, não no código. A causa não é nossa: no momento da recusa, a fila do
+  item e a da conta estavam zeradas, enquanto a fila global do Archive marcava
+  11.639 de 11.999. Publicar menos não ajudaria; o upload passou a esperar e
+  tentar de novo. O item ficou intacto — a publicação anterior, com o mesmo
+  conteúdo, seguiu servindo.
+
 ## 2026-09-01
 
 - Os CSVs saíram do versionamento. Commitá-los foi um erro de arquitetura: 6,9

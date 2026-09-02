@@ -10,6 +10,18 @@ from internetarchive import upload
 # run_pipeline gera. Um zip qualquer no diretório não substitui o bruto.
 BRUTO_FILENAME = "imoveis_csv_bruto.zip"
 
+# O Archive raciona uploads quando a fila GLOBAL dele se aproxima do teto, e
+# recusa com "Please reduce your request rate - total_tasks_queued exceeds
+# global_limit". O limite não é do item nem da conta: em 02/09/2026 a recusa
+# veio com bucket_tasks_queued e accesskey_tasks_queued zerados, e
+# total_tasks_queued em 11.639 de 11.999. Não há como evitá-lo publicando
+# menos; só esperar. A biblioteca já sabe fazer isso.
+#
+# O estado atual pode ser consultado em
+# https://s3.us.archive.org/?check_limit=1
+UPLOAD_RETRIES = 5
+UPLOAD_RETRIES_SLEEP = 30
+
 
 def upload_files_to_archive(
     identifier, title, description, files_dir, dry_run=False, exigir_bruto=True
@@ -82,6 +94,8 @@ def upload_files_to_archive(
         access_key=access_key,
         secret_key=secret_key,
         verbose=True,
+        retries=UPLOAD_RETRIES,
+        retries_sleep=UPLOAD_RETRIES_SLEEP,
     )
     print("Upload concluído com sucesso.")
 
