@@ -1,6 +1,7 @@
 import csv
 import io
 import os
+import random
 import time
 from pathlib import Path
 
@@ -42,6 +43,29 @@ CAIXA_COLUMNS = {
     "Descrição": "descricao",
     "Modalidade de venda": "modalidade",
     "Link de acesso": "link_acesso",
+}
+
+
+# O anti-bot da Caixa avalia coerência, não só o User-Agent. Um UA de navegador
+# sozinho, sem os cabeçalhos que o navegador manda junto, é pior que nenhum:
+# medido em 01/09/2026, UA isolado passou 0 de 6, sem header nenhum passou 3 de
+# 10, e este conjunto coerente passou 10 de 10.
+BROWSER_HEADERS = {
+    "User-Agent": (
+        "Mozilla/5.0 (X11; Linux x86_64; rv:131.0) Gecko/20100101 Firefox/131.0"
+    ),
+    "Accept": (
+        "text/html,application/xhtml+xml,application/xml;q=0.9,"
+        "image/avif,image/webp,*/*;q=0.8"
+    ),
+    "Accept-Language": "pt-BR,pt;q=0.8,en-US;q=0.5,en;q=0.3",
+    "Accept-Encoding": "gzip, deflate, br",
+    "Connection": "keep-alive",
+    "Upgrade-Insecure-Requests": "1",
+    "Sec-Fetch-Dest": "document",
+    "Sec-Fetch-Mode": "navigate",
+    "Sec-Fetch-Site": "none",
+    "Sec-Fetch-User": "?1",
 }
 
 
@@ -106,50 +130,89 @@ def parse_caixa_csv(content):
     return df[CSV_COLUMNS]
 
 
-def fetch_state(uf, url_base=None, session=None, timeout=60, attempts=6, backoff=2.0):
-    """Baixa e interpreta a lista de imóveis de um estado.
+def fetch_state(uf, url_base=None, session=None, timeout=60, jitter=(0.8, 2.5), raw_dir=None):
+    """Baixa e interpreta a lista de imóveis de um estado, uma tentativa.
 
-    A Caixa serve o CSV atrás de um anti-bot que responde HTTP 200 com uma
-    página HTML de bloqueio. O bloqueio é intermitente, então cada estado é
-    tentado várias vezes com espera crescente antes de desistir.
+    Cada chamada usa uma sessão HTTP nova de propósito. O anti-bot da Caixa
+    marca o cliente pelos cookies `__uzm*` que injeta na primeira resposta;
+    reenviá-los identifica quem já foi avaliado e o bloqueio passa a ser quase
+    certo. Medido em 01/09/2026: reusando a sessão, 1 de 8 estados passou; com
+    sessão limpa por requisição, 6 de 8.
+
+    Levanta BlockedError quando o anti-bot responde no lugar do CSV. Insistir
+    no mesmo estado não ajuda — quem chama deve seguir para o próximo e voltar
+    a este numa rodada seguinte, que é o que fetch_all_states faz.
     """
     url_base = url_base or os.getenv("URL_BASE") or DEFAULT_URL_BASE
-    getter = session.get if session is not None else requests.get
-    url = url_base.format(uf)
+    getter = session.get if session is not None else requests.Session().get
+    response = getter(url_base.format(uf), timeout=timeout, headers=BROWSER_HEADERS)
 
-    for attempt in range(1, attempts + 1):
-        response = getter(url, timeout=timeout)
-        if response.status_code != 200:
-            raise FetchError(f"{uf}: a Caixa respondeu HTTP {response.status_code}.")
+    if response.status_code != 200:
+        raise FetchError(f"{uf}: a Caixa respondeu HTTP {response.status_code}.")
 
-        if not _is_block_page(response.content):
-            df = parse_caixa_csv(response.content)
-            if df.empty:
-                raise FetchError(f"{uf}: a Caixa não retornou nenhum imóvel.")
-            return df
+    if _is_block_page(response.content):
+        raise BlockedError(f"{uf}: o anti-bot da Caixa respondeu no lugar do CSV.")
 
-        if attempt < attempts:
-            time.sleep(backoff * 2 ** (attempt - 1))
+    df = parse_caixa_csv(response.content)
+    if df.empty:
+        raise FetchError(f"{uf}: a Caixa não retornou nenhum imóvel.")
 
-    raise BlockedError(
-        f"{uf}: o anti-bot da Caixa bloqueou as {attempts} tentativas. "
-        "O CSV não foi servido; nada foi gravado."
-    )
+    # O CSV original é a fonte primária e desaparece quando a Caixa atualiza a
+    # lista. O Parquet publicado é derivado; só o bruto preserva o cabeçalho
+    # com a data de geração e o texto exatamente como a Caixa escreveu.
+    if raw_dir is not None:
+        destino = Path(raw_dir)
+        destino.mkdir(parents=True, exist_ok=True)
+        (destino / f"Lista_imoveis_{uf}.csv").write_bytes(response.content)
+
+    if jitter:
+        time.sleep(random.uniform(*jitter))
+    return df
 
 
-def fetch_all_states(url_base=None, input_dir=None, ufs=None, delay=1.0):
+def fetch_all_states(
+    url_base=None,
+    input_dir=None,
+    ufs=None,
+    rodadas=4,
+    espera_entre_rodadas=20.0,
+    raw_dir=None,
+):
     """Baixa todos os estados e reescreve os CSVs em `data/`.
 
-    Só grava depois de baixar todos os estados: uma falha isolada não deixa
+    Percorre os estados pendentes em rodadas: um bloqueio não interrompe a
+    passagem, o estado volta para a fila e é tentado de novo depois. Insistir
+    no mesmo estado em sequência é o que o anti-bot pune — medido no runner do
+    GitHub em 01/09/2026, seis tentativas seguidas em AL falharam todas,
+    enquanto rodadas sobre os pendentes fecharam 27 de 27.
+
+    Só grava depois de obter todos os estados: uma falha isolada não deixa
     `data/` com um recorte parcial da Caixa.
     """
-    ufs = ufs or UFS
+    pendentes = list(ufs or UFS)
     frames = {}
-    for index, uf in enumerate(ufs):
-        print(f"Baixando imóveis de {uf}...")
-        frames[uf] = fetch_state(uf, url_base=url_base)
-        if delay and index < len(ufs) - 1:
-            time.sleep(delay)
+
+    for rodada in range(1, rodadas + 1):
+        if not pendentes:
+            break
+        print(f"Rodada {rodada}: {len(pendentes)} estado(s) a baixar.")
+        falharam = []
+        for uf in pendentes:
+            try:
+                frames[uf] = fetch_state(uf, url_base=url_base, raw_dir=raw_dir)
+            except BlockedError:
+                falharam.append(uf)
+        pendentes = falharam
+        if pendentes:
+            print(f"  bloqueados nesta rodada: {', '.join(pendentes)}")
+            if rodada < rodadas:
+                time.sleep(espera_entre_rodadas)
+
+    if pendentes:
+        raise BlockedError(
+            f"o anti-bot da Caixa bloqueou {len(pendentes)} estado(s) em "
+            f"{rodadas} rodadas: {', '.join(pendentes)}. Nada foi gravado."
+        )
 
     input_path = Path(input_dir or INPUT_DIR)
     input_path.mkdir(parents=True, exist_ok=True)

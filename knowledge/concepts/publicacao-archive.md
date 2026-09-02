@@ -7,6 +7,24 @@ identifier: imoveis-caixa-economica-federal
 
 # Publicação no Internet Archive
 
+Cada execução publica dois arquivos:
+
+| Arquivo                    | O que é                                                                 |
+| -------------------------- | ----------------------------------------------------------------------- |
+| `imoveis_geocoded.parquet` | O [dataset](dataset-imoveis.md) consolidado e geocodificado.            |
+| `imoveis_csv_bruto.zip`    | Os CSVs exatamente como a [Caixa](fonte-caixa.md) os serviu, um por UF. |
+
+O bruto vai junto porque é a fonte primária e some assim que a Caixa atualiza a
+lista: o Parquet é derivado e pode ser regerado, o CSV daquele dia não. É
+também por isso que os CSVs **não são versionados no repositório** — o git
+guardaria para sempre cada retrato, num histórico que ninguém consulta, e o
+Archive já versiona, dedupe e serve.
+
+Isso é um gate, não uma recomendação: `upload_files_to_archive` recusa publicar
+sem o zip. A única exceção é `--skip-processing`, que republica um Parquet já
+existente e portanto não tem bruto novo a preservar — e a declara passando
+`exigir_bruto=False`, em vez de deixar a ausência passar em silêncio.
+
 O [Parquet](dataset-imoveis.md) é enviado ao item
 `imoveis-caixa-economica-federal` do Internet Archive. Antes do envio,
 `validate_publication_parquet` recusa arquivo ausente, arquivo vazio, esquema

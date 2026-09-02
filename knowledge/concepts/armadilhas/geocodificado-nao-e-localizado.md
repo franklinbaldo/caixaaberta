@@ -3,12 +3,12 @@ type: Armadilha
 title: Latitude preenchida significa que o imóvel foi localizado
 description: Um quarto das coordenadas é o centro do município, não o endereço
 severity: alta
-evidencia: dos 12.115 imóveis de 01/09/2026, 3.177 (26,2%) receberam coordenada com precisao=municipio, e o desvio mediano do acervo é de 740 metros
+evidencia: dos 25.687 imóveis de 01/09/2026, 2.524 (9,8%) receberam coordenada com precisao=municipio, cujo desvio médio no acervo publicado é de 18,7 km
 ---
 
 # Latitude preenchida significa que o imóvel foi localizado
 
-**A leitura ingênua.** 99,8% das linhas têm `latitude` e `longitude`; o dataset
+**A leitura ingênua.** 99,9% das linhas têm `latitude` e `longitude`; o dataset
 está geocodificado; dá para plotar tudo num mapa.
 
 **Por que falha.** A [geocodificação](../geocodificacao.md) é uma cascata, e
@@ -17,14 +17,15 @@ está geocodificado; dá para plotar tudo num mapa.
 
 | `precisao`              | Imóveis | Fração |
 | ----------------------- | ------- | ------ |
-| `logradouro_localidade` | 2.257   | 18,6%  |
-| `logradouro`            | 2.926   | 24,2%  |
-| `localidade`            | 3.733   | 30,8%  |
-| `municipio`             | 3.177   | 26,2%  |
+| `logradouro_localidade` | 10.909  | 42,5%  |
+| `logradouro`            | 6.015   | 23,4%  |
+| `localidade`            | 6.203   | 24,1%  |
+| `municipio`             | 2.524   | 9,8%   |
 
-Só **42,8%** chegam ao nível de rua. Mais de um quarto recebe o centro do
-município — em municípios grandes, isso põe o imóvel a dezenas de quilômetros
-do endereço real; o maior `desvio_metros` do acervo passa de 500 km. Um mapa
+Só **65,9%** chegam ao nível de rua. Um décimo recebe o centro do município —
+em municípios grandes, isso põe o imóvel a dezenas de quilômetros do endereço
+real. No dataset publicado, o `desvio_metros` médio é de 396 m nos dois níveis
+de logradouro e de **18,7 km** em `municipio`. Um mapa
 feito sem filtro mostra milhares de imóveis empilhados no centro geométrico das
 cidades, e uma análise de distância a partir dele é ficção.
 

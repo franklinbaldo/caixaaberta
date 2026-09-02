@@ -2,6 +2,24 @@
 
 ## 2026-09-01
 
+- Os CSVs saíram do versionamento. Commitá-los foi um erro de arquitetura: 6,9
+  MB por retrato, num histórico que o git guarda para sempre e ninguém
+  consulta — até 2,5 GB/ano no pior caso. O Archive já versiona e serve, e
+  passou a receber `imoveis_csv_bruto.zip` junto do Parquet. Dado no Archive,
+  código no git.
+
+- O anti-bot da Caixa foi contornado, e a descoberta não foi teimosia: o
+  bloqueio pune sessão reusada e User-Agent incoerente, não volume. Sessão
+  nova por requisição mais cabeçalhos de navegador coerentes levam 27 UFs em
+  86 segundos. Os números estão em `concepts/fonte-caixa.md`.
+
+- Com dado de 2026 no lugar do de 2022, o acervo dobra (25.687 imóveis) e a
+  geocodificação melhora sozinha: 65,9% ao nível de logradouro, contra 42,8%.
+  Endereço da Caixa hoje é mais bem escrito do que era.
+
+- As quatro modalidades documentadas passaram a cobrir 100% do dado. O aviso
+  de modalidade desconhecida, que disparava com os CSVs de 2022, silenciou.
+
 - O bundle passou a ser verificado contra o código, e não só contra si mesmo:
   `scripts/check_bundle_contract.py` recusa divergência no identificador do
   Archive (que tinha quatro cópias), nas colunas obrigatórias e nas

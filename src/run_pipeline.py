@@ -1,8 +1,11 @@
 import argparse
+import shutil
+import tempfile
+from pathlib import Path
 
 from fetch_data import fetch_all_states, process_local_data
 from reporter import DEFAULT_PARQUET_PATH, validate_publication_parquet
-from upload_to_archive import upload_files_to_archive
+from upload_to_archive import BRUTO_FILENAME, upload_files_to_archive
 
 
 def main():
@@ -58,7 +61,15 @@ def main():
         print("Pulando o download dos dados da Caixa.")
     else:
         print("Baixando os dados da Caixa...")
-        fetch_all_states()
+        with tempfile.TemporaryDirectory() as bruto:
+            fetch_all_states(raw_dir=bruto)
+            # O CSV como a Caixa serviu vai para o Archive junto do Parquet: é
+            # a fonte primária, e some assim que a Caixa atualiza a lista.
+            saida = Path("output_data")
+            saida.mkdir(parents=True, exist_ok=True)
+            shutil.make_archive(
+                str(saida / Path(BRUTO_FILENAME).stem), "zip", root_dir=bruto
+            )
         print("Download dos dados da Caixa concluído.")
 
     if not args.skip_processing:
@@ -83,6 +94,9 @@ def main():
         description=args.archive_item_description,
         files_dir="output_data",
         dry_run=args.upload_dry_run,
+        # --skip-processing republica o Parquet que já existe; não há bruto
+        # novo a preservar, e é a única publicação sem a fonte junto.
+        exigir_bruto=not args.skip_processing,
     )
     if args.upload_dry_run:
         print("Dry-run de upload concluído.")

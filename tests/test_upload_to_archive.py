@@ -7,7 +7,7 @@ import sys
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "src"))
 
-from upload_to_archive import upload_files_to_archive
+from upload_to_archive import BRUTO_FILENAME, upload_files_to_archive
 
 
 @pytest.fixture
@@ -22,6 +22,7 @@ def dummy_files_dir(tmp_path):
     directory.mkdir()
     (directory / "imoveis_1.parquet").write_text("dummy")
     (directory / "imoveis_2.parquet").write_text("dummy")
+    (directory / "imoveis_csv_bruto.zip").write_text("dummy")
     (directory / "ignore.txt").write_text("ignore")
     return directory
 
@@ -41,7 +42,8 @@ def test_upload_files_to_archive_success(mock_upload, dummy_files_dir):
     assert call_kwargs["identifier"] == "test-identifier"
     assert call_kwargs["access_key"] == "test_access_key"
     assert call_kwargs["secret_key"] == "test_secret_key"
-    assert len(call_kwargs["files"]) == 2
+    # dois Parquets e o zip com o CSV bruto; o .txt fica de fora
+    assert len(call_kwargs["files"]) == 3
     assert not any("ignore.txt" in file for file in call_kwargs["files"])
 
 
@@ -152,3 +154,76 @@ def test_upload_uses_collection_from_the_environment(
     )
 
     assert mock_upload.call_args.kwargs["metadata"]["collection"] == "opensource_data"
+
+
+@pytest.mark.usefixtures("mock_env")
+@patch("upload_to_archive.upload")
+def test_publicacao_sem_o_bruto_e_recusada(mock_upload, tmp_path):
+    """Dado novo sem a fonte que o gerou quebra a proveniência."""
+    directory = tmp_path / "output_data"
+    directory.mkdir()
+    (directory / "imoveis_geocoded.parquet").write_text("dummy")
+
+    with pytest.raises(FileNotFoundError, match=BRUTO_FILENAME):
+        upload_files_to_archive(
+            identifier="test-identifier",
+            title="Test Title",
+            description="Test Description",
+            files_dir=str(directory),
+        )
+
+    mock_upload.assert_not_called()
+
+
+@pytest.mark.usefixtures("mock_env")
+@patch("upload_to_archive.upload")
+def test_republicacao_declara_a_ausencia_do_bruto(mock_upload, tmp_path):
+    """Republicar um Parquet existente é a exceção, e é explícita."""
+    directory = tmp_path / "output_data"
+    directory.mkdir()
+    (directory / "imoveis_geocoded.parquet").write_text("dummy")
+
+    upload_files_to_archive(
+        identifier="test-identifier",
+        title="Test Title",
+        description="Test Description",
+        files_dir=str(directory),
+        exigir_bruto=False,
+    )
+
+    mock_upload.assert_called_once()
+
+
+@pytest.mark.usefixtures("mock_env")
+@patch("upload_to_archive.upload")
+def test_o_bruto_sobe_junto_do_parquet(mock_upload, dummy_files_dir):
+    upload_files_to_archive(
+        identifier="test-identifier",
+        title="Test Title",
+        description="Test Description",
+        files_dir=str(dummy_files_dir),
+    )
+
+    enviados = mock_upload.call_args.kwargs["files"]
+    assert any(f.endswith("imoveis_csv_bruto.zip") for f in enviados)
+    assert not any(f.endswith(".txt") for f in enviados)
+
+
+@pytest.mark.usefixtures("mock_env")
+@patch("upload_to_archive.upload")
+def test_um_zip_qualquer_nao_satisfaz_o_gate(mock_upload, tmp_path):
+    """O contrato nomeia um arquivo; qualquer .zip não é a fonte primária."""
+    directory = tmp_path / "output_data"
+    directory.mkdir()
+    (directory / "imoveis_geocoded.parquet").write_text("dummy")
+    (directory / "foo.zip").write_text("dummy")
+
+    with pytest.raises(FileNotFoundError, match=BRUTO_FILENAME):
+        upload_files_to_archive(
+            identifier="test-identifier",
+            title="Test Title",
+            description="Test Description",
+            files_dir=str(directory),
+        )
+
+    mock_upload.assert_not_called()

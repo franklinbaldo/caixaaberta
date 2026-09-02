@@ -125,7 +125,10 @@ def test_fetch_all_states_writes_csvs(tmp_path, requests_mock):
         )
 
     frames = fetch_all_states(
-        url_base=url_base, input_dir=str(tmp_path), ufs=["RO", "SP"], delay=0
+        url_base=url_base,
+        input_dir=str(tmp_path),
+        ufs=["RO", "SP"],
+        espera_entre_rodadas=0,
     )
 
     assert set(frames) == {"RO", "SP"}
@@ -148,7 +151,10 @@ def test_fetch_all_states_fails_on_empty_state(tmp_path, requests_mock):
 
     with pytest.raises(FetchError, match="SP"):
         fetch_all_states(
-            url_base=url_base, input_dir=str(tmp_path), ufs=["RO", "SP"], delay=0
+            url_base=url_base,
+            input_dir=str(tmp_path),
+            ufs=["RO", "SP"],
+            espera_entre_rodadas=0,
         )
 
     assert not list(tmp_path.glob("*.csv"))
@@ -162,42 +168,114 @@ def test_fetch_all_states_fails_on_http_error(tmp_path, requests_mock):
 
     with pytest.raises(FetchError, match="HTTP 404"):
         fetch_all_states(
-            url_base=url_base, input_dir=str(tmp_path), ufs=["RO"], delay=0
+            url_base=url_base, input_dir=str(tmp_path), ufs=["RO"], espera_entre_rodadas=0
         )
 
 
 BLOCK_PAGE = b"<head><title>Radware Bot Manager Block</title></head>"
 
 
-def test_fetch_state_retries_past_the_anti_bot_page(requests_mock):
-    from fetch_data import fetch_state
-
-    url = "https://exemplo.test/Lista_imoveis_RO.csv"
-    requests_mock.get(
-        url,
-        [
-            {"content": BLOCK_PAGE},
-            {"content": BLOCK_PAGE},
-            {"content": CAIXA_CSV.encode("latin-1")},
-        ],
-    )
-
-    df = fetch_state(
-        "RO", url_base="https://exemplo.test/Lista_imoveis_{}.csv", backoff=0
-    )
-
-    assert len(df) == 2
-
-
-def test_fetch_state_reports_a_persistent_block(requests_mock):
+def test_fetch_state_reports_a_block(requests_mock):
     from fetch_data import BlockedError, fetch_state
 
     requests_mock.get("https://exemplo.test/Lista_imoveis_RO.csv", content=BLOCK_PAGE)
 
     with pytest.raises(BlockedError, match="anti-bot"):
         fetch_state(
-            "RO",
-            url_base="https://exemplo.test/Lista_imoveis_{}.csv",
-            attempts=2,
-            backoff=0,
+            "RO", url_base="https://exemplo.test/Lista_imoveis_{}.csv", jitter=None
         )
+
+
+def test_fetch_state_sends_coherent_browser_headers(requests_mock):
+    """UA de navegador sem os cabeçalhos que o acompanham é pior que nenhum."""
+    from fetch_data import BROWSER_HEADERS, fetch_state
+
+    requests_mock.get(
+        "https://exemplo.test/Lista_imoveis_RO.csv",
+        content=CAIXA_CSV.encode("latin-1"),
+    )
+
+    fetch_state(
+        "RO", url_base="https://exemplo.test/Lista_imoveis_{}.csv", jitter=None
+    )
+
+    enviados = requests_mock.last_request.headers
+    assert "Firefox" in enviados["User-Agent"]
+    for cabecalho in ("Sec-Fetch-Mode", "Accept-Language", "Upgrade-Insecure-Requests"):
+        assert enviados[cabecalho] == BROWSER_HEADERS[cabecalho]
+
+
+def test_um_estado_bloqueado_volta_na_rodada_seguinte(tmp_path, requests_mock):
+    """Insistir no mesmo estado é o que o anti-bot pune; a fila é que resolve."""
+    from fetch_data import fetch_all_states
+
+    url_base = "https://exemplo.test/Lista_imoveis_{}.csv"
+    csv = CAIXA_CSV.encode("latin-1")
+    requests_mock.get(url_base.format("RO"), content=csv)
+    requests_mock.get(
+        url_base.format("SP"),
+        [{"content": BLOCK_PAGE}, {"content": csv}],
+    )
+
+    frames = fetch_all_states(
+        url_base=url_base,
+        input_dir=str(tmp_path),
+        ufs=["RO", "SP"],
+        espera_entre_rodadas=0,
+    )
+
+    assert set(frames) == {"RO", "SP"}
+    assert (tmp_path / "imoveis_SP.csv").exists()
+
+
+def test_bloqueio_em_todas_as_rodadas_nao_grava_nada(tmp_path, requests_mock):
+    from fetch_data import BlockedError, fetch_all_states
+
+    url_base = "https://exemplo.test/Lista_imoveis_{}.csv"
+    requests_mock.get(url_base.format("RO"), content=CAIXA_CSV.encode("latin-1"))
+    requests_mock.get(url_base.format("SP"), content=BLOCK_PAGE)
+
+    with pytest.raises(BlockedError, match="SP"):
+        fetch_all_states(
+            url_base=url_base,
+            input_dir=str(tmp_path),
+            ufs=["RO", "SP"],
+            rodadas=2,
+            espera_entre_rodadas=0,
+        )
+
+    assert not list(tmp_path.glob("*.csv"))
+
+
+def test_o_csv_original_da_caixa_e_preservado(tmp_path, requests_mock):
+    """O Parquet é derivado; só o bruto guarda o que a Caixa serviu."""
+    from fetch_data import fetch_state
+
+    bruto = CAIXA_CSV.encode("latin-1")
+    requests_mock.get("https://exemplo.test/Lista_imoveis_RO.csv", content=bruto)
+
+    fetch_state(
+        "RO",
+        url_base="https://exemplo.test/Lista_imoveis_{}.csv",
+        jitter=None,
+        raw_dir=tmp_path,
+    )
+
+    salvo = (tmp_path / "Lista_imoveis_RO.csv").read_bytes()
+    assert salvo == bruto
+    assert "Data de geração" in salvo.decode("latin-1")
+
+
+def test_sem_raw_dir_nada_e_preservado(tmp_path, requests_mock):
+    from fetch_data import fetch_state
+
+    requests_mock.get(
+        "https://exemplo.test/Lista_imoveis_RO.csv",
+        content=CAIXA_CSV.encode("latin-1"),
+    )
+
+    fetch_state(
+        "RO", url_base="https://exemplo.test/Lista_imoveis_{}.csv", jitter=None
+    )
+
+    assert not list(tmp_path.iterdir())
