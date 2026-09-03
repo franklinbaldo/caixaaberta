@@ -53,6 +53,7 @@ UFS = [
 # Ordem das colunas gravadas em data/imoveis_<UF>.csv.
 CSV_COLUMNS = [
     "link",
+    "link_acesso",
     "endereco",
     "bairro",
     "descricao",
