@@ -1,0 +1,290 @@
+/* Acabamento de produto: mantém Cobogó/Pico como base e mexe só na hierarquia. */
+
+body {
+  background:
+    radial-gradient(circle at 12% 0%, color-mix(in srgb, var(--caixa-accent) 7%, transparent), transparent 26rem),
+    linear-gradient(180deg, color-mix(in srgb, var(--caixa-paper) 96%, white), var(--caixa-paper));
+}
+
+[data-site-header] {
+  position: sticky;
+  top: 0;
+  z-index: 30;
+  padding-block: 0.72rem;
+  backdrop-filter: blur(14px);
+  background: color-mix(in srgb, var(--caixa-paper) 88%, transparent);
+}
+
+[data-site-header] nav a:not([data-brand]) {
+  font-size: 0.86rem;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 0.2em;
+}
+
+section[data-hero] {
+  min-height: min(42rem, 72vh);
+  align-items: center;
+  padding-block: clamp(2rem, 5vw, 5rem);
+}
+
+section[data-hero] h1 {
+  max-width: 15ch;
+  font-size: clamp(3rem, 6.4vw, 6.6rem);
+}
+
+section[data-hero] > div > p:first-of-type {
+  max-width: 54rem;
+  color: color-mix(in srgb, var(--caixa-ink) 82%, transparent);
+}
+
+[data-hero-search] {
+  max-width: 58rem;
+  margin: 1.5rem 0 0;
+  padding: 0;
+}
+
+[data-hero-search] > label {
+  display: block;
+  margin-bottom: 0.45rem;
+  font-size: 0.78rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+[data-hero-search] > div {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 0.55rem;
+  padding: 0.4rem;
+  border: 1px solid color-mix(in srgb, var(--caixa-accent) 36%, var(--caixa-rule));
+  border-radius: 0.75rem;
+  background: color-mix(in srgb, var(--caixa-paper) 70%, white);
+  box-shadow: 0 1rem 2.4rem color-mix(in srgb, var(--caixa-ink) 9%, transparent);
+}
+
+[data-hero-search] input,
+[data-hero-search] button {
+  margin: 0;
+}
+
+[data-hero-search] input {
+  min-height: 3.3rem;
+  border: 0;
+  box-shadow: none;
+  background: transparent;
+  font-size: clamp(1rem, 1.5vw, 1.12rem);
+}
+
+[data-hero-search] button {
+  min-width: 10rem;
+  border-radius: 0.5rem;
+  font-weight: 750;
+}
+
+[data-hero-search] small {
+  display: block;
+  margin-top: 0.45rem;
+  color: var(--pico-muted-color);
+}
+
+[data-hero-proof] {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+  margin: 1rem 0 0;
+}
+
+[data-hero-proof] span {
+  padding: 0.3rem 0.6rem;
+  border: 1px solid var(--caixa-rule);
+  border-radius: 999px;
+  color: var(--pico-muted-color);
+  font-size: 0.75rem;
+  font-weight: 650;
+}
+
+section[data-hero] > aside {
+  padding: 1.25rem;
+  border: 1px solid var(--caixa-rule);
+  border-top: 0.35rem solid var(--caixa-warm);
+  border-radius: 0.35rem;
+  background: color-mix(in srgb, var(--caixa-paper) 84%, white);
+}
+
+section[data-hero] > aside p {
+  color: var(--pico-muted-color);
+  font-size: 0.9rem;
+}
+
+[data-explorer-app] {
+  border: 0;
+  border-top: 1px solid var(--caixa-rule);
+  border-bottom: 1px solid var(--caixa-rule);
+  padding: clamp(1rem, 2vw, 1.75rem) 0;
+  background: transparent;
+}
+
+[data-explorer-app] > header {
+  margin-bottom: 1.4rem;
+}
+
+[data-explorer-app] > header h2 {
+  font-size: clamp(2.2rem, 4.4vw, 4.6rem);
+}
+
+[data-daily-changes] {
+  padding: 1rem;
+  border: 1px solid var(--caixa-rule);
+  border-radius: 0.5rem;
+  background: color-mix(in srgb, var(--caixa-paper) 86%, white);
+}
+
+[data-change-metrics] {
+  gap: 0.55rem;
+  padding: 0;
+  background: transparent;
+}
+
+[data-change-metrics] article {
+  min-height: 6.8rem;
+  border: 1px solid var(--caixa-rule);
+  border-radius: 0.35rem;
+}
+
+[data-primary-filters] {
+  grid-template-columns: minmax(20rem, 2.2fr) repeat(3, minmax(9rem, 1fr));
+  gap: 0.7rem;
+  padding: 1rem;
+  border: 1px solid var(--caixa-rule);
+  border-radius: 0.5rem;
+  background: color-mix(in srgb, var(--caixa-paper) 88%, white);
+}
+
+[data-primary-filters] label:first-of-type {
+  grid-column: span 2;
+}
+
+[data-primary-filters] label:nth-of-type(n + 6) {
+  grid-row: 2;
+}
+
+[data-primary-filters] button {
+  grid-column: auto;
+  justify-self: stretch;
+  align-self: end;
+}
+
+[data-advanced-filters] {
+  padding-inline: 0.15rem;
+}
+
+[data-explorer-summary] {
+  margin-top: 0.15rem;
+}
+
+[data-map-figure],
+[data-results] {
+  border-radius: 0.5rem;
+}
+
+#map {
+  border-radius: 0.5rem;
+  box-shadow: 0 0.8rem 2rem color-mix(in srgb, var(--caixa-ink) 8%, transparent);
+}
+
+[data-property-list] {
+  gap: 0.85rem;
+}
+
+[data-property-card] {
+  position: relative;
+  padding: 1.05rem 1.1rem;
+  border-radius: 0.5rem;
+  background: color-mix(in srgb, var(--caixa-paper) 82%, white);
+  box-shadow: 0 0.35rem 1rem color-mix(in srgb, var(--caixa-ink) 5%, transparent);
+  transition: transform 140ms ease, border-color 140ms ease, box-shadow 140ms ease;
+}
+
+[data-property-card]:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 0.8rem 1.8rem color-mix(in srgb, var(--caixa-ink) 9%, transparent);
+}
+
+[data-property-card] h3 {
+  max-width: 38ch;
+  font-size: clamp(1.08rem, 1.65vw, 1.35rem);
+}
+
+[data-property-metrics] {
+  gap: 0.45rem;
+  padding: 0;
+  background: transparent;
+}
+
+[data-property-metrics] > div {
+  border: 1px solid var(--caixa-rule);
+  border-radius: 0.25rem;
+  background: color-mix(in srgb, var(--caixa-paper) 92%, white);
+}
+
+[data-property-card] > footer a {
+  font-weight: 750;
+}
+
+[data-snapshot] {
+  gap: 0.7rem;
+  padding: 0;
+  background: transparent;
+}
+
+[data-snapshot] article {
+  border: 1px solid var(--caixa-rule);
+  border-radius: 0.45rem;
+  background: color-mix(in srgb, var(--caixa-paper) 88%, white);
+}
+
+@media (max-width: 1220px) {
+  [data-primary-filters] {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  [data-primary-filters] label:first-of-type {
+    grid-column: 1 / -1;
+  }
+
+  [data-primary-filters] label:nth-of-type(n + 6) {
+    grid-row: auto;
+  }
+}
+
+@media (max-width: 760px) {
+  [data-site-header] {
+    position: static;
+  }
+
+  section[data-hero] {
+    min-height: auto;
+    padding-block: 2rem 1rem;
+  }
+
+  section[data-hero] h1 {
+    font-size: clamp(2.8rem, 13vw, 4.5rem);
+  }
+
+  [data-hero-search] > div {
+    grid-template-columns: 1fr;
+  }
+
+  [data-hero-search] button {
+    width: 100%;
+  }
+
+  [data-primary-filters] {
+    grid-template-columns: 1fr;
+  }
+
+  [data-explorer-app] {
+    padding-inline: 0;
+  }
+}
