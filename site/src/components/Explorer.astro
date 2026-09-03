@@ -4,20 +4,58 @@ import "maplibre-gl/dist/maplibre-gl.css";
 
 <section id="explorar" data-explorer-app data-state="loading" aria-labelledby="explorer-title">
   <header>
-    <span data-kicker>Explorador nacional</span>
-    <h2 id="explorer-title">Encontre imóveis no retrato mais recente.</h2>
+    <div>
+      <span data-kicker>Explorador nacional</span>
+      <h2 id="explorer-title">Garimpe o retrato mais recente.</h2>
+    </div>
     <p>
-      Os filtros rodam no seu navegador sobre o Parquet publicado. O mapa é uma
-      visualização; a lista abaixo continua sendo a superfície principal e acessível.
+      Busque primeiro como comprador: lugar, preço, desconto, modalidade e financiamento.
+      Informações de qualidade geográfica e vínculo com CNO continuam disponíveis como
+      contexto técnico, sem competir com a tarefa principal.
     </p>
   </header>
 
+  <aside data-daily-changes data-state="loading" aria-labelledby="daily-changes-title">
+    <header>
+      <div>
+        <span data-kicker>Hoje no radar</span>
+        <h3 id="daily-changes-title">O que mudou desde o retrato anterior.</h3>
+      </div>
+      <p id="daily-changes-period">Carregando a memória temporal…</p>
+    </header>
+    <div data-change-metrics>
+      <article>
+        <small>Entraram</small>
+        <strong id="daily-entered">—</strong>
+        <p>Imóveis que não estavam no retrato anterior.</p>
+      </article>
+      <article>
+        <small>Preço caiu</small>
+        <strong id="daily-price-drops">—</strong>
+        <p>Ofertas cujo preço publicado diminuiu.</p>
+      </article>
+      <article>
+        <small>Outras alterações</small>
+        <strong id="daily-altered">—</strong>
+        <p>Mudanças de avaliação, desconto, modalidade ou preço sem queda.</p>
+      </article>
+      <article>
+        <small>Saíram</small>
+        <strong id="daily-exited">—</strong>
+        <p>Não aparecem mais no retrato atual; isso não prova venda ou arrematação.</p>
+      </article>
+    </div>
+    <p id="daily-changes-note" role="status">
+      A série temporal aparecerá aqui assim que houver um derivado publicado para o retrato atual.
+    </p>
+  </aside>
+
   <form id="explorer-filters" aria-label="Filtros de imóveis">
-    <fieldset>
-      <legend>Filtrar o retrato</legend>
+    <fieldset data-primary-filters>
+      <legend>Buscar oportunidades</legend>
       <label>
-        Buscar
-        <input id="filter-query" type="search" placeholder="cidade, bairro, endereço ou número do imóvel" autocomplete="off" />
+        Onde ou qual imóvel?
+        <input id="filter-query" type="search" placeholder="cidade, bairro, endereço, imóvel ou CNO" autocomplete="off" />
       </label>
       <label>
         Estado
@@ -32,21 +70,64 @@ import "maplibre-gl/dist/maplibre-gl.css";
         </select>
       </label>
       <label>
-        Precisão geográfica
-        <select id="filter-precision">
-          <option value="">Todas</option>
-          <option value="logradouro_localidade">Logradouro + localidade</option>
-          <option value="logradouro">Logradouro</option>
-          <option value="localidade">Localidade</option>
-          <option value="municipio">Município</option>
-        </select>
+        Até quanto?
+        <input id="filter-price-max" type="number" min="0" step="1000" inputmode="numeric" placeholder="sem limite" />
       </label>
       <label>
         Desconto mínimo
         <input id="filter-discount" type="number" min="0" max="100" step="1" inputmode="numeric" placeholder="0" />
       </label>
+      <label>
+        Financiamento
+        <select id="filter-financing">
+          <option value="">Todos</option>
+        </select>
+      </label>
+      <label>
+        Ordenar por
+        <select id="filter-sort">
+          <option value="discount-desc">Maior desconto</option>
+          <option value="price-asc">Menor preço</option>
+          <option value="price-desc">Maior preço</option>
+          <option value="city-asc">Cidade A–Z</option>
+        </select>
+      </label>
       <button type="reset">Limpar filtros</button>
     </fieldset>
+
+    <details data-advanced-filters>
+      <summary>Filtros técnicos e de proveniência</summary>
+      <fieldset>
+        <legend>Refinar pela qualidade dos dados</legend>
+        <label>
+          Vínculo com CNO
+          <select id="filter-cno-match">
+            <option value="">Todos</option>
+            <option value="forte">Associado — forte</option>
+            <option value="provavel">Provável — não associado</option>
+            <option value="ambiguo">Ambíguo — não associado</option>
+            <option value="sem_match">Sem candidato</option>
+            <option value="sem_dados">Snapshot sem CNO</option>
+          </select>
+        </label>
+        <label>
+          Situação da obra
+          <select id="filter-cno-situation">
+            <option value="">Todas</option>
+          </select>
+        </label>
+        <label>
+          Precisão geográfica
+          <select id="filter-precision">
+            <option value="">Todas</option>
+            <option value="logradouro_localidade">Logradouro + localidade</option>
+            <option value="logradouro">Logradouro</option>
+            <option value="localidade">Localidade</option>
+            <option value="municipio">Município</option>
+          </select>
+        </label>
+      </fieldset>
+    </details>
   </form>
 
   <aside data-explorer-summary aria-live="polite">
@@ -58,31 +139,41 @@ import "maplibre-gl/dist/maplibre-gl.css";
   <figure data-map-figure>
     <div id="map" role="img" aria-label="Mapa do Brasil com os imóveis filtrados"></div>
     <figcaption>
-      Coordenadas vêm do CNEFE. Pontos com precisão <code>municipio</code> representam
-      o município, não o endereço exato do imóvel.
+      Coordenadas vêm do CNEFE. Pontos com precisão de município não representam o endereço
+      exato. Vínculos com CNO são inferências auditáveis do Caixa Aberta, não identificadores
+      fornecidos pela Caixa ou certificados pela Receita.
     </figcaption>
   </figure>
 
   <section data-results aria-labelledby="results-title">
     <header>
-      <h3 id="results-title">Resultados</h3>
-      <p>Mostrando até 100 linhas. O contador e o mapa consideram todos os imóveis filtrados.</p>
+      <h3 id="results-title">Oportunidades</h3>
+      <p>Até 100 imóveis visíveis; o contador e o mapa consideram todo o filtro.</p>
     </header>
-    <div data-table-scroll>
-      <table>
-        <thead>
-          <tr>
-            <th scope="col">Imóvel</th>
-            <th scope="col">Local</th>
-            <th scope="col">Preço</th>
-            <th scope="col">Desconto</th>
-            <th scope="col">Modalidade</th>
-            <th scope="col">Precisão</th>
-          </tr>
-        </thead>
-        <tbody id="explorer-rows"></tbody>
-      </table>
-    </div>
+
+    <div id="explorer-cards" data-property-list aria-live="polite"></div>
+
+    <details data-power-table>
+      <summary>Ver como tabela</summary>
+      <div data-table-scroll>
+        <table>
+          <thead>
+            <tr>
+              <th scope="col">Imóvel</th>
+              <th scope="col">Local</th>
+              <th scope="col">Preço</th>
+              <th scope="col">Avaliação</th>
+              <th scope="col">Desconto</th>
+              <th scope="col">Modalidade</th>
+              <th scope="col">Financiamento</th>
+              <th scope="col">CNO / obra</th>
+              <th scope="col">Precisão</th>
+            </tr>
+          </thead>
+          <tbody id="explorer-rows"></tbody>
+        </table>
+      </div>
+    </details>
   </section>
 
   <noscript>
@@ -91,6 +182,9 @@ import "maplibre-gl/dist/maplibre-gl.css";
 </section>
 
 <script>
+  import { initDailyChanges } from "../scripts/daily-changes";
   import { initExplorer } from "../scripts/explorer";
-  initExplorer();
+
+  void initDailyChanges();
+  void initExplorer();
 </script>

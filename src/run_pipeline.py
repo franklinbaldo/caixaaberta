@@ -4,7 +4,17 @@ import tempfile
 from datetime import date
 from pathlib import Path
 
-from archive_names import bruto_datado, data_de_publicacao, item_do_ano
+from archive_history import baixar_snapshot, snapshot_anterior
+from archive_names import (
+    bruto_datado,
+    cno_matches_datado,
+    data_de_publicacao,
+    item_do_ano,
+    mudancas_datado,
+)
+from cno_ingest import fetch_cno_snapshot
+from cno_normalize import normalize_snapshot
+from compare_snapshots import compare_snapshots
 from fetch_data import fetch_all_states, process_local_data
 from reporter import parquet_do_dia, validate_publication_parquet
 from upload_to_archive import (
@@ -12,6 +22,30 @@ from upload_to_archive import (
     publicar_manifesto,
     upload_files_to_archive,
 )
+
+
+def _derivar_mudancas(quando: date, output_dir: str | Path = "output_data"):
+    """Compara o retrato corrente com o último retrato público anterior.
+
+    A ausência de histórico é válida na primeira publicação. Qualquer falha ao
+    consultar ou baixar um histórico que deveria estar acessível, porém, sobe:
+    publicar o snapshot e fingir que a camada temporal está íntegra seria pior
+    do que falhar explicitamente.
+    """
+    anterior = snapshot_anterior(quando)
+    if anterior is None:
+        print("Nenhum snapshot anterior disponível; mudanças não serão derivadas.")
+        return None
+
+    destino = Path(output_dir) / mudancas_datado(quando)
+    with tempfile.TemporaryDirectory() as tmp:
+        caminho_anterior = baixar_snapshot(anterior, Path(tmp) / anterior.arquivo)
+        compare_snapshots(caminho_anterior, parquet_do_dia(quando), destino)
+    print(
+        "Mudanças derivadas contra "
+        f"{anterior.data.isoformat()} ({anterior.item}/{anterior.arquivo})."
+    )
+    return anterior
 
 
 def main():
@@ -30,6 +64,14 @@ def main():
         "--skip-processing",
         action="store_true",
         help="Pula a etapa de processamento de dados locais.",
+    )
+    parser.add_argument(
+        "--with-cno",
+        action="store_true",
+        help=(
+            "Baixa o snapshot aberto do CNO, normaliza e cruza com os imóveis. "
+            "A publicação diária oficial usa esta opção."
+        ),
     )
     parser.add_argument(
         "--skip-upload",
@@ -95,9 +137,22 @@ def main():
             shutil.make_archive(str(datado.with_suffix("")), "zip", root_dir=bruto)
         print("Download dos dados da Caixa concluído.")
 
+    cno_dir = None
+    if args.with_cno and not args.skip_processing:
+        print("Baixando o snapshot aberto do CNO...")
+        raw_cno = fetch_cno_snapshot()
+        cno_dir = Path("cno_data/normalized")
+        normalize_snapshot(raw_cno, cno_dir)
+        print("CNO normalizado e pronto para matching.")
+    elif args.with_cno:
+        print("Pulando o CNO porque o processamento foi pulado.")
+
     if not args.skip_processing:
         print("Iniciando o processamento de dados locais...")
-        process_local_data(quando=quando)
+        if cno_dir is None:
+            process_local_data(quando=quando)
+        else:
+            process_local_data(quando=quando, cno_dir=cno_dir)
         print("Processamento de dados locais concluído.")
     else:
         print("Pulando o processamento de dados locais.")
@@ -110,18 +165,34 @@ def main():
     validate_publication_parquet(parquet_do_dia(quando))
     print("Parquet validado para publicação.")
 
+    print("Derivando mudanças contra o snapshot público anterior...")
+    anterior = _derivar_mudancas(quando)
+
+    arquivos = artefatos_da_publicacao(
+        quando,
+        "output_data",
+        # --skip-processing republica o Parquet que já existe; não há bruto
+        # novo a preservar, e é a única publicação sem a fonte junto.
+        exigir_bruto=not args.skip_processing,
+    )
+    mudancas = Path("output_data") / mudancas_datado(quando)
+    if mudancas.exists():
+        arquivos.append(str(mudancas))
+
+    if args.with_cno and not args.skip_processing:
+        evidencias = Path("output_data") / cno_matches_datado(quando)
+        if not evidencias.exists():
+            raise FileNotFoundError(
+                f"Matching CNO foi solicitado, mas a evidência não existe: {evidencias}"
+            )
+        arquivos.append(str(evidencias))
+
     print("Iniciando o upload para o Internet Archive...")
     upload_files_to_archive(
         identifier=identifier,
         title=args.archive_item_title,
         description=args.archive_item_description,
-        files=artefatos_da_publicacao(
-            quando,
-            "output_data",
-            # --skip-processing republica o Parquet que já existe; não há bruto
-            # novo a preservar, e é a única publicação sem a fonte junto.
-            exigir_bruto=not args.skip_processing,
-        ),
+        files=arquivos,
         dry_run=args.upload_dry_run,
     )
 
@@ -129,7 +200,12 @@ def main():
     # a série pública: publicar num item arbitrário é um experimento, e um
     # experimento não redireciona quem consulta o dataset.
     if identifier == item_do_ano(quando):
-        publicar_manifesto(quando, identifier, dry_run=args.upload_dry_run)
+        publicar_manifesto(
+            quando,
+            identifier,
+            dry_run=args.upload_dry_run,
+            mudancas_desde=anterior.data if anterior is not None else None,
+        )
     else:
         print(
             f"Item {identifier} não é o da série ({item_do_ano(quando)}); "

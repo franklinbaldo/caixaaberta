@@ -9,7 +9,7 @@ ano, para nenhum item crescer sem limite.
 A data é propriedade da execução, não de cada chamada: `data_de_publicacao()`
 é lida **uma vez** no início do pipeline e passada adiante. Se cada nome
 consultasse o relógio por conta própria, uma execução atravessando a meia-noite
-poderia gravar o zip em D e o Parquet em D+1 — e, na virada do ano, o arquivo
+poderia gravar o zip em D e o Parquet no outro — e, na virada do ano, o arquivo
 num item e o identificador em outro.
 
 O fuso é UTC, sempre. O produtor roda em runner UTC e o consumidor pode estar
@@ -22,6 +22,8 @@ from datetime import UTC, date, datetime
 ITEM_PREFIX = "imoveis-caixa-economica-federal"
 PARQUET_PREFIX = "imoveis_geocoded"
 BRUTO_PREFIX = "imoveis_csv_bruto"
+CNO_MATCH_PREFIX = "cno_matches"
+MUDANCAS_PREFIX = "mudancas"
 
 # O item sem ano não guarda dado: guarda o ponteiro para o último retrato
 # efetivamente publicado. O calendário não serve como ponteiro — a publicação
@@ -46,6 +48,16 @@ def parquet_datado(quando: date) -> str:
 
 def bruto_datado(quando: date) -> str:
     return f"{BRUTO_PREFIX}_{quando.isoformat()}.zip"
+
+
+def cno_matches_datado(quando: date) -> str:
+    """Tabela de candidatos/evidências do matching CNO daquele retrato."""
+    return f"{CNO_MATCH_PREFIX}_{quando.isoformat()}.parquet"
+
+
+def mudancas_datado(quando: date) -> str:
+    """Eventos derivados entre este retrato e o imediatamente anterior."""
+    return f"{MUDANCAS_PREFIX}_{quando.isoformat()}.parquet"
 
 
 def url_no_item(identifier: str, arquivo: str) -> str:

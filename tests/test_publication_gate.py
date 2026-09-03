@@ -151,6 +151,7 @@ def test_skip_processing_alone_does_not_download(monkeypatch, tmp_path):
         run_pipeline, "process_local_data", lambda **kw: pytest.fail("não processa")
     )
     monkeypatch.setattr(run_pipeline, "validate_publication_parquet", lambda path: None)
+    monkeypatch.setattr(run_pipeline, "_derivar_mudancas", lambda quando: None)
     monkeypatch.setattr(
         run_pipeline, "artefatos_da_publicacao", lambda *_, **kw: ["p.parquet"]
     )
@@ -178,6 +179,7 @@ def test_skip_processing_republica_sem_exigir_o_bruto(monkeypatch, tmp_path):
         run_pipeline, "process_local_data", lambda **kw: pytest.fail("não processa")
     )
     monkeypatch.setattr(run_pipeline, "validate_publication_parquet", lambda path: None)
+    monkeypatch.setattr(run_pipeline, "_derivar_mudancas", lambda quando: None)
     monkeypatch.setattr(
         run_pipeline, "artefatos_da_publicacao", lambda *_, **kw: chamadas.append(kw)
     )
@@ -198,6 +200,7 @@ def test_publicacao_normal_exige_o_bruto(monkeypatch, tmp_path):
     monkeypatch.setattr(run_pipeline, "fetch_all_states", lambda **kw: None)
     monkeypatch.setattr(run_pipeline, "process_local_data", lambda **kw: None)
     monkeypatch.setattr(run_pipeline, "validate_publication_parquet", lambda path: None)
+    monkeypatch.setattr(run_pipeline, "_derivar_mudancas", lambda quando: None)
     monkeypatch.setattr(
         run_pipeline, "artefatos_da_publicacao", lambda *_, **kw: chamadas.append(kw)
     )
@@ -250,6 +253,11 @@ def test_a_execucao_que_atravessa_a_meia_noite_usa_uma_data_so(monkeypatch):
     )
     monkeypatch.setattr(
         run_pipeline,
+        "_derivar_mudancas",
+        lambda quando: (vistas.append(quando), None)[1],
+    )
+    monkeypatch.setattr(
+        run_pipeline,
         "artefatos_da_publicacao",
         lambda quando, *_, **kw: (vistas.append(quando), ["p.parquet"])[1],
     )
@@ -275,6 +283,7 @@ def test_o_item_e_o_arquivo_saem_do_mesmo_ano(monkeypatch, capsys):
     monkeypatch.setattr(run_pipeline, "fetch_all_states", lambda **kw: None)
     monkeypatch.setattr(run_pipeline, "process_local_data", lambda **kw: None)
     monkeypatch.setattr(run_pipeline, "validate_publication_parquet", lambda path: None)
+    monkeypatch.setattr(run_pipeline, "_derivar_mudancas", lambda data: None)
     monkeypatch.setattr(
         run_pipeline, "artefatos_da_publicacao", lambda *_, **kw: ["p.parquet"]
     )
@@ -305,6 +314,7 @@ def _pipeline_publicando(monkeypatch, argv):
     monkeypatch.setattr(run_pipeline, "fetch_all_states", lambda **kw: None)
     monkeypatch.setattr(run_pipeline, "process_local_data", lambda **kw: None)
     monkeypatch.setattr(run_pipeline, "validate_publication_parquet", lambda path: None)
+    monkeypatch.setattr(run_pipeline, "_derivar_mudancas", lambda quando: None)
     monkeypatch.setattr(
         run_pipeline, "artefatos_da_publicacao", lambda *_, **kw: ["p.parquet"]
     )

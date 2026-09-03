@@ -15,6 +15,10 @@ código. É validado no CI com `okf-parser check knowledge`.
 - [Esquema do Parquet](concepts/esquema-parquet.md)
 - [Publicação no Internet Archive](concepts/publicacao-archive.md)
 
+## Modelagem experimental
+
+- [Estimativa independente de avaliação](concepts/estimativa-avaliacao.md) — baseline próprio que aprende a avaliação da Caixa como proxy sem usar o lance mínimo como feature.
+
 ## Modalidades de venda
 
 O campo que mais muda a leitura de um imóvel. Só a primeira tem preço fixo.

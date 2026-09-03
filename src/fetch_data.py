@@ -9,12 +9,14 @@ import pandas as pd
 import ibis
 import requests
 
-from archive_names import data_de_publicacao, parquet_datado
+from archive_names import cno_matches_datado, data_de_publicacao, parquet_datado
+from cno_match import enrich_from_directory
 from geocode_cnefe import cobertura, geocodificar
 from utils import converter_valor_monetario_para_float, converter_percentual_para_float
 
 INPUT_DIR = "data"
 OUTPUT_DIR = "output_data"
+CNO_DIR = "cno_data/normalized"
 
 DEFAULT_URL_BASE = "https://venda-imoveis.caixa.gov.br/listaweb/Lista_imoveis_{}.csv"
 
@@ -264,11 +266,12 @@ def fetch_all_states(
     return frames
 
 
-def process_local_data(quando=None):
+def process_local_data(quando=None, cno_dir=None):
     """Processa os CSVs locais e grava o snapshot nacional em Parquet.
 
-    ``quando`` é a data do scraping, congelada pelo pipeline. O default só
-    serve à execução direta deste módulo.
+    ``quando`` é a data do scraping, congelada pelo pipeline. Se ``cno_dir`` é
+    informado, a ausência do índice CNO é erro; sem ele, a execução direta
+    preserva compatibilidade e simplesmente não faz o enriquecimento.
     """
     quando = quando or data_de_publicacao()
     input_path = Path(INPUT_DIR)
@@ -325,6 +328,23 @@ def process_local_data(quando=None):
         df = geocodificar(df)
         for nivel, quantos in cobertura(df).items():
             print(f"  {nivel}: {quantos}")
+
+    cno_path = Path(cno_dir or CNO_DIR)
+    cno_file = cno_path / "cno.parquet"
+    if cno_dir is not None and not cno_file.exists():
+        raise FileNotFoundError(f"Índice CNO solicitado não encontrado: {cno_file}")
+    if cno_file.exists():
+        print("Cruzando imóveis com o Cadastro Nacional de Obras...")
+        df, candidates = enrich_from_directory(df, cno_path)
+        candidates["scrape_date"] = quando
+        candidate_file = output_path / cno_matches_datado(quando)
+        candidates.to_parquet(candidate_file, index=False)
+        counts = df["cno_match_status"].value_counts().to_dict()
+        print(
+            "CNO: "
+            + ", ".join(f"{status}={count}" for status, count in sorted(counts.items()))
+        )
+        print(f"Evidências CNO salvas em {candidate_file}.")
 
     # A identidade temporal viaja dentro do próprio dado: um Parquet copiado ou
     # baixado fora do Archive continua dizendo de qual observação ele veio.

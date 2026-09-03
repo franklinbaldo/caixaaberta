@@ -6,34 +6,76 @@ import Explorer from "../components/Explorer.astro";
 <Base>
   <section data-hero aria-labelledby="titulo">
     <div>
-      <span data-kicker>Uma observação do Brasil, todos os dias</span>
-      <h1 id="titulo">Imóveis da Caixa. <em>Com memória.</em></h1>
-      <p>O Caixa Aberta observa diariamente os imóveis que a Caixa oferece, organiza o retrato nacional em uma tabela aberta e preserva cada dia no Internet Archive.</p>
-      <p><a href="#explorar" role="button">Explorar o acervo</a> <a href="https://github.com/franklinbaldo/caixaaberta">Ver como é produzido</a></p>
+      <span data-kicker>Radar nacional de imóveis da Caixa</span>
+      <h1 id="titulo">Encontre oportunidades. <em>Veja o que a fonte esquece.</em></h1>
+      <p>
+        Busque imóveis da Caixa no Brasil inteiro por lugar, preço, desconto e modalidade.
+        O Caixa Aberta acompanha a oferta todos os dias e preserva cada retrato para que
+        mudanças de preço, entrada e saída não desapareçam com o tempo.
+      </p>
+      <p data-hero-actions>
+        <a href="#explorar" role="button">Buscar imóveis agora</a>
+        <a href="#dados">Entender os dados</a>
+      </p>
     </div>
-    <aside>
-      <p><strong>O que este projeto preserva</strong></p>
-      <p>A fonte da Caixa mostra o estado corrente. Quando um imóvel some, o passado não fica disponível ali. Aqui, cada scraping vira um snapshot imutável.</p>
+    <aside aria-label="O que você encontra aqui">
+      <strong>Feito para garimpar, não só para baixar dados.</strong>
+      <ul>
+        <li>busca nacional em um único lugar;</li>
+        <li>preço, desconto, modalidade e contexto da obra;</li>
+        <li>fonte oficial preservada e histórico auditável.</li>
+      </ul>
     </aside>
-  </section>
-
-  <section aria-labelledby="retrato-atual">
-    <header><span data-kicker>Agora</span><h2 id="retrato-atual">O último retrato publicado</h2></header>
-    <div data-snapshot data-snapshot-status="loading" aria-live="polite">
-      <article><small>Data do scraping</small><strong data-live-value id="snapshot-date">carregando…</strong><p>A data que o próprio Caixa Aberta observou a fonte.</p></article>
-      <article><small>Formato principal</small><strong>Parquet</strong><p>Consulta direta com DuckDB ou pelo explorador deste site.</p></article>
-      <article><small>Preservação</small><strong data-live-value id="snapshot-item">Internet Archive</strong><p><a id="snapshot-archive" href="https://archive.org/details/imoveis-caixa-economica-federal">Abrir o item publicado</a></p></article>
-    </div>
   </section>
 
   <Explorer />
 
+  <section id="dados" aria-labelledby="retrato-atual">
+    <header>
+      <span data-kicker>Transparência por baixo da busca</span>
+      <h2 id="retrato-atual">Dados abertos, memória verificável.</h2>
+      <p>
+        A interface é só a porta de entrada. O conjunto publicado continua aberto para
+        consulta, reprodução e auditoria fora deste site.
+      </p>
+    </header>
+    <div data-snapshot data-snapshot-status="loading" aria-live="polite">
+      <article>
+        <small>Retrato observado em</small>
+        <strong data-live-value id="snapshot-date">carregando…</strong>
+        <p>A data em que o próprio Caixa Aberta observou a fonte.</p>
+      </article>
+      <article>
+        <small>Base aberta</small>
+        <strong>Parquet</strong>
+        <p>O mesmo retrato usado pelo explorador pode ser consultado com DuckDB e outras ferramentas.</p>
+      </article>
+      <article>
+        <small>Histórico canônico</small>
+        <strong data-live-value id="snapshot-item">Internet Archive</strong>
+        <p><a id="snapshot-archive" href="https://archive.org/details/imoveis-caixa-economica-federal">Abrir o item preservado</a></p>
+      </article>
+    </div>
+  </section>
+
   <section id="como-funciona" data-callout aria-labelledby="como-titulo">
-    <header><span data-kicker>Método</span><h2 id="como-titulo">Simples de propósito.</h2></header>
+    <header>
+      <span data-kicker>Método</span>
+      <h2 id="como-titulo">Uma observação do Brasil, todos os dias.</h2>
+    </header>
     <div>
-      <article><h3>1. Observar</h3><p>Um GitHub Action roda diariamente e baixa a lista nacional publicada pela Caixa.</p></article>
-      <article><h3>2. Organizar</h3><p>Os CSVs são normalizados, geocodificados com CNEFE e publicados como um único Parquet nacional com <code>scrape_date</code>.</p></article>
-      <article><h3>3. Preservar e projetar</h3><p>Cada dia fica no Internet Archive. O Pages espelha só o retrato atual para o browser; o histórico canônico continua no Archive.</p></article>
+      <article>
+        <h3>1. Observar</h3>
+        <p>Um GitHub Action baixa diariamente as listas publicadas pela Caixa para as 27 UFs.</p>
+      </article>
+      <article>
+        <h3>2. Organizar</h3>
+        <p>Os CSVs são normalizados, enriquecidos e publicados como um único retrato nacional com <code>scrape_date</code>.</p>
+      </article>
+      <article>
+        <h3>3. Preservar</h3>
+        <p>Cada dia fica no Internet Archive. A busca usa o retrato corrente sem transformar o site na fonte canônica.</p>
+      </article>
     </div>
   </section>
 

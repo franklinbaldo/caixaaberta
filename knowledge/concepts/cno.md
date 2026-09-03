@@ -20,4 +20,12 @@ O snapshot só é aceito quando o ZIP contém as cinco relações documentadas p
 
 CNO é cadastro de obras e responsáveis, não um acompanhamento físico detalhado da construção. O dado publicado pela Receita é declaratório/cadastral e deve ser apresentado assim. Campos omitidos pela própria fonte não devem ser reconstruídos pelo Caixa Aberta.
 
-A cardinalidade também é parte do dado: `CNO_AREAS` pode ter várias linhas para um mesmo CNO. As etapas seguintes devem preservar isso em vez de achatar silenciosamente a relação.
+A cardinalidade também é parte do dado: `CNO_AREAS` pode ter várias linhas para um mesmo CNO. A normalização preserva essas relações em Parquets separados em vez de achatá-las silenciosamente.
+
+## Matching com os imóveis
+
+O vínculo entre um imóvel da Caixa e um CNO é uma inferência do Caixa Aberta, não um identificador fornecido pelas fontes. O algoritmo primeiro bloqueia candidatos por UF, município e número do endereço; dentro desse bloco exige igualdade do logradouro normalizado, com e sem o tipo de logradouro. Bairro serve apenas para aumentar a força da evidência.
+
+O Parquet principal recebe um CNO somente quando existe um vencedor único com score forte. Empates ficam `ambiguo`; candidatos únicos abaixo do limiar ficam `provavel`; ausência de candidato fica `sem_match`. Nenhum desses estados é convertido silenciosamente em certeza.
+
+Todos os candidatos são gravados em `cno_matches_<data>.parquet`, com score, método e ranking. A publicação diária envia essa tabela ao Internet Archive junto do retrato principal, permitindo auditar por que um vínculo foi ou não aceito.
