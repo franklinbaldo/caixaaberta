@@ -18,6 +18,7 @@ colunas_obrigatorias:
 | Coluna          | Tipo  | Significado |
 | --------------- | ----- | ----------- |
 | `link`          | texto | Número do imóvel na Caixa. Chave prática; a validação de publicação exige que ao menos um valor não seja vazio. |
+| `link_acesso`   | texto | URL original fornecida pela Caixa para acessar a oferta. Preservada como proveniência; snapshots anteriores à introdução da coluna podem não tê-la. |
 | `endereco`      | texto | Logradouro, número e complemento, como a Caixa escreve. |
 | `bairro`        | texto | Normalizado para maiúsculas, sem espaços nas pontas. |
 | `cidade`        | texto | Município. |
