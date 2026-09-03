@@ -13,18 +13,34 @@ import Explorer from "../components/Explorer.astro";
         O Caixa Aberta acompanha a oferta todos os dias e preserva cada retrato para que
         mudanças de preço, entrada e saída não desapareçam com o tempo.
       </p>
-      <p data-hero-actions>
-        <a href="#explorar" role="button">Buscar imóveis agora</a>
-        <a href="#dados">Entender os dados</a>
+
+      <form data-hero-search role="search" aria-label="Buscar imóveis no radar">
+        <label for="hero-query">Onde você quer procurar?</label>
+        <div>
+          <input
+            id="hero-query"
+            type="search"
+            placeholder="cidade, bairro, endereço ou número do imóvel"
+            autocomplete="off"
+          />
+          <button type="submit">Buscar no radar</button>
+        </div>
+        <small>Experimente “Porto Velho”, “Centro”, “apartamento” ou o número de um imóvel.</small>
+      </form>
+
+      <p data-hero-proof aria-label="Características do radar">
+        <span>Brasil inteiro</span>
+        <span>observação diária</span>
+        <span>histórico preservado</span>
       </p>
     </div>
     <aside aria-label="O que você encontra aqui">
-      <strong>Feito para garimpar, não só para baixar dados.</strong>
-      <ul>
-        <li>busca nacional em um único lugar;</li>
-        <li>preço, desconto, modalidade e contexto da obra;</li>
-        <li>fonte oficial preservada e histórico auditável.</li>
-      </ul>
+      <strong>Um radar para decidir, com a memória para conferir.</strong>
+      <p>
+        A oferta corrente vira busca, mapa e cards. O histórico fica preservado para mostrar
+        quando o preço muda ou um imóvel entra e sai do radar.
+      </p>
+      <a href="#explorar">Ver todas as oportunidades ↓</a>
     </aside>
   </section>
 
@@ -85,6 +101,19 @@ import Explorer from "../components/Explorer.astro";
     const date = document.querySelector("#snapshot-date");
     const item = document.querySelector("#snapshot-item");
     const archive = document.querySelector<HTMLAnchorElement>("#snapshot-archive");
+    const heroSearch = document.querySelector<HTMLFormElement>("[data-hero-search]");
+    const heroQuery = document.querySelector<HTMLInputElement>("#hero-query");
+
+    heroSearch?.addEventListener("submit", (event) => {
+      event.preventDefault();
+      const explorerQuery = document.querySelector<HTMLInputElement>("#filter-query");
+      if (explorerQuery && heroQuery) {
+        explorerQuery.value = heroQuery.value;
+        explorerQuery.dispatchEvent(new Event("input", { bubbles: true }));
+        document.querySelector("#explorar")?.scrollIntoView({ behavior: "smooth", block: "start" });
+        window.setTimeout(() => explorerQuery.focus(), 420);
+      }
+    });
 
     try {
       const response = await fetch(manifestUrl, { cache: "no-store" });
