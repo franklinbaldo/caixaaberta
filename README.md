@@ -120,8 +120,7 @@ paralelo ao backlog.
 ## Instalação
 
 ```bash
-uv venv .venv
-uv pip install --python .venv/bin/python -e '.[dev]'
+uv sync --locked --extra dev
 ```
 
 ## Configuração
