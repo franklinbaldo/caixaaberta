@@ -30,8 +30,7 @@ jobs:
 
       - name: Install dependencies
         run: |
-          "$HOME/.local/bin/uv" venv .venv --python "$(which python)"
-          "$HOME/.local/bin/uv" pip install --python .venv/bin/python '.[dev]'
+          "$HOME/.local/bin/uv" sync --locked --extra dev --python "$(which python)"
 
       - name: Run Pytest tests
         run: .venv/bin/python -m pytest -v tests/
@@ -70,8 +69,7 @@ jobs:
 
       - name: Install dependencies
         run: |
-          "$HOME/.local/bin/uv" venv .venv --python "$(which python)"
-          "$HOME/.local/bin/uv" pip install --python .venv/bin/python '.[dev]'
+          "$HOME/.local/bin/uv" sync --locked --extra dev --python "$(which python)"
 
       - name: Scrape, enrich with CNO, process and publish the daily snapshot
         env:

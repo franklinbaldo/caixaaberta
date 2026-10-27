@@ -45,3 +45,7 @@ packages = ["src"]
 pythonpath = [".", "src"]
 minversion = "6.0"
 addopts = "-ra -q"
+
+[tool.uv]
+# Security floors for transitive HTTPS dependencies (Dependabot #68/#69).
+constraint-dependencies = ["certifi>=2026.10.18", "urllib3>=2.8.0"]
